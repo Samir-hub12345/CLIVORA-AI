@@ -6,6 +6,12 @@ import {
   SOAPGenerateResponse,
   AuditLog,
   VitalsInput,
+  TriageCase,
+  ReportOCRResult,
+  SpeechTranscribeResult,
+  TranslationResult,
+  ReferralNote,
+  OCRField,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -213,5 +219,108 @@ export const api = {
   // Audit Logs
   async getAuditLogs(limit: number = 50) {
     return fetchApi<{ total: number; items: AuditLog[] }>(`/api/v1/audit-logs?limit=${limit}`);
+  },
+
+  // -------------------------------------------------------------------------
+  // PS03 Triage Assistant & Multimodal Endpoints
+  // -------------------------------------------------------------------------
+  async getCases(queueCategory?: string, statusFilter?: string) {
+    const params = new URLSearchParams();
+    if (queueCategory) params.append("queue_category", queueCategory);
+    if (statusFilter) params.append("status_filter", statusFilter);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return fetchApi<TriageCase[]>(`/api/v1/cases${qs}`);
+  },
+
+  async getCase(caseId: string) {
+    return fetchApi<TriageCase>(`/api/v1/cases/${caseId}`);
+  },
+
+  async createCase(payload: {
+    preferred_language?: string;
+    facility_type?: string;
+    visit_type?: string;
+    approximate_age?: number;
+    gender?: string;
+    context_notes?: string;
+    raw_symptoms: string;
+    speech_transcript?: string;
+    detected_language?: string;
+    report_filename?: string;
+    report_ocr_data?: OCRField[];
+    image_reference?: string;
+    consent_acknowledged?: boolean;
+  }) {
+    return fetchApi<TriageCase>("/api/v1/cases", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteCaseData(caseId: string) {
+    return fetchApi<{ status: string; message: string }>(`/api/v1/cases/${caseId}`, {
+      method: "DELETE",
+    });
+  },
+
+  async transcribeSpeech(formData: FormData) {
+    const token = getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/intake/speech`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      return { data: null, error: `Upload error: ${res.statusText}` };
+    }
+    const data = await res.json();
+    return { data, error: null };
+  },
+
+  async translateText(text: string, source_language: string = "or") {
+    return fetchApi<TranslationResult>("/api/v1/intake/translate", {
+      method: "POST",
+      body: JSON.stringify({ text, source_language }),
+    });
+  },
+
+  async processReportOCR(formData: FormData) {
+    const token = getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/intake/ocr`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      return { data: null, error: `OCR error: ${res.statusText}` };
+    }
+    const data = await res.json();
+    return { data, error: null };
+  },
+
+  async performReviewAction(
+    caseId: string,
+    payload: {
+      action: "approve" | "edit" | "reject" | "escalate";
+      reviewer_notes?: string;
+      edited_summary?: string;
+      confirmed_queue_category?: string;
+      verified_ocr_fields?: OCRField[];
+    }
+  ) {
+    return fetchApi<TriageCase>(`/api/v1/review/${caseId}/action`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getReferralNote(caseId: string) {
+    return fetchApi<ReferralNote>(`/api/v1/review/${caseId}/referral`);
   },
 };

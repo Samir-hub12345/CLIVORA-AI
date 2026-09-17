@@ -34,8 +34,15 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    # AI Configuration
+    # AI Configuration & Prototype Settings
+    DEMO_MODE: bool = True
     GEMINI_API_KEY: str = ""
+    LLM_PROVIDER: str = "mock"  # "mock", "gemini"
+    STT_PROVIDER: str = "local"  # "local", "faster-whisper", "mock"
+    OCR_PROVIDER: str = "local"  # "local", "paddleocr", "mock"
+    TRANSLATION_PROVIDER: str = "local"  # "local", "indictrans2", "mock"
+    DEFAULT_FACILITY: str = "Government District Hospital"
+    RETENTION_HOURS: int = 24
 
     model_config = SettingsConfigDict(
         env_file=".env",

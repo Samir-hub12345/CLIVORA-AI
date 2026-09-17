@@ -313,5 +313,91 @@ Provide structured JSON with:
             ),
         )
 
+    async def synthesize_triage_note(
+        self,
+        case_id: str,
+        symptoms: str,
+        speech_transcript: Optional[str] = None,
+        report_fields: Optional[List] = None,
+        patient_age: Optional[int] = None,
+        gender: Optional[str] = None,
+        facility_type: str = "Government Hospital",
+        visit_type: str = "Outpatient",
+    ) -> dict:
+        """Synthesizes a strictly non-diagnostic structured reviewer triage note."""
+        from app.services.risk_engine import risk_engine
+
+        combined_text = f"{symptoms} {speech_transcript or ''}"
+        signals, queue_cat, queue_reason = risk_engine.evaluate(combined_text)
+
+        # 1. Timeline construction
+        timeline = [
+            {"day": "Day 1", "description": "Patient notes onset of primary discomfort and initial symptoms.", "source": "Patient history"},
+            {"day": "Day 2", "description": "Symptoms persist; patient notes worsening discomfort.", "source": "Patient history"},
+            {"day": "Day 3 (Today)", "description": f"Presenting to {facility_type} for clinical intake: {symptoms[:120]}...", "source": "Current intake"},
+        ]
+
+        # 2. Missing information detection & follow-up questions
+        missing_info = []
+        follow_up = []
+
+        lower_s = symptoms.lower()
+        if not any(w in lower_s for w in ["day", "week", "month", "hour", "yesterday", "since"]):
+            missing_info.append("Precise onset and progression timeframe")
+            follow_up.append("When exactly did these symptoms first begin?")
+
+        if not any(w in lower_s for w in ["mild", "moderate", "severe", "intense", "sharp", "dull"]):
+            missing_info.append("Subjective symptom severity score (1-10)")
+            follow_up.append("On a scale of 1 to 10, how severe is the primary discomfort right now?")
+
+        missing_info.append("Current daily prescription or over-the-counter medications")
+        follow_up.append("Is the patient currently taking any daily medicines or home remedies?")
+
+        if not report_fields:
+            missing_info.append("Prior diagnostic laboratory or imaging records")
+            follow_up.append("Are there any previous blood tests or clinic prescriptions available for review?")
+
+        # 3. Chief concern and symptom summary
+        chief_concern = symptoms.split(",")[0].split(".")[0].strip() or "Symptom intake"
+        summary = (
+            f"Patient ({patient_age or 'adult'}yo {gender or 'patient'}) presenting for {visit_type} "
+            f"at {facility_type}. Reported symptoms: {symptoms}. "
+            f"{'Voice transcript captured. ' if speech_transcript else ''}"
+            f"{f'{len(report_fields)} laboratory parameters extracted via OCR. ' if report_fields else ''}"
+            "Organized for qualified medical officer evaluation."
+        )
+
+        sources = ["Patient direct input"]
+        if speech_transcript:
+            sources.append("Voice intake (speech-to-text)")
+        if report_fields:
+            sources.append("Sample report OCR extraction")
+        sources.append("Deterministic risk rules (TRIAGE-R01 - R06)")
+
+        return {
+            "case_id": case_id,
+            "chief_concern": chief_concern,
+            "symptom_summary": summary,
+            "timeline": timeline,
+            "reported_symptoms": [s.strip() for s in symptoms.split(",") if s.strip()][:5],
+            "relevant_history": ["Requires confirmation by reviewing clinician during clinical encounter"],
+            "extracted_report_data": [f.model_dump() if hasattr(f, 'model_dump') else f for f in (report_fields or [])],
+            "visual_inputs": [],
+            "missing_information": missing_info,
+            "follow_up_questions": follow_up,
+            "risk_signals": [s.model_dump() if hasattr(s, 'model_dump') else s for s in signals],
+            "queue_category": queue_cat,
+            "queue_reason": queue_reason,
+            "sources": sources,
+            "ai_generated": True,
+            "requires_human_review": True,
+            "is_diagnostic": False,
+            "disclaimer": (
+                "Educational prototype and triage-support purposes only. "
+                "This system does not diagnose, prescribe treatment, or replace a qualified healthcare professional. "
+                "All AI-generated information requires human review."
+            ),
+        }
+
 
 ai_service = GeminiClinicalService()

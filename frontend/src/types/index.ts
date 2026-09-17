@@ -103,3 +103,123 @@ export interface AuditLog {
   details?: string;
   timestamp: string;
 }
+
+// ---------------------------------------------------------------------------
+// PS03 Multimodal Triage Assistant Types
+// ---------------------------------------------------------------------------
+export type QueueCategory = "urgent-review" | "priority" | "routine";
+export type CaseStatus =
+  | "awaiting_review"
+  | "in_review"
+  | "approved"
+  | "rejected"
+  | "referred"
+  | "deleted";
+
+export interface OCRField {
+  field_name: string;
+  value: string;
+  unit?: string;
+  confidence: number;
+  bounding_box?: number[];
+  verification_status: "pending" | "verified" | "rejected";
+  source_reference?: string;
+}
+
+export interface ReportOCRResult {
+  report_filename: string;
+  fields: OCRField[];
+  raw_extracted_text: string;
+  confidence_average: number;
+  is_synthetic_sample: boolean;
+  status: string;
+  disclaimer: string;
+}
+
+export interface SpeechTranscribeResult {
+  transcript: string;
+  detected_language: string;
+  confidence: number;
+  duration_seconds: number;
+  is_demo_fallback: boolean;
+  disclaimer: string;
+}
+
+export interface TranslationResult {
+  original_text: string;
+  original_language: string;
+  translated_text: string;
+  target_language: string;
+  normalization_summary: string;
+  is_demo_fallback: boolean;
+}
+
+export interface TimelineEvent {
+  day: string;
+  description: string;
+  source?: string;
+}
+
+export interface RiskSignal {
+  rule_id: string;
+  signal: string;
+  source_text: string;
+  severity: "URGENT REVIEW" | "PRIORITY" | "ROUTINE";
+  timestamp: string;
+  reviewer_confirmation_required: boolean;
+  status: "pending_confirmation" | "confirmed" | "dismissed";
+}
+
+export interface TriageCase {
+  id: string;
+  synthetic_case_id: string;
+  language: string;
+  facility_type: string;
+  visit_type: string;
+  status: CaseStatus;
+  queue_category: QueueCategory;
+  queue_reason?: string;
+  consent_status: boolean;
+  approximate_age?: number;
+  gender?: string;
+  context_notes?: string;
+  raw_symptoms?: string;
+  normalized_symptoms?: string;
+  speech_transcript?: string;
+  detected_language?: string;
+  report_filename?: string;
+  report_ocr_data?: OCRField[];
+  image_reference?: string;
+  triage_summary?: Record<string, any>;
+  missing_information?: string[];
+  follow_up_questions?: string[];
+  risk_signals?: RiskSignal[];
+  timeline_events?: TimelineEvent[];
+  reviewer_notes?: string;
+  reviewer_id?: string;
+  reviewer_name?: string;
+  reviewed_at?: string;
+  approved_at?: string;
+  created_at: string;
+  updated_at: string;
+  waiting_minutes?: number;
+  is_deleted?: boolean;
+}
+
+export interface ReferralNote {
+  case_id: string;
+  synthetic_case_id: string;
+  facility: string;
+  visit_type: string;
+  patient_reported_symptoms: string;
+  timeline: TimelineEvent[];
+  available_report_data: OCRField[];
+  reviewer_confirmed_summary: string;
+  outstanding_questions: string[];
+  review_signals: RiskSignal[];
+  reviewer_reason: string;
+  reviewer_name: string;
+  reviewer_role: string;
+  timestamp: string;
+  footer_disclaimer: string;
+}
