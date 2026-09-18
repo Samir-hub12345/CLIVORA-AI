@@ -1,7 +1,6 @@
-# CLIVORA AI
+# CLINOVA AI
 
 **Multimodal Healthcare Triage Assistant for Government and Institutional Health Facilities**  
-*Source Basis: BPUT Hackathon 2026 Problem Statement 3 (PS03)*
 
 ---
 
@@ -13,7 +12,7 @@
 
 ## 📋 Executive Overview
 
-**CLIVORA AI** is an explainable, multimodal, human-in-the-loop healthcare triage support platform engineered for government district hospitals, primary health centers (PHCs), public health outreach camps, industrial health units, and campus clinics. 
+**CLINOVA AI** is an explainable, multimodal, human-in-the-loop healthcare triage support platform engineered for government district hospitals, primary health centers (PHCs), public health outreach camps, industrial health units, and campus clinics. 
 
 The system organizes high-volume patient inputs into structured, reviewer-facing notes to accelerate qualified clinician decision-making:
 * **Multimodal Intake**: Voice recording (6-state audio capture), autosizing text symptom narratives, and sample pathology report uploads.
@@ -93,10 +92,30 @@ Patient / Kiosk / Health Worker
 
 ---
 
+## 📚 Documentation Index
+
+Clinova AI maintains a comprehensive, production-grade technical and clinical documentation suite:
+
+| Document | Primary Focus | Target Audience |
+| :--- | :--- | :--- |
+| **[FEATURES.md](FEATURES.md)** | Multimodal intake, risk engine, queue, review gate, referrals, demo hub. | Clinicians, Product Owners, Developers |
+| **[INFRASTRUCTURE.md](INFRASTRUCTURE.md)** | Topology, Docker Compose, ports, PM2, systemd, TLS, hardware profiles. | DevOps, SREs, Systems Administrators |
+| **[SECURITY.md](SECURITY.md)** | DISHA/ABDM compliance, PII/Aadhaar scrubbing, JWT, audit logs, purge. | Security Engineers, Compliance Officers |
+| **[TESTING.md](TESTING.md)** | 15 backend tests, standalone vs. Docker testing, frontend lint, checklist. | QA Engineers, Backend Developers |
+| **[ROADMAP.md](ROADMAP.md)** | Phased roadmap: MTS pediatric matrix, PWA, Bhashini, ABDM, biomarkers. | Clinical Informatics, Engineering Leads |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | End-to-end data flow, neuro-symbolic patterns, subsystem architecture. | Software Architects, Full-Stack Devs |
+| **[API_SPECIFICATION.md](API_SPECIFICATION.md)**| REST API endpoints, schemas, authentication, status codes, examples. | Backend & Frontend API Integrators |
+| **[clinical-rules.md](clinical-rules.md)** | Deterministic triage rules (`TRIAGE-R01`–`R06`), safety thresholds. | Medical Officers, Informatics Reviewers |
+| **[deploy.md](deploy.md)** | Step-by-step production deployment, Docker, bare-metal, disaster recovery. | Infrastructure & DevOps Teams |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contributor setup, branching, git guidelines, validation checklist. | Open-Source Contributors |
+| **[CHANGELOG.md](CHANGELOG.md)** | Semantic release history and implemented vs. planned status matrix. | Maintainers & Evaluators |
+
+---
+
 ## 📁 Repository Structure
 
 ```text
-CLIVORA-AI/
+CLINOVA-AI/
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
@@ -137,7 +156,18 @@ CLIVORA-AI/
 │
 ├── docker-compose.yml
 ├── .env.example
-└── README.md
+├── README.md
+├── FEATURES.md
+├── INFRASTRUCTURE.md
+├── SECURITY.md
+├── TESTING.md
+├── ROADMAP.md
+├── ARCHITECTURE.md
+├── API_SPECIFICATION.md
+├── clinical-rules.md
+├── deploy.md
+├── CONTRIBUTING.md
+└── CHANGELOG.md
 ```
 
 ---
@@ -189,7 +219,7 @@ docker compose exec backend pytest -v
 
 ---
 
-## 🎭 3-Minute Hackathon Demo Script (For Judges)
+## 🎭 3-Minute Clinical Demonstration Workflow
 
 1. **Landing Page (`/`)**: Notice the prominent amber Non-Diagnostic Disclaimer, feature pillars, and India-wide facility relevance.
 2. **Start Intake (`/intake`)**:

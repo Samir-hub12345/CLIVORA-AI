@@ -13,7 +13,7 @@ export const Header: React.FC = () => {
   const [lowBandwidth, setLowBandwidth] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("clivora_low_bandwidth") === "true";
+    const saved = localStorage.getItem("clinova_low_bandwidth") === "true";
     setLowBandwidth(saved);
     if (saved) {
       document.documentElement.classList.add("low-bandwidth");
@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
   const toggleLowBandwidth = () => {
     const next = !lowBandwidth;
     setLowBandwidth(next);
-    localStorage.setItem("clivora_low_bandwidth", String(next));
+    localStorage.setItem("clinova_low_bandwidth", String(next));
     if (next) {
       document.documentElement.classList.add("low-bandwidth");
     } else {
@@ -51,7 +51,7 @@ export const Header: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-lg tracking-tight text-slate-900">CLIVORA</span>
+                <span className="font-black text-lg tracking-tight text-slate-900">CLINOVA</span>
                 <span className="text-teal-700 font-extrabold text-[10px] bg-teal-100 px-1.5 py-0.5 rounded border border-teal-300">
                   AI
                 </span>

@@ -111,7 +111,7 @@ export default function DemoPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center gap-2 text-teal-700 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-4 h-4 text-teal-600" />
-            <span>Hackathon Demonstration Hub &bull; BPUT 2026 PS03</span>
+            <span>Interactive Clinical Demonstration Hub &bull; Decision Support Scenarios</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900">
             Synthetic Public Health Demo Scenarios
@@ -166,11 +166,11 @@ export default function DemoPage() {
           ))}
         </div>
 
-        {/* 3-5 Minute Judge Demo Script Card */}
+        {/* 3-Minute Clinical Evaluation Workflow Card */}
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-teal-600" />
-            <span>Recommended 3-Minute Hackathon Demonstration Script</span>
+            <span>Recommended 3-Minute Clinical Evaluation Workflow</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-700">

@@ -82,11 +82,11 @@ export default function Home() {
         <div className="space-y-4 max-w-3xl text-center mx-auto pt-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-            <span>BPUT Hackathon 2026 PS03 &bull; Multimodal Healthcare Triage Support</span>
+            <span>Clinical Decision Support &bull; Multimodal Healthcare Triage System</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-            CLIVORA <span className="text-teal-600">AI</span>
+            CLINOVA <span className="text-teal-600">AI</span>
           </h1>
 
           <p className="text-lg sm:text-xl font-bold text-slate-700">
