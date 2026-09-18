@@ -23,7 +23,8 @@ logger = logging.getLogger("clinova")
 router = APIRouter()
 
 
-@router.post("/", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CaseResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def create_triage_case(
     req: CaseCreateRequest,
     request: Request,
@@ -97,7 +98,8 @@ async def create_triage_case(
     return _format_case_response(case)
 
 
-@router.get("/", response_model=List[CaseResponse])
+@router.get("", response_model=List[CaseResponse])
+@router.get("/", response_model=List[CaseResponse], include_in_schema=False)
 async def list_cases(
     queue_category: Optional[str] = Query(None, description="urgent-review, priority, routine"),
     status_filter: Optional[str] = Query(None, description="awaiting_review, in_review, approved, rejected, referred"),
