@@ -106,7 +106,7 @@ export default function ReferralNotePage() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-xl font-black tracking-tight text-slate-900">
-                  CLINOVA AI &bull; CLINICAL REFERRAL SUPPORT NOTE
+                  Clinova AI &bull; Clinical Referral Support Note
                 </h1>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Institutional Healthcare Triage &bull; Multimodal Handoff Document

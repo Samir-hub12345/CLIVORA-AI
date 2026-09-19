@@ -91,7 +91,7 @@ export default function DashboardPage() {
               Welcome back, {user?.full_name}
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              CLINOVA AI Clinical Decision Support &amp; EHR Workflow System
+              Clinova AI Clinical Decision Support &amp; EHR Workflow System
             </p>
           </div>
 

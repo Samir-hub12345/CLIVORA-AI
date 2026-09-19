@@ -42,6 +42,13 @@ async def seed_initial_data():
                 role=UserRole.PATIENT,
                 is_active=True,
             )
+            nurse = User(
+                email="staff@clinova.ai",
+                hashed_password=get_password_hash("ClinovaStaff2026!"),
+                full_name="Nurse Sunita Patel, RN",
+                role=UserRole.NURSE,
+                is_active=True,
+            )
             admin = User(
                 email="admin@clinova.ai",
                 hashed_password=get_password_hash("ClinovaAdmin2026!"),
@@ -49,7 +56,7 @@ async def seed_initial_data():
                 role=UserRole.ADMIN,
                 is_active=True,
             )
-            db.add_all([doctor, patient_user, admin])
+            db.add_all([doctor, patient_user, nurse, admin])
             await db.flush()
 
             # 2. Demo Patients

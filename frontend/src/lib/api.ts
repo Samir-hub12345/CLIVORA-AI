@@ -97,7 +97,7 @@ export async function fetchApi<T>(
     };
   } catch (error: any) {
     return {
-      error: error?.message || "Network error. Please ensure CLINOVA AI services are running.",
+      error: error?.message || "Network error. Please ensure Clinova AI services are running.",
       status: 500,
     };
   }

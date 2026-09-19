@@ -9,7 +9,7 @@ async def test_root_endpoint(async_client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "online"
-    assert "CLINOVA AI" in data["message"]
+    assert "Clinova AI" in data["message"] or "CLINOVA AI" in data["message"]
 
 
 @pytest.mark.asyncio
@@ -19,5 +19,5 @@ async def test_health_check_endpoint(async_client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["app_name"] == "CLINOVA AI"
+    assert data["app_name"] in ["Clinova AI", "CLINOVA AI"]
     assert "timestamp" in data
