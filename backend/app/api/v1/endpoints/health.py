@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get("/health", response_model=HealthCheckResponse, tags=["Health"])
 async def check_health() -> HealthCheckResponse:
-    """Return health status of the Clinova AI API service."""
+    """Return health status of the CLINOVA AI API service."""
     return HealthCheckResponse(
         status="healthy",
         app_name=settings.APP_NAME,

@@ -1,4 +1,4 @@
-# Clinova AI — Testing & Quality Assurance Handbook
+# CLINOVA AI â€” Testing & Quality Assurance Handbook
 
 **Document Version:** 1.0.0  
 **Target Audience:** Software developers, clinical informatics testers, DevOps engineers, and QA reviewers  
@@ -7,8 +7,8 @@
 ---
 
 > [!WARNING]
-> ### 🔒 Clinical Safety & Testing Philosophy
-> **Zero-Risk Testing Mandate.** Clinova AI enforces a strict synthetic-only testing policy. Real patient health information (PHI) or identifiable clinical data must never be used in unit tests, integration tests, or mock datasets. Every clinical urgency rule must be rigorously tested against deterministic criteria to prevent clinical triage regressions.
+> ### ðŸ”’ Clinical Safety & Testing Philosophy
+> **Zero-Risk Testing Mandate.** CLINOVA AI enforces a strict synthetic-only testing policy. Real patient health information (PHI) or identifiable clinical data must never be used in unit tests, integration tests, or mock datasets. Every clinical urgency rule must be rigorously tested against deterministic criteria to prevent clinical triage regressions.
 
 ---
 
@@ -39,14 +39,14 @@ The backend test suite (`backend/tests/`) contains 15 automated test cases execu
 
 ```text
 backend/tests/
-├── conftest.py               # Shared test fixtures & async database engine
-├── test_risk_engine.py       # Deterministic clinical risk rules & PII redaction (6 tests)
-├── test_health.py            # Service health probe & root metadata (2 tests)
-├── test_ai.py                # AI clinical triage & SOAP note synthesis (2 tests)
-├── test_auth.py              # JWT authentication & credential validation (2 tests)
-├── test_patients.py          # EHR patient registry CRUD lifecycle (1 test)
-├── test_consultations.py     # Clinical consultation management (1 test)
-└── test_audit.py             # Medicolegal audit logging persistence (1 test)
+â”œâ”€â”€ conftest.py               # Shared test fixtures & async database engine
+â”œâ”€â”€ test_risk_engine.py       # Deterministic clinical risk rules & PII redaction (6 tests)
+â”œâ”€â”€ test_health.py            # Service health probe & root metadata (2 tests)
+â”œâ”€â”€ test_ai.py                # AI clinical triage & SOAP note synthesis (2 tests)
+â”œâ”€â”€ test_auth.py              # JWT authentication & credential validation (2 tests)
+â”œâ”€â”€ test_patients.py          # EHR patient registry CRUD lifecycle (1 test)
+â”œâ”€â”€ test_consultations.py     # Clinical consultation management (1 test)
+â””â”€â”€ test_audit.py             # Medicolegal audit logging persistence (1 test)
 ```
 
 ### 2.1 Test Module Breakdown
@@ -59,7 +59,7 @@ backend/tests/
 | `test_risk_engine.py` | `test_risk_engine_chest_pain_urgency` | Risk Engine | Verifies crushing chest pain triggers `TRIAGE-R04` and `urgent-review`. |
 | `test_risk_engine.py` | `test_risk_engine_routine_presentation`| Risk Engine | Verifies mild non-acute symptoms default to `routine`. |
 | `test_risk_engine.py` | `test_non_diagnostic_triage_note_structure`| AI Synthesizer | Asserts non-diagnostic disclaimer and timeline schema. |
-| `test_health.py` | `test_root_endpoint` | Health Probes | Validates `GET /` returns status online and Clinova AI message. |
+| `test_health.py` | `test_root_endpoint` | Health Probes | Validates `GET /` returns status online and CLINOVA AI message. |
 | `test_health.py` | `test_health_check_endpoint` | Health Probes | Validates `GET /api/v1/health` reports status healthy. |
 | `test_ai.py` | `test_ai_triage_clinical_decision_support` | AI Endpoints | Validates decision support recommendations. |
 | `test_ai.py` | `test_ai_soap_synthesis` | AI Endpoints | Asserts structured SOAP format output from narrative synthesizer. |
@@ -162,7 +162,7 @@ npm run build
 
 Before submitting a Pull Request or promoting code to staging, verify each item:
 
-- [ ] **Deterministic Rules Intact**: All 6 triage rules (`TRIAGE-R01`–`TRIAGE-R06`) correctly trigger their designated priority levels.
+- [ ] **Deterministic Rules Intact**: All 6 triage rules (`TRIAGE-R01`â€“`TRIAGE-R06`) correctly trigger their designated priority levels.
 - [ ] **PII Scrubbing Enforced**: Phone numbers, email addresses, and 12-digit Aadhaar numbers are masked before database insertion.
 - [ ] **Persistent Disclaimer Visible**: Amber clinical safety banner renders across all frontend pages (`/`, `/intake`, `/review`, `/demo`).
 - [ ] **Human-in-the-Loop Active**: Automated endpoints do not autonomously write approved clinical notes without clinician action.

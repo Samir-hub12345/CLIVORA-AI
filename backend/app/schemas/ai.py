@@ -40,7 +40,7 @@ class TriageResponse(BaseModel):
     clinical_reasoning: str
     suggested_monitoring: List[str] = Field(default_factory=list)
     disclaimer: str = (
-        "CLINICAL DECISION SUPPORT NOTICE: Clinova AI is an investigative decision aid and does not replace "
+        "CLINICAL DECISION SUPPORT NOTICE: CLINOVA AI is an investigative decision aid and does not replace "
         "physician judgment. All recommendations, triage stratifications, and differential diagnoses must be "
         "independently verified by a licensed healthcare professional before taking clinical action."
     )

@@ -52,7 +52,7 @@ class GeminiClinicalService:
         from google.genai import types
 
         prompt = f"""
-You are Clinova AI, an expert clinical decision support copilot for healthcare providers.
+You are CLINOVA AI, an expert clinical decision support copilot for healthcare providers.
 Analyze the following patient clinical presentation:
 
 Chief Complaint: {req.chief_complaint}
@@ -115,7 +115,7 @@ Respond strictly in valid JSON matching this schema:
         from google.genai import types
 
         prompt = f"""
-You are Clinova AI, a medical documentation copilot. Synthesize the following encounter information into high-quality clinical SOAP notes:
+You are CLINOVA AI, a medical documentation copilot. Synthesize the following encounter information into high-quality clinical SOAP notes:
 
 Patient: {req.patient_name} ({req.age_and_gender or 'Demographics unspecified'})
 Chief Complaint: {req.chief_complaint}
@@ -277,7 +277,7 @@ Provide structured JSON with:
             immediate_actions=immediate_actions,
             clinical_reasoning=reasoning,
             suggested_monitoring=["Continuous Pulse Oximetry", "Hourly Blood Pressure", "Pain score reassessment"],
-            source="Clinova Clinical Decision Engine (Deterministic Heuristic)",
+            source="CLINOVA AI Clinical Decision Engine (Deterministic Heuristic)",
         )
 
     def _heuristic_soap(self, req: SOAPGenerateRequest, note: str = "") -> SOAPGenerateResponse:

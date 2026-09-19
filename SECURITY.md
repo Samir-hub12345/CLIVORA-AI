@@ -1,4 +1,4 @@
-# Clinova AI — Healthcare Security, Safety & Privacy Policy
+# CLINOVA AI â€” Healthcare Security, Safety & Privacy Policy
 
 **Document Version:** 1.0.0  
 **Target Audience:** Security engineers, clinical compliance officers, data protection officers, and infrastructure administrators  
@@ -7,8 +7,8 @@
 ---
 
 > [!WARNING]
-> ### 🔒 Clinical Safety & Non-Diagnostic Mandate
-> **Educational prototype and clinical decision support system only.** Clinova AI does not diagnose disease, prescribe pharmaceuticals, or make autonomous medical decisions. All AI-generated triage suggestions, risk flags, and clinical notes strictly require qualified medical professional validation and explicit human sign-off prior to clinical or administrative action.
+> ### ðŸ”’ Clinical Safety & Non-Diagnostic Mandate
+> **Educational prototype and clinical decision support system only.** CLINOVA AI does not diagnose disease, prescribe pharmaceuticals, or make autonomous medical decisions. All AI-generated triage suggestions, risk flags, and clinical notes strictly require qualified medical professional validation and explicit human sign-off prior to clinical or administrative action.
 
 ---
 
@@ -27,7 +27,7 @@
 
 ## 1. Security Philosophy & Regulatory Posture
 
-Clinova AI is architected from the ground up under a **Privacy by Design** and **Defense-in-Depth** model specifically tailored to public health infrastructure in India:
+CLINOVA AI is architected from the ground up under a **Privacy by Design** and **Defense-in-Depth** model specifically tailored to public health infrastructure in India:
 
 ### 1.1 DISHA Alignment
 Designed to adhere to India's **Digital Information Security in Healthcare Act (DISHA)** principles:
@@ -49,32 +49,32 @@ Meets standards under the **Information Technology (Reasonable Security Practice
 
 ## 2. Non-Diagnostic Safety Principles
 
-The primary patient safety risk in clinical AI systems is autonomous action or clinician over-reliance. Clinova AI mitigates this through architectural hard barriers:
+The primary patient safety risk in clinical AI systems is autonomous action or clinician over-reliance. CLINOVA AI mitigates this through architectural hard barriers:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    HUMAN-IN-THE-LOOP SAFETY GATEWAY                     │
-└─────────────────────────────────────────────────────────────────────────┘
-                                   │
-                                   ▼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    HUMAN-IN-THE-LOOP SAFETY GATEWAY                     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                   â”‚
+                                   â–¼
                    [ Generative / Multimodal Intake ]
-                                   │
-                                   ▼
+                                   â”‚
+                                   â–¼
                   [ Deterministic Risk Signal Engine ]
-                                   │
-                                   ▼
+                                   â”‚
+                                   â–¼
                     [ Proposed Clinical Summary ]
-                                   │
-                                   ▼
-        ┌─────────────────────────────────────────────────────┐
-        │       QUALIFIED ATTENDING CLINICIAN REVIEW GATE     │
-        │  1. Inspect Timeline & Original Vernacular Audio    │
-        │  2. Review Provenance-Linked Lab Parameters         │
-        │  3. Edit Note / Override Triage Category            │
-        │  4. Electronic Sign-Off / Confirm / Escalate        │
-        └──────────────────────────┬──────────────────────────┘
-                                   │ Explicit Clinician Signature
-                                   ▼
+                                   â”‚
+                                   â–¼
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚       QUALIFIED ATTENDING CLINICIAN REVIEW GATE     â”‚
+        â”‚  1. Inspect Timeline & Original Vernacular Audio    â”‚
+        â”‚  2. Review Provenance-Linked Lab Parameters         â”‚
+        â”‚  3. Edit Note / Override Triage Category            â”‚
+        â”‚  4. Electronic Sign-Off / Confirm / Escalate        â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                   â”‚ Explicit Clinician Signature
+                                   â–¼
                     [ Official Health Record / Transfer ]
 ```
 
@@ -117,11 +117,11 @@ In demonstration and public health outreach modes, patient charts are generated 
 
 | Endpoint Group | `admin` | `doctor` | `nurse` | `patient` |
 | :--- | :---: | :---: | :---: | :---: |
-| `POST /api/v1/intake/process` | ✅ | ✅ | ✅ | ✅ |
-| `GET /api/v1/cases/` (Queue) | ✅ | ✅ | ✅ | ❌ |
-| `POST /api/v1/review/action` | ✅ | ✅ | ❌ | ❌ |
-| `DELETE /api/v1/cases/{id}` | ✅ | ✅ | ❌ | ❌ |
-| `GET /api/v1/audit-logs/` | ✅ | ❌ | ❌ | ❌ |
+| `POST /api/v1/intake/process` | âœ… | âœ… | âœ… | âœ… |
+| `GET /api/v1/cases/` (Queue) | âœ… | âœ… | âœ… | âŒ |
+| `POST /api/v1/review/action` | âœ… | âœ… | âŒ | âŒ |
+| `DELETE /api/v1/cases/{id}` | âœ… | âœ… | âŒ | âŒ |
+| `GET /api/v1/audit-logs/` | âœ… | âŒ | âŒ | âŒ |
 
 ---
 
@@ -189,7 +189,7 @@ FastAPI enforces strict CORS middleware restricting origins to authorized domain
 
 ## 8. Vulnerability Disclosure & Security Reporting
 
-We welcome responsible security research on Clinova AI.
+We welcome responsible security research on CLINOVA AI.
 
 ### 8.1 Reporting Security Issues
 If you discover a security vulnerability or potential clinical data leakage:
