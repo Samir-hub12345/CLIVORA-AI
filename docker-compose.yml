@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - APP_NAME=Clinova AI
+      - APP_NAME=CLINOVA AI
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/clinova
       - REDIS_URL=redis://redis:6379/0

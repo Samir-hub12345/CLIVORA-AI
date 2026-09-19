@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Clinova AI - Healthcare Intelligence Platform",
-  description: "Next-generation clinical decision support and patient care platform powered by AI.",
+  title: {
+    default: `${APP_NAME} — Multimodal Healthcare Triage Assistant`,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_TAGLINE,
 };
 
 export default function RootLayout({

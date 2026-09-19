@@ -138,7 +138,7 @@ export default function LoginPage() {
             </div>
 
             <Button type="submit" loading={loading} className="w-full py-2.5 mt-2 gap-2 text-sm">
-              Sign In to Clinova AI <ArrowRight className="w-4 h-4" />
+              Sign In to CLINOVA AI <ArrowRight className="w-4 h-4" />
             </Button>
           </form>
 
