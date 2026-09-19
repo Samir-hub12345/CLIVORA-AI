@@ -13,7 +13,7 @@ services:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/clinova
       - REDIS_URL=redis://redis:6379/0
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001
     depends_on:
       - db
       - redis
