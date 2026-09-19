@@ -5,12 +5,12 @@
 ---
 
 > [!WARNING]
-> ### 🔒 Mandatory Safety & Non-Diagnostic Disclaimer
+> ### ðŸ”’ Mandatory Safety & Non-Diagnostic Disclaimer
 > **Educational prototype and triage-support purposes only.** This system does **not** diagnose, prescribe treatment, or replace a qualified healthcare professional. All AI-generated information requires human review before clinical action.
 
 ---
 
-## 📋 Executive Overview
+## ðŸ“‹ Executive Overview
 
 **CLINOVA AI** is an explainable, multimodal, human-in-the-loop healthcare triage support platform engineered for government district hospitals, primary health centers (PHCs), public health outreach camps, industrial health units, and campus clinics. 
 
@@ -26,63 +26,63 @@ The system organizes high-volume patient inputs into structured, reviewer-facing
 
 ---
 
-## 🏛️ Architecture & Data Flow
+## ðŸ›ï¸ Architecture & Data Flow
 
 ```text
 Patient / Kiosk / Health Worker
-               │
-               ▼
-┌──────────────────────────────────────────────┐
-│             DEMO CONSENT & CONTEXT           │
-│  Age • Gender • Facility • Preferred Lang    │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│           MULTIMODAL INTAKE PIPELINE         │
-│  Voice (Speech-to-Text) • Typed Narrative    │
-│  Report OCR (CBC Panel) • Basic Visuals      │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│        ANONYMIZATION & PRIVACY LAYER         │
-│  PII Redaction • Synthetic Case ID (CLV-xxx) │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│        INTELLIGENCE & EXTRACTION ENGINE      │
-│  Language Normalization (Odia/Hindi -> Eng)  │
-│  Timeline Synthesis • Missing Info Detection │
-│  Deterministic Urgency Rules (R01 - R06)     │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│          STRUCTURED REVIEWER NOTE            │
-│  Chief Concern • Timeline • OCR Data • Flags │
-│      *AI GENERATED — HUMAN REVIEW REQUIRED*  │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│             HUMAN REVIEW GATE                │
-│       Medical Officer Review Dashboard       │
-│    Confirm  •  Edit  •  Reject  •  Escalate  │
-└──────────────┬───────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────┐
-│           ACTION & REFERRAL HANDOFF          │
-│   Official Referral Note • Facility Handoff  │
-│      Immutable Audit Trail • Data Purge      │
-└──────────────────────────────────────────────┘
+               â”‚
+               â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚             DEMO CONSENT & CONTEXT           â”‚
+â”‚  Age â€¢ Gender â€¢ Facility â€¢ Preferred Lang    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â”‚
+                       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚           MULTIMODAL INTAKE PIPELINE         â”‚
+â”‚  Voice (Speech-to-Text) â€¢ Typed Narrative    â”‚
+â”‚  Report OCR (CBC Panel) â€¢ Basic Visuals      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â”‚
+                       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚        ANONYMIZATION & PRIVACY LAYER         â”‚
+â”‚  PII Redaction â€¢ Synthetic Case ID (CLV-xxx) â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â”‚
+                       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚        INTELLIGENCE & EXTRACTION ENGINE      â”‚
+â”‚  Language Normalization (Odia/Hindi -> Eng)  â”‚
+â”‚  Timeline Synthesis â€¢ Missing Info Detection â”‚
+â”‚  Deterministic Urgency Rules (R01 - R06)     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â”‚
+                       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚          STRUCTURED REVIEWER NOTE            â”‚
+â”‚  Chief Concern â€¢ Timeline â€¢ OCR Data â€¢ Flags â”‚
+â”‚      *AI GENERATED â€” HUMAN REVIEW REQUIRED*  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                       â”‚
+                       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚             HUMAN REVIEW GATE                â”‚
+â”‚       Medical Officer Review Dashboard       â”‚
+â”‚    Confirm  â€¢  Edit  â€¢  Reject  â€¢  Escalate  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+               â”‚
+               â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚           ACTION & REFERRAL HANDOFF          â”‚
+â”‚   Official Referral Note â€¢ Facility Handoff  â”‚
+â”‚      Immutable Audit Trail â€¢ Data Purge      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## ðŸ› ï¸ Technology Stack
 
 * **Frontend**: Next.js 14+ (App Router), React 18, TypeScript, Tailwind CSS, Lucide Icons.
 * **Backend**: FastAPI (Python 3.12/3.14 on Uvicorn ASGI), Pydantic v2 validation, SQLAlchemy 2.0 (async).
@@ -92,9 +92,9 @@ Patient / Kiosk / Health Worker
 
 ---
 
-## 📚 Documentation Index
+## ðŸ“š Documentation Index
 
-Clinova AI maintains a comprehensive, production-grade technical and clinical documentation suite:
+CLINOVA AI maintains a comprehensive, production-grade technical and clinical documentation suite:
 
 | Document | Primary Focus | Target Audience |
 | :--- | :--- | :--- |
@@ -105,74 +105,74 @@ Clinova AI maintains a comprehensive, production-grade technical and clinical do
 | **[ROADMAP.md](ROADMAP.md)** | Phased roadmap: MTS pediatric matrix, PWA, Bhashini, ABDM, biomarkers. | Clinical Informatics, Engineering Leads |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | End-to-end data flow, neuro-symbolic patterns, subsystem architecture. | Software Architects, Full-Stack Devs |
 | **[API_SPECIFICATION.md](API_SPECIFICATION.md)**| REST API endpoints, schemas, authentication, status codes, examples. | Backend & Frontend API Integrators |
-| **[clinical-rules.md](clinical-rules.md)** | Deterministic triage rules (`TRIAGE-R01`–`R06`), safety thresholds. | Medical Officers, Informatics Reviewers |
+| **[clinical-rules.md](clinical-rules.md)** | Deterministic triage rules (`TRIAGE-R01`â€“`R06`), safety thresholds. | Medical Officers, Informatics Reviewers |
 | **[deploy.md](deploy.md)** | Step-by-step production deployment, Docker, bare-metal, disaster recovery. | Infrastructure & DevOps Teams |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contributor setup, branching, git guidelines, validation checklist. | Open-Source Contributors |
 | **[CHANGELOG.md](CHANGELOG.md)** | Semantic release history and implemented vs. planned status matrix. | Maintainers & Evaluators |
 
 ---
 
-## 📁 Repository Structure
+## ðŸ“ Repository Structure
 
 ```text
 CLINOVA-AI/
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx                    # Polished healthcare landing page
-│   │   │   ├── intake/page.tsx             # 4-step Multimodal Intake Wizard
-│   │   │   ├── review/page.tsx             # Prioritized Reviewer Queue
-│   │   │   ├── review/case/[caseId]/page.tsx # Case Review & Human Gate
-│   │   │   ├── review/case/[caseId]/referral/page.tsx # Printable Referral Note
-│   │   │   ├── demo/page.tsx               # 6 Public Health Demo Scenarios
-│   │   │   ├── dashboard/page.tsx          # Provider metrics dashboard
-│   │   │   └── audit/page.tsx              # Audit trail viewer
-│   │   ├── components/
-│   │   │   ├── clinical/                   # Safety banner, voice recorder, OCR uploader, timeline
-│   │   │   ├── common/                     # Header, footer, navigation
-│   │   │   └── ui/                         # Badges, buttons, cards
-│   │   ├── lib/                            # API client & auth provider
-│   │   └── types/                          # TypeScript definitions
-│   ├── package.json
-│   └── Dockerfile
-│
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/endpoints/
-│   │   │   ├── cases.py                    # Triage cases CRUD & queue
-│   │   │   ├── intake.py                   # Speech, translation & OCR endpoints
-│   │   │   ├── review.py                   # Review actions & referral generation
-│   │   │   ├── auth.py                     # Authentication & JWT
-│   │   │   ├── patients.py                 # EHR patient charts
-│   │   │   └── audit.py                    # HIPAA-ready audit logging
-│   │   ├── core/                           # Config, security, dependencies
-│   │   ├── models/                         # TriageCase, User, Patient, Consultation, AuditLog
-│   │   ├── schemas/                        # Pydantic request/response models
-│   │   ├── services/                       # Anonymizer, RiskEngine, Speech, Translation, OCR, Gemini
-│   │   └── main.py                         # FastAPI factory & synthetic seed data
-│   ├── tests/                              # Automated Pytest suite (15 passing tests)
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── docker-compose.yml
-├── .env.example
-├── README.md
-├── FEATURES.md
-├── INFRASTRUCTURE.md
-├── SECURITY.md
-├── TESTING.md
-├── ROADMAP.md
-├── ARCHITECTURE.md
-├── API_SPECIFICATION.md
-├── clinical-rules.md
-├── deploy.md
-├── CONTRIBUTING.md
-└── CHANGELOG.md
+â”œâ”€â”€ frontend/
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ app/
+â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx                    # Polished healthcare landing page
+â”‚   â”‚   â”‚   â”œâ”€â”€ intake/page.tsx             # 4-step Multimodal Intake Wizard
+â”‚   â”‚   â”‚   â”œâ”€â”€ review/page.tsx             # Prioritized Reviewer Queue
+â”‚   â”‚   â”‚   â”œâ”€â”€ review/case/[caseId]/page.tsx # Case Review & Human Gate
+â”‚   â”‚   â”‚   â”œâ”€â”€ review/case/[caseId]/referral/page.tsx # Printable Referral Note
+â”‚   â”‚   â”‚   â”œâ”€â”€ demo/page.tsx               # 6 Public Health Demo Scenarios
+â”‚   â”‚   â”‚   â”œâ”€â”€ dashboard/page.tsx          # Provider metrics dashboard
+â”‚   â”‚   â”‚   â””â”€â”€ audit/page.tsx              # Audit trail viewer
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ clinical/                   # Safety banner, voice recorder, OCR uploader, timeline
+â”‚   â”‚   â”‚   â”œâ”€â”€ common/                     # Header, footer, navigation
+â”‚   â”‚   â”‚   â””â”€â”€ ui/                         # Badges, buttons, cards
+â”‚   â”‚   â”œâ”€â”€ lib/                            # API client & auth provider
+â”‚   â”‚   â””â”€â”€ types/                          # TypeScript definitions
+â”‚   â”œâ”€â”€ package.json
+â”‚   â””â”€â”€ Dockerfile
+â”‚
+â”œâ”€â”€ backend/
+â”‚   â”œâ”€â”€ app/
+â”‚   â”‚   â”œâ”€â”€ api/v1/endpoints/
+â”‚   â”‚   â”‚   â”œâ”€â”€ cases.py                    # Triage cases CRUD & queue
+â”‚   â”‚   â”‚   â”œâ”€â”€ intake.py                   # Speech, translation & OCR endpoints
+â”‚   â”‚   â”‚   â”œâ”€â”€ review.py                   # Review actions & referral generation
+â”‚   â”‚   â”‚   â”œâ”€â”€ auth.py                     # Authentication & JWT
+â”‚   â”‚   â”‚   â”œâ”€â”€ patients.py                 # EHR patient charts
+â”‚   â”‚   â”‚   â””â”€â”€ audit.py                    # HIPAA-ready audit logging
+â”‚   â”‚   â”œâ”€â”€ core/                           # Config, security, dependencies
+â”‚   â”‚   â”œâ”€â”€ models/                         # TriageCase, User, Patient, Consultation, AuditLog
+â”‚   â”‚   â”œâ”€â”€ schemas/                        # Pydantic request/response models
+â”‚   â”‚   â”œâ”€â”€ services/                       # Anonymizer, RiskEngine, Speech, Translation, OCR, Gemini
+â”‚   â”‚   â””â”€â”€ main.py                         # FastAPI factory & synthetic seed data
+â”‚   â”œâ”€â”€ tests/                              # Automated Pytest suite (15 passing tests)
+â”‚   â”œâ”€â”€ requirements.txt
+â”‚   â””â”€â”€ Dockerfile
+â”‚
+â”œâ”€â”€ docker-compose.yml
+â”œâ”€â”€ .env.example
+â”œâ”€â”€ README.md
+â”œâ”€â”€ FEATURES.md
+â”œâ”€â”€ INFRASTRUCTURE.md
+â”œâ”€â”€ SECURITY.md
+â”œâ”€â”€ TESTING.md
+â”œâ”€â”€ ROADMAP.md
+â”œâ”€â”€ ARCHITECTURE.md
+â”œâ”€â”€ API_SPECIFICATION.md
+â”œâ”€â”€ clinical-rules.md
+â”œâ”€â”€ deploy.md
+â”œâ”€â”€ CONTRIBUTING.md
+â””â”€â”€ CHANGELOG.md
 ```
 
 ---
 
-## ⚡ Quickstart Commands (Windows PowerShell)
+## âš¡ Quickstart Commands (Windows PowerShell)
 
 ### Option 1: One-Command Startup with Docker Compose (Recommended)
 
@@ -207,7 +207,7 @@ npm run dev
 
 ---
 
-## 🧪 Running Automated Tests
+## ðŸ§ª Running Automated Tests
 
 Run the complete 15-test automated backend test suite:
 
@@ -219,7 +219,7 @@ docker compose exec backend pytest -v
 
 ---
 
-## 🎭 3-Minute Clinical Demonstration Workflow
+## ðŸŽ­ 3-Minute Clinical Demonstration Workflow
 
 1. **Landing Page (`/`)**: Notice the prominent amber Non-Diagnostic Disclaimer, feature pillars, and India-wide facility relevance.
 2. **Start Intake (`/intake`)**:
@@ -243,7 +243,7 @@ docker compose exec backend pytest -v
 
 ---
 
-## 🔒 Security & Privacy Controls
+## ðŸ”’ Security & Privacy Controls
 
 * **Anonymization Layer**: Direct personal identifiers (phone numbers, email addresses, 12-digit Aadhaar sequences) are masked with `[PHONE_REMOVED]`, `[EMAIL_REDACTED]`, and `[GOVT_ID_REDACTED]`.
 * **Synthetic Identifiers**: Cases use anonymous IDs (`CLV-DEMO-001`).

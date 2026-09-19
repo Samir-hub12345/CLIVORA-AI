@@ -26,7 +26,7 @@ async def seed_initial_data():
         # Check if users exist
         res = await db.execute(select(User).limit(1))
         if res.scalar_one_or_none() is None:
-            logger.info("Fresh database detected. Seeding Clinova AI demo users...")
+            logger.info("Fresh database detected. Seeding CLINOVA AI demo users...")
             # 1. Demo Users
             doctor = User(
                 email="doctor@clinova.ai",
@@ -115,7 +115,7 @@ async def seed_initial_data():
             )
             db.add(consultation)
             await db.commit()
-            logger.info("Clinova AI demo users and patients seeded successfully.")
+            logger.info("CLINOVA AI demo users and patients seeded successfully.")
 
         # Check if triage cases exist
         case_res = await db.execute(select(TriageCase).limit(1))
@@ -133,9 +133,9 @@ async def seed_initial_data():
                 approximate_age=21,
                 gender="Male",
                 context_notes="University undergraduate reporting acute fever outbreak in hostel.",
-                raw_symptoms="ମୋତେ ୩ ଦିନ ହେଲା ପ୍ରବଳ ଜ୍ୱର ଅଛି, ମୁଣ୍ଡ ବିନ୍ଧା ହେଉଛି ଏବଂ ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ ହେଉଛି।",
+                raw_symptoms="à¬®à­‹à¬¤à­‡ à­© à¬¦à¬¿à¬¨ à¬¹à­‡à¬²à¬¾ à¬ªà­à¬°à¬¬à¬³ à¬œà­à­±à¬° à¬…à¬›à¬¿, à¬®à­à¬£à­à¬¡ à¬¬à¬¿à¬¨à­à¬§à¬¾ à¬¹à­‡à¬‰à¬›à¬¿ à¬à¬¬à¬‚ à¬¨à¬¿à¬¶à­à­±à¬¾à¬¸ à¬¨à­‡à¬¬à¬¾à¬°à­‡ à¬•à¬·à­à¬Ÿ à¬¹à­‡à¬‰à¬›à¬¿à¥¤",
                 normalized_symptoms="Patient reports high fever for 3 days, severe headache, generalized body weakness, and progressive shortness of breath upon minimal exertion.",
-                speech_transcript="ମୋତେ ୩ ଦିନ ହେଲା ପ୍ରବଳ ଜ୍ୱର ଅଛି, ମୁଣ୍ଡ ବିନ୍ଧା ହେଉଛି ଏବଂ ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ ହେଉଛି।",
+                speech_transcript="à¬®à­‹à¬¤à­‡ à­© à¬¦à¬¿à¬¨ à¬¹à­‡à¬²à¬¾ à¬ªà­à¬°à¬¬à¬³ à¬œà­à­±à¬° à¬…à¬›à¬¿, à¬®à­à¬£à­à¬¡ à¬¬à¬¿à¬¨à­à¬§à¬¾ à¬¹à­‡à¬‰à¬›à¬¿ à¬à¬¬à¬‚ à¬¨à¬¿à¬¶à­à­±à¬¾à¬¸ à¬¨à­‡à¬¬à¬¾à¬°à­‡ à¬•à¬·à­à¬Ÿ à¬¹à­‡à¬‰à¬›à¬¿à¥¤",
                 detected_language="Odia",
                 timeline_events=json.dumps([
                     {"day": "Day 1", "description": "High fever, chills, severe frontal headache after hostel return.", "source": "Patient voice"},
@@ -168,7 +168,7 @@ async def seed_initial_data():
                 approximate_age=44,
                 gender="Male",
                 context_notes="Machinist at metal fabrication unit with chronic dust exposure.",
-                raw_symptoms="सांस लेने में बहुत तकलीफ हो रही है, सीने में भारीपन और फैक्ट्री में धूल की वजह से तेज खांसी है।",
+                raw_symptoms="à¤¸à¤¾à¤‚à¤¸ à¤²à¥‡à¤¨à¥‡ à¤®à¥‡à¤‚ à¤¬à¤¹à¥à¤¤ à¤¤à¤•à¤²à¥€à¤« à¤¹à¥‹ à¤°à¤¹à¥€ à¤¹à¥ˆ, à¤¸à¥€à¤¨à¥‡ à¤®à¥‡à¤‚ à¤­à¤¾à¤°à¥€à¤ªà¤¨ à¤”à¤° à¤«à¥ˆà¤•à¥à¤Ÿà¥à¤°à¥€ à¤®à¥‡à¤‚ à¤§à¥‚à¤² à¤•à¥€ à¤µà¤œà¤¹ à¤¸à¥‡ à¤¤à¥‡à¤œ à¤–à¤¾à¤‚à¤¸à¥€ à¤¹à¥ˆà¥¤",
                 normalized_symptoms="Industrial worker reports acute-on-chronic dyspnea, substernal heaviness, and severe paroxysmal coughing exacerbated by particulate exposure.",
                 detected_language="Hindi",
                 timeline_events=json.dumps([
@@ -221,7 +221,7 @@ async def seed_initial_data():
                 approximate_age=32,
                 gender="Female",
                 context_notes="Rural community public health camp attendee.",
-                raw_symptoms="कमजोरी और बदन दर्द दो दिनों से है, भूख कम लग रही है।",
+                raw_symptoms="à¤•à¤®à¤œà¥‹à¤°à¥€ à¤”à¤° à¤¬à¤¦à¤¨ à¤¦à¤°à¥à¤¦ à¤¦à¥‹ à¤¦à¤¿à¤¨à¥‹à¤‚ à¤¸à¥‡ à¤¹à¥ˆ, à¤­à¥‚à¤– à¤•à¤® à¤²à¤— à¤°à¤¹à¥€ à¤¹à¥ˆà¥¤",
                 normalized_symptoms="Patient reports generalized body ache and mild appetite suppression for two days; vital signs stable.",
                 detected_language="Hindi",
             )
@@ -238,7 +238,7 @@ async def seed_initial_data():
                 approximate_age=62,
                 gender="Male",
                 context_notes="Primary health center patient requiring tertiary cardiology referral.",
-                raw_symptoms="ଛାତିରେ ପ୍ରବଳ ଯନ୍ତ୍ରଣା ହେଉଛି ଏବଂ ବାମ ହାତକୁ ଯନ୍ତ୍ରଣା ବ୍ୟାପୁଛି, ପ୍ରବଳ ଝାଳ ବାହାରୁଛି।",
+                raw_symptoms="à¬›à¬¾à¬¤à¬¿à¬°à­‡ à¬ªà­à¬°à¬¬à¬³ à¬¯à¬¨à­à¬¤à­à¬°à¬£à¬¾ à¬¹à­‡à¬‰à¬›à¬¿ à¬à¬¬à¬‚ à¬¬à¬¾à¬® à¬¹à¬¾à¬¤à¬•à­ à¬¯à¬¨à­à¬¤à­à¬°à¬£à¬¾ à¬¬à­à­Ÿà¬¾à¬ªà­à¬›à¬¿, à¬ªà­à¬°à¬¬à¬³ à¬à¬¾à¬³ à¬¬à¬¾à¬¹à¬¾à¬°à­à¬›à¬¿à¥¤",
                 normalized_symptoms="Patient reports acute chest pain radiating to the left arm with associated diaphoresis (profuse sweating). Urgent referral prepared.",
                 detected_language="Odia",
                 reviewer_name="Dr. S. Chen, MD",
@@ -248,7 +248,7 @@ async def seed_initial_data():
                     "synthetic_case_id": "CLV-DEMO-005",
                     "facility": "PHC",
                     "visit_type": "Referral Preparation",
-                    "patient_reported_symptoms": "ଛାତିରେ ପ୍ରବଳ ଯନ୍ତ୍ରଣା ହେଉଛି ଏବଂ ବାମ ହାତକୁ ଯନ୍ତ୍ରଣା ବ୍ୟାପୁଛି, ପ୍ରବଳ ଝାଳ ବାହାରୁଛି।",
+                    "patient_reported_symptoms": "à¬›à¬¾à¬¤à¬¿à¬°à­‡ à¬ªà­à¬°à¬¬à¬³ à¬¯à¬¨à­à¬¤à­à¬°à¬£à¬¾ à¬¹à­‡à¬‰à¬›à¬¿ à¬à¬¬à¬‚ à¬¬à¬¾à¬® à¬¹à¬¾à¬¤à¬•à­ à¬¯à¬¨à­à¬¤à­à¬°à¬£à¬¾ à¬¬à­à­Ÿà¬¾à¬ªà­à¬›à¬¿, à¬ªà­à¬°à¬¬à¬³ à¬à¬¾à¬³ à¬¬à¬¾à¬¹à¬¾à¬°à­à¬›à¬¿à¥¤",
                     "timeline": [
                         {"day": "Day 1", "description": "Intermittent chest tightness after walking up hill."},
                         {"day": "Day 2 (Today)", "description": "Crushing central chest pain radiating to left arm with cold diaphoresis."}
