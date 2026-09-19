@@ -56,12 +56,34 @@ export interface ApiResponse<T> {
   status: number;
 }
 
+// Global network latency and failure listeners
+let networkLatencyReporter: ((ms: number) => void) | null = null;
+let networkFailureReporter: (() => void) | null = null;
+
+export function registerNetworkReporters(
+  onLatency: (ms: number) => void,
+  onFailure: () => void
+) {
+  networkLatencyReporter = onLatency;
+  networkFailureReporter = onFailure;
+}
+
 export async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs: number = 14000
 ): Promise<ApiResponse<T>> {
+  // Pre-flight check: if browser is strictly offline, reject immediately
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return {
+      error: "You are currently offline. Please verify your network connection and try again.",
+      status: 0,
+    };
+  }
+
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   const token = getToken();
+  const method = (options.method || "GET").toUpperCase();
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -72,35 +94,67 @@ export async function fetchApi<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  const executeRequest = async (): Promise<ApiResponse<T>> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const start = performance.now();
 
-    const data = await response.json().catch(() => null);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      let errorMsg = response.statusText;
-      if (data?.detail) {
-        errorMsg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+      clearTimeout(timer);
+      const elapsed = Math.round(performance.now() - start);
+      networkLatencyReporter?.(elapsed);
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        let errorMsg = response.statusText;
+        if (data?.detail) {
+          errorMsg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+        }
+        return {
+          error: errorMsg,
+          status: response.status,
+        };
       }
+
       return {
-        error: errorMsg,
+        data,
         status: response.status,
       };
-    }
+    } catch (error: any) {
+      clearTimeout(timer);
+      networkFailureReporter?.();
 
-    return {
-      data,
-      status: response.status,
-    };
-  } catch (error: any) {
-    return {
-      error: error?.message || "Network error. Please ensure Clinova AI services are running.",
-      status: 500,
-    };
+      if (error.name === "AbortError") {
+        return {
+          error: "Connection timed out. Clinova AI service did not respond within the time limit.",
+          status: 408,
+        };
+      }
+
+      return {
+        error: error?.message || "Network error. Please ensure Clinova AI services are reachable.",
+        status: 500,
+      };
+    }
+  };
+
+  // Safe retry: ONLY retry idempotent GET requests once upon network failure
+  // NEVER automatically retry state-modifying mutations (POST, PUT, DELETE) to protect clinical integrity
+  const initial = await executeRequest();
+  if (method === "GET" && (initial.status === 0 || initial.status === 408 || initial.status >= 502)) {
+    // Wait 500ms before single safe retry
+    await new Promise((r) => setTimeout(r, 500));
+    return await executeRequest();
   }
+
+  return initial;
 }
 
 // API Service Callers
@@ -154,7 +208,11 @@ export const api = {
   },
 
   // Consultations
-  async getConsultations(filters?: { patientId?: string; status?: string }) {
+  async getConsultations(filters?: string | { patientId?: string; status?: string }) {
+    if (typeof filters === "string") {
+      const query = filters ? `?patient_id=${filters}` : "";
+      return fetchApi<{ total: number; items: Consultation[] }>(`/api/v1/consultations${query}`);
+    }
     const params = new URLSearchParams();
     if (filters?.patientId) params.append("patient_id", filters.patientId);
     if (filters?.status) params.append("status", filters.status);
@@ -171,6 +229,9 @@ export const api = {
     chief_complaint: string;
     vitals_data?: string;
     triage_level?: string;
+    symptoms?: string[];
+    vitals?: VitalsInput;
+    medical_history?: string;
   }) {
     return fetchApi<Consultation>("/api/v1/consultations", {
       method: "POST",
@@ -196,6 +257,19 @@ export const api = {
     vitals?: VitalsInput;
     relevant_medical_history?: string;
     patient_id?: string;
+  }) {
+    return fetchApi<TriageResponse>("/api/v1/ai/triage", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getTriageAssessment(payload: {
+    chief_complaint: string;
+    symptoms: string[];
+    vitals?: VitalsInput;
+    patient_age?: number;
+    patient_gender?: string;
   }) {
     return fetchApi<TriageResponse>("/api/v1/ai/triage", {
       method: "POST",
@@ -264,20 +338,43 @@ export const api = {
   },
 
   async transcribeSpeech(formData: FormData) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return { data: null, error: "You are currently offline. Speech transcription requires an internet connection." };
+    }
+
     const token = getToken();
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE_URL}/api/v1/intake/speech`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-    if (!res.ok) {
-      return { data: null, error: `Upload error: ${res.statusText}` };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 25000);
+    const start = performance.now();
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/intake/speech`, {
+        method: "POST",
+        headers,
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      networkLatencyReporter?.(Math.round(performance.now() - start));
+
+      if (!res.ok) {
+        return { data: null, error: `Upload error: ${res.statusText}` };
+      }
+      const data = await res.json();
+      return { data, error: null };
+    } catch (err: any) {
+      clearTimeout(timer);
+      networkFailureReporter?.();
+      return {
+        data: null,
+        error: err.name === "AbortError"
+          ? "Audio upload timed out. Connection is slow or unstable."
+          : "Network error during audio processing.",
+      };
     }
-    const data = await res.json();
-    return { data, error: null };
   },
 
   async translateText(text: string, source_language: string = "or") {
@@ -288,20 +385,43 @@ export const api = {
   },
 
   async processReportOCR(formData: FormData) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return { data: null, error: "You are currently offline. Document OCR requires an internet connection." };
+    }
+
     const token = getToken();
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE_URL}/api/v1/intake/ocr`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-    if (!res.ok) {
-      return { data: null, error: `OCR error: ${res.statusText}` };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    const start = performance.now();
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/intake/ocr`, {
+        method: "POST",
+        headers,
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      networkLatencyReporter?.(Math.round(performance.now() - start));
+
+      if (!res.ok) {
+        return { data: null, error: `OCR error: ${res.statusText}` };
+      }
+      const data = await res.json();
+      return { data, error: null };
+    } catch (err: any) {
+      clearTimeout(timer);
+      networkFailureReporter?.();
+      return {
+        data: null,
+        error: err.name === "AbortError"
+          ? "Document OCR upload timed out. Connection is slow or unstable."
+          : "Network error during document processing.",
+      };
     }
-    const data = await res.json();
-    return { data, error: null };
   },
 
   async performReviewAction(

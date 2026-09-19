@@ -154,7 +154,31 @@ npm run lint
 
 # 2. Run TypeScript build verification
 npm run build
+
+# 3. Run Adaptive UX Network Transition Test Suite
+node scripts/test-adaptive-ux.js
 ```
+
+### 6.2 Browser DevTools Throttling & Network Transition Testing
+To verify real-time application behavior transitions under live network throttling:
+1. Open Clinova AI at `http://localhost:3000/dashboard` in Google Chrome or Microsoft Edge.
+2. Open Chrome DevTools (`F12`), select the **Network** tab, and locate the **Throttling** menu.
+3. Test **Normal -> Slow**: Select **Slow 4G**.
+   - Verify Network Indicator changes to `[██░░] Slow` with an Amber "Data Saver" badge.
+   - Verify toast notification appears: *"Slow connection detected. Clinova AI is reducing non-essential data usage."*
+   - Verify background polling interval extends from 15s to 50s.
+   - Verify non-essential analytics and `<AdaptiveImage>` components are deferred with click-to-load placeholders.
+4. Test **Slow -> Offline**: Select **Offline**.
+   - Verify Network Indicator changes to `[░░░░] Offline • Disconnected`.
+   - Verify toast notification appears: *"You're currently offline. Operations requiring server access are paused."*
+   - Verify background polling stops completely (0 requests).
+   - Verify intake case submission, voice capture, and AI triage buttons are safely disabled with offline instructions.
+5. Test **Offline -> Good (Recovery)**: Select **No throttling**.
+   - Verify in-place recovery without full page reload.
+   - Verify toast notification appears: *"Connection improved. Normal data behavior restored."*
+   - Verify normal polling (15s) and asset loading resume.
+6. **Development Connectivity Debug Panel**:
+   - In dev mode or with `?debug=network` in the URL, click **DEV CONNECTIVITY DEBUG** (bottom-left) to view live RTT, downlink, polling status, and the real-time event transition log.
 
 ---
 

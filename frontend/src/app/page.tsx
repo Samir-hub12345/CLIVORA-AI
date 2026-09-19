@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Header } from "@/components/common/header";
 import { Footer } from "@/components/common/footer";
 import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
+import { AdaptiveImage } from "@/components/common/adaptive-image";
 import {
   Mic,
   FileText,
@@ -411,6 +412,29 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Adaptive Image Clinical Architecture Diagram Showcase */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Standard Clinical Triage Workflow Architecture</h3>
+                <p className="text-xs text-slate-500">
+                  Multimodal input ingestion to attending medical officer review &amp; verification
+                </p>
+              </div>
+              <span className="text-[10px] font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-bold">
+                Adaptive Asset
+              </span>
+            </div>
+            <AdaptiveImage
+              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80"
+              alt="Clinova AI Standard Clinical Triage Workflow Architecture"
+              isEssential={false}
+              estimatedKb={65}
+              caption="Clinical triage workflow protocol & human verification gate"
+              aspectRatio="aspect-21/9"
+            />
           </div>
         </section>
 

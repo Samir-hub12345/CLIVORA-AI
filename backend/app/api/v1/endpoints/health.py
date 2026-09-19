@@ -16,3 +16,13 @@ async def check_health() -> HealthCheckResponse:
         version="0.1.0",
         timestamp=datetime.now(timezone.utc),
     )
+
+
+@router.get("/ping", tags=["Health"])
+async def ping_health():
+    """Ultra-lightweight ping endpoint for client latency measurement (no DB overhead)."""
+    return {
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+

@@ -357,7 +357,28 @@ CLINOVA AI is designed to run across three distinct deployment tiers:
   }
   ```
 
-### 9.2 Docker Log Inspection
+- **Ultra-Lightweight Latency Ping**: `GET /api/v1/ping`
+  ```bash
+  curl -s http://localhost:8000/api/v1/ping | jq .
+  ```
+  Response:
+  ```json
+  {
+    "status": "ok",
+    "timestamp": 1742491200.123
+  }
+  ```
+  > **Architectural Note:** The `/api/v1/ping` endpoint bypasses database queries and session caches to provide sub-millisecond ASGI response times specifically for accurate client-side round-trip time (RTT) calculation without adding backend load.
+
+### 9.2 Network Telemetry & Adaptive Connectivity Architecture
+- **Active Heartbeat Ping Frequency**:
+  - `GOOD` / `NORMAL`: Sampled every 15 seconds.
+  - `SLOW`: Backed off to every 45 seconds to preserve scarce bandwidth.
+  - `OFFLINE`: Probed every 5 seconds for fast recovery detection.
+- **Client Latency Smoothing**: Rolling median of the last 5 RTT measurements with 3-consecutive-sample debouncing to eliminate false-positive mode switching.
+- **Zero-PHI Client Invariant**: No unencrypted patient intake or triage data is stored in browser persistent storage (`localStorage` / `IndexedDB`) during offline states.
+
+### 9.3 Docker Log Inspection
 ```bash
 # Follow backend API logs
 docker compose logs -f backend

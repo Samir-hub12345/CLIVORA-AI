@@ -50,6 +50,7 @@ Clinova AI bridges the gap between walk-in patient presentations and attending c
 | **Referrals** | High-contrast printable transfer slips with print stylesheet & synthetic ID. | ABDM / Ayushman Bharat Digital Mission health exchange bridge. |
 | **Demonstrations** | 6 pre-configured synthetic public health scenarios with 1-click loading. | Scenario builder UI for custom training and academic simulation. |
 | **Data Privacy** | In-flight regex scrubbing (Aadhaar, mobile, email) & 1-click case purge. | Automated differential privacy masking for epidemiological telemetry. |
+| **Adaptive Connectivity** | Real-time 4-state network monitoring (`GOOD`, `NORMAL`, `SLOW`, `OFFLINE`), 4-bar indicator, safe API retry policies, and clinical intake guards. | Local offline queue with deferred cryptographically-signed sync. |
 
 ---
 
@@ -208,12 +209,54 @@ In addition to acute triage, Clinova AI provides core electronic health record (
 
 ---
 
-## 10. Accessibility & Low-Bandwidth Mode
+## 10. Adaptive Low-Bandwidth & Real-Time Network Monitoring
 
-Designed for rural primary health clinics operating over unstable 2G/3G cellular networks or intermittent power:
-- **Low-Bandwidth Mode Toggle** (`clinova_low_bandwidth`): Located in the header, disables non-essential animations, reduces decorative assets, and minimizes payload sizes.
-- **High Contrast & Accessible Colors**: Complies with WCAG AA accessibility standards with legible typography and clear acuity color indicators.
-- **Zero-Cloud Offline Fallback (`DEMO_MODE=True`)**: All features operate seamlessly on an isolated local machine without external internet connectivity.
+Designed for rural primary health clinics operating over unstable 2G/3G cellular networks, satellite links, or intermittent connectivity:
+
+### 10.1 Centralized Connectivity State Engine
+- **Engine Provider (`frontend/src/lib/connectivity.tsx`)**: Single source of truth React Context (`useConnectivity`) managing network telemetry and UI state across the entire application.
+- **4 Discrete Connectivity States**:
+  1. `GOOD` (4 bars: `[████]`, Green): RTT < 250ms, packet loss < 2%. Full interactive features, animations, and standard polling active.
+  2. `NORMAL` (3 bars: `[███░]`, Teal/Blue): RTT 250ms–700ms. Standard operation with normal request timeouts (14s).
+  3. `SLOW` (2 bars: `[██░░]`, Amber): RTT > 700ms or 2G/slow-2g reported by NetworkInformation API. Automatic low-bandwidth mode activates: decorative animations disabled, request timeouts extended to 30s, telemetry reduced, warning toasts displayed on high-payload actions.
+  4. `OFFLINE` (0 bars: `[░░░░]`, Red): Complete loss of connectivity (`!navigator.onLine` or 3 consecutive failed health pings). Mutation buttons disabled, offline banners displayed.
+- **Debouncing & Hysteresis**:
+  - State upgrades require **3 consecutive samples** within target threshold to eliminate flickering and flip-flopping under jitter.
+  - Latency calculated using a rolling median of the last 5 samples to resist transient spikes.
+  - Active sampling: periodic heartbeat ping to lightweight `/api/v1/ping` endpoint (every 15s in normal operation, 45s when degraded, 5s during offline recovery probes).
+  - Passive sampling: every `apiClient` HTTP request records round-trip duration and feeds into the median filter.
+
+### 10.2 User Operating Modes
+- **`AUTOMATIC` (Default)**: Automatically activates low-bandwidth optimizations when connection degrades to `SLOW` or `OFFLINE`, and restores full experience when connection recovers to `GOOD` or `NORMAL`.
+- **`NORMAL`**: Forces standard interface regardless of network conditions (useful for diagnostic override).
+- **`LOW_BANDWIDTH`**: Manually forces data-saver mode at all times (disables animations, simplifies layout rendering, minimizes polling).
+- **Persistence**: User mode preference persisted in `localStorage` under `clinova_network_mode`.
+
+### 10.3 Visual Network Indicator & Diagnostics Popover
+- **Compact Header Badge (`frontend/src/components/common/network-indicator.tsx`)**:
+  - Visual 4-bar signal strength graphic (`[████]`, `[███░]`, `[██░░]`, `[░░░░]`).
+  - Acuity-coded color tokens (emerald green, sky blue, amber, crimson).
+  - Real-time latency readout (e.g., `42 ms`) and state label.
+- **Interactive Diagnostics Modal**:
+  - Accessible via click on the header network badge.
+  - Live diagnostics: Connection state, effective round-trip time (RTT), user-selected mode, downlink speed estimate, and system timestamp.
+  - Mode switcher allowing one-click toggle between Automatic, Normal, and Forced Low-Bandwidth.
+  - Immediate "Test Connection Now" ping trigger.
+
+### 10.4 Safe API Behavior & Idempotency Rules
+- **Idempotent Retry Only (`frontend/src/lib/api.ts`)**:
+  - `GET` requests: Retried up to 2 times with exponential backoff on transient network failures (`fetch` exceptions, 502, 503, 504).
+  - Mutation requests (`POST`, `PUT`, `DELETE`): **NEVER retried automatically**. Prevents duplicate patient records, duplicate case submissions, or conflicting triage state transitions during network hiccups.
+- **Offline Fast-Fail**: API calls fail immediately with clear client error when `OFFLINE`, preventing hanging requests and unhelpful browser timeout delays.
+
+### 10.5 Clinical Workflow Guards
+- **Intake Submission (`/intake`)**: Submit button disabled while offline; shows warning banner with instructions to maintain browser tab open until connection restores.
+- **Voice Symptom Recorder**: Offline capture blocked with warning banner; low-bandwidth mode displays notification that audio transcription may experience slight latency.
+- **Lab Report OCR**: File upload blocked while offline; low-bandwidth mode increases upload timeout to 30s with progress indicator.
+- **Review Queue & Dashboard (`/review`, `/dashboard`)**: Displays non-intrusive offline banner alerting clinicians that queue updates are paused until reconnection.
+
+### 10.6 PHI Privacy Safeguard
+- **Zero Local PHI Caching**: In accordance with medical privacy standards, patient intake data and clinical notes are **never** stored unencrypted in `localStorage` or `sessionStorage` as an "offline cache", preventing PHI leaks on shared clinical workstations.
 
 ---
 

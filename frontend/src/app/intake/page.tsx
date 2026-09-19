@@ -10,6 +10,7 @@ import { VoiceRecorder } from "@/components/clinical/voice-recorder";
 import { ReportUploader } from "@/components/clinical/report-uploader";
 import { api } from "@/lib/api";
 import { OCRField, TriageCase } from "@/types";
+import { useConnectivity } from "@/lib/connectivity";
 import {
   ShieldCheck,
   Languages,
@@ -18,13 +19,15 @@ import {
   ArrowLeft,
   Activity,
   FileText,
-  AlertCircle,
-  Loader2,
   Sparkles,
+  Loader2,
+  AlertCircle,
+  WifiOff,
 } from "lucide-react";
 
 export default function PatientIntakePage() {
   const router = useRouter();
+  const { state: networkState, isLowBandwidthActive } = useConnectivity();
 
   // Step indicator: 1 = Consent, 2 = Context, 3 = Symptoms, 4 = Optional Report, 5 = Review & Submit
   const [step, setStep] = useState(1);
@@ -85,6 +88,10 @@ export default function PatientIntakePage() {
   };
 
   const handleSubmitCase = async () => {
+    if (networkState === "OFFLINE") {
+      setSubmitError("Case submission requires an active network connection. Please reconnect before submitting.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -525,6 +532,20 @@ export default function PatientIntakePage() {
                     )}
                   </div>
 
+                  {networkState === "OFFLINE" && (
+                    <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
+                      <WifiOff className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                      <span>You are currently offline. Case submission requires an internet connection. Your entered information is preserved.</span>
+                    </div>
+                  )}
+
+                  {isLowBandwidthActive && networkState !== "OFFLINE" && (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-center justify-between">
+                      <span className="font-semibold">Adaptive Low-Bandwidth Mode active: submission payload optimized.</span>
+                      <span className="text-[10px] bg-amber-200/80 font-bold px-1.5 py-0.5 rounded uppercase">Optimized</span>
+                    </div>
+                  )}
+
                   {submitError && (
                     <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
@@ -542,9 +563,9 @@ export default function PatientIntakePage() {
                     </button>
                     <button
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || networkState === "OFFLINE"}
                       onClick={handleSubmitCase}
-                      className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2"
+                      className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2"
                     >
                       {submitting ? (
                         <>

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, Square, RotateCcw, Check, AlertCircle, Loader2, Volume2 } from "lucide-react";
+import { Mic, Square, RotateCcw, Check, AlertCircle, Loader2, Volume2, WifiOff } from "lucide-react";
 import { api } from "@/lib/api";
 import { ProvenanceBadge } from "./provenance-badge";
+import { useConnectivity } from "@/lib/connectivity";
 
 type RecorderState = "ready" | "recording" | "processing" | "transcribed" | "error";
 
@@ -16,6 +17,7 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   languageHint = "en",
   onTranscriptionComplete,
 }) => {
+  const { state: networkState, isLowBandwidthActive } = useConnectivity();
   const [state, setState] = useState<RecorderState>("ready");
   const [seconds, setSeconds] = useState(0);
   const [transcript, setTranscript] = useState("");
@@ -32,6 +34,10 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   }, []);
 
   const startRecording = () => {
+    if (networkState === "OFFLINE") {
+      setErrorMessage("Voice transcription requires an active internet connection. Please type symptoms manually below.");
+      return;
+    }
     setState("recording");
     setSeconds(0);
     setErrorMessage("");
@@ -92,6 +98,19 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         )}
       </div>
 
+      {/* Network Notice */}
+      {networkState === "OFFLINE" ? (
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center gap-2">
+          <WifiOff className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <span>You are currently offline. Voice transcription requires network connectivity. You can type your symptoms manually below.</span>
+        </div>
+      ) : isLowBandwidthActive ? (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-900 flex items-center justify-between">
+          <span className="font-semibold">Low-Bandwidth Mode active: audio compression and timeout extensions enabled.</span>
+          <span className="text-[10px] bg-amber-200/80 font-bold px-1.5 py-0.5 rounded uppercase">Optimized</span>
+        </div>
+      ) : null}
+
       {/* State 1: Ready */}
       {state === "ready" && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-slate-50 border border-dashed border-slate-300">
@@ -101,8 +120,9 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           </div>
           <button
             type="button"
+            disabled={networkState === "OFFLINE"}
             onClick={startRecording}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg shadow-sm transition-all"
           >
             <Mic className="w-4 h-4" /> Start Voice Recording
           </button>

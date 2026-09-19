@@ -1,22 +1,29 @@
 "use client";
 
 import React, { useState } from "react";
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Sparkles, X } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Sparkles, X, WifiOff } from "lucide-react";
 import { api } from "@/lib/api";
 import { OCRField, ReportOCRResult } from "@/types";
 import { ProvenanceBadge } from "./provenance-badge";
+import { useConnectivity } from "@/lib/connectivity";
 
 interface ReportUploaderProps {
   onReportExtracted: (filename: string, fields: OCRField[]) => void;
 }
 
 export const ReportUploader: React.FC<ReportUploaderProps> = ({ onReportExtracted }) => {
+  const { state: networkState, isLowBandwidthActive } = useConnectivity();
   const [loading, setLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState<ReportOCRResult | null>(null);
   const [fields, setFields] = useState<OCRField[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileUpload = async (file?: File) => {
+    if (networkState === "OFFLINE") {
+      setError("Document upload and OCR requires an active network connection.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -79,6 +86,19 @@ export const ReportUploader: React.FC<ReportUploaderProps> = ({ onReportExtracte
           />
         )}
       </div>
+
+      {/* Connectivity Notice */}
+      {networkState === "OFFLINE" ? (
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center gap-2">
+          <WifiOff className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <span>You are currently offline. Document upload &amp; OCR requires an active network connection.</span>
+        </div>
+      ) : isLowBandwidthActive ? (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-900 flex items-center justify-between">
+          <span className="font-semibold">Low-Bandwidth Mode active: OCR requests use extended 30s timeout thresholds.</span>
+          <span className="text-[10px] bg-amber-200/80 font-bold px-1.5 py-0.5 rounded uppercase">Optimized</span>
+        </div>
+      ) : null}
 
       {!ocrResult && !loading && (
         <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center space-y-3 bg-slate-50/50">

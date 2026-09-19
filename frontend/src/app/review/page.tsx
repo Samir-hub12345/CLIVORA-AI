@@ -7,6 +7,8 @@ import { Footer } from "@/components/common/footer";
 import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 import { api } from "@/lib/api";
 import { TriageCase, QueueCategory } from "@/types";
+import { useConnectivity } from "@/lib/connectivity";
+import { useAdaptivePolling } from "@/lib/use-adaptive-polling";
 import {
   Activity,
   AlertTriangle,
@@ -19,28 +21,37 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
+  WifiOff,
+  Stethoscope,
 } from "lucide-react";
 
 export default function ReviewQueuePage() {
+  const { state: networkState, isLowBandwidthActive, pollingIntervalMs, pollingStatus } =
+    useConnectivity();
   const [cases, setCases] = useState<TriageCase[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   const loadCases = async () => {
-    setLoading(true);
     const cat = selectedCategory === "all" ? undefined : selectedCategory;
     const stat = selectedStatus === "all" ? undefined : selectedStatus;
     const res = await api.getCases(cat, stat);
     if (res.data) {
       setCases(res.data);
     }
-    setLoading(false);
   };
 
+  // Adaptive background polling: 15s GOOD, 25s NORMAL, 50s SLOW, Stopped OFFLINE
+  const { isRefreshing, refresh } = useAdaptivePolling(loadCases, {
+    baseIntervalMs: 15000,
+    enabled: true,
+    immediate: true,
+  });
+
+  // Re-fetch when filters change
   useEffect(() => {
     loadCases();
-  }, [selectedCategory, selectedStatus]);
+  }, [selectedCategory, selectedStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const urgentCount = cases.filter((c) => c.queue_category === "urgent-review").length;
   const priorityCount = cases.filter((c) => c.queue_category === "priority").length;
@@ -71,11 +82,23 @@ export default function ReviewQueuePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={loadCases}
-              className="p-2 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-xs font-semibold flex items-center gap-1.5"
+            <span
+              className="text-[11px] font-mono text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5"
+              title="Adaptive background synchronization interval"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <Activity className={`w-3.5 h-3.5 ${networkState === "OFFLINE" ? "text-rose-500" : "text-teal-600"}`} />
+              <span>
+                Queue Sync: {pollingStatus} {pollingIntervalMs > 0 ? `(${pollingIntervalMs / 1000}s)` : "(Paused)"}
+              </span>
+            </span>
+
+            <button
+              onClick={() => refresh()}
+              disabled={networkState === "OFFLINE" || isRefreshing}
+              className="p-2 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50"
+              title={networkState === "OFFLINE" ? "Refresh paused while offline" : "Manual queue refresh"}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
               <span>Refresh</span>
             </button>
             <Link
@@ -86,6 +109,24 @@ export default function ReviewQueuePage() {
             </Link>
           </div>
         </div>
+
+        {/* Connectivity Alerts */}
+        {networkState === "OFFLINE" ? (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-2">
+              <WifiOff className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <span>Offline: Queue updates are paused. Loaded cases remain accessible for review. Real-time updates will resume once connected.</span>
+            </div>
+            <span className="text-[10px] font-bold uppercase bg-rose-100 text-rose-800 px-2 py-0.5 rounded border border-rose-300">
+              Offline Mode
+            </span>
+          </div>
+        ) : isLowBandwidthActive ? (
+          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-center justify-between shadow-2xs">
+            <span className="font-semibold">Adaptive Low-Bandwidth Mode active: polling frequencies reduced and payloads throttled.</span>
+            <span className="text-[10px] bg-amber-200/80 font-bold px-1.5 py-0.5 rounded uppercase">Data Saver</span>
+          </div>
+        ) : null}
 
         {/* Metric Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -173,105 +214,116 @@ export default function ReviewQueuePage() {
           </div>
 
           {/* Table */}
-          {loading ? (
+          {cases.length === 0 && isRefreshing ? (
             <div className="p-12 flex flex-col items-center justify-center space-y-2">
               <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
-              <span className="text-xs text-slate-500">Loading facility review queue...</span>
+              <span className="text-xs text-slate-500">
+                {isLowBandwidthActive
+                  ? "Loading essential queue data (Low Bandwidth)..."
+                  : "Loading facility review queue..."}
+              </span>
             </div>
           ) : cases.length === 0 ? (
-            <div className="p-12 text-center space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto" />
-              <p className="text-sm font-bold text-slate-700">No cases found in this filter</p>
-              <p className="text-xs text-slate-500">
-                All triage cases in this category have been evaluated.
-              </p>
+            <div className="p-12 text-center text-slate-400 text-xs">
+              No cases found matching the selected filter criteria.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <thead className="bg-slate-50/80 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100">
                   <tr>
-                    <th className="py-3 px-4">Case ID</th>
-                    <th className="py-3 px-4">Patient / Context</th>
-                    <th className="py-3 px-4">Facility / Visit</th>
-                    <th className="py-3 px-4">Wait Time</th>
-                    <th className="py-3 px-4">Queue Urgency</th>
-                    <th className="py-3 px-4">Review Signals</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="px-6 py-3">Case ID</th>
+                    <th className="px-6 py-3">Priority / Category</th>
+                    <th className="px-6 py-3">Patient Context</th>
+                    <th className="px-6 py-3">Reported Symptoms</th>
+                    <th className="px-6 py-3">Clinical Rules</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Review Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {cases.map((c) => {
                     const isUrgent = c.queue_category === "urgent-review";
                     const isPriority = c.queue_category === "priority";
+                    const caseKey = c.synthetic_case_id || c.id;
+
                     return (
                       <tr
-                        key={c.id}
+                        key={caseKey}
                         className={`hover:bg-slate-50/80 transition-colors ${
-                          isUrgent ? "bg-rose-50/20" : ""
+                          isUrgent ? "bg-rose-50/30" : isPriority ? "bg-amber-50/20" : ""
                         }`}
                       >
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                          {c.synthetic_case_id}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="font-semibold text-slate-900">
-                            {c.approximate_age ? `${c.approximate_age}yo` : "Adult"} &bull; {c.gender || "Patient"}
-                          </div>
-                          <div className="text-[11px] text-slate-500 truncate max-w-[180px]">
-                            {c.raw_symptoms}
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="font-medium text-slate-800 block">{c.facility_type}</span>
-                          <span className="text-[11px] text-slate-500">{c.visit_type}</span>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            {c.waiting_minutes || 0}m
+                        <td className="px-6 py-4 font-mono font-bold text-slate-900">
+                          {caseKey}
+                          <span className="block text-[10px] text-slate-400 font-normal font-sans">
+                            {new Date(c.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="px-6 py-4">
                           <span
-                            className={`inline-block px-2.5 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight ${
                               isUrgent
-                                ? "bg-rose-100 text-rose-900 border border-rose-200"
+                                ? "bg-rose-100 text-rose-800 border border-rose-200"
                                 : isPriority
-                                ? "bg-amber-100 text-amber-900 border border-amber-200"
-                                : "bg-teal-50 text-teal-800 border border-teal-200"
+                                ? "bg-amber-100 text-amber-800 border border-amber-200"
+                                : "bg-slate-100 text-slate-700 border border-slate-200"
                             }`}
                           >
+                            {isUrgent && <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />}
+                            {isPriority && <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />}
                             {c.queue_category.replace("-", " ")}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-slate-800">
+                            {c.approximate_age ? `${c.approximate_age}y` : "Age N/A"} &bull; {c.gender || "N/A"}
+                          </span>
+                          <span className="block text-[11px] text-slate-400">
+                            {c.facility_type ? c.facility_type.replace("_", " ") : "Primary Care"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 max-w-xs">
+                          <p className="line-clamp-2 text-slate-600 text-[11px] leading-relaxed">
+                            {c.raw_symptoms || c.normalized_symptoms || "Clinical symptom intake"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
                           {c.risk_signals && c.risk_signals.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {c.risk_signals.map((sig, idx) => (
+                            <div className="flex flex-wrap gap-1 max-w-[160px]">
+                              {c.risk_signals.map((r, i) => (
                                 <span
-                                  key={idx}
-                                  className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200"
-                                  title={sig.signal}
+                                  key={i}
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-red-100 text-red-700 font-bold"
                                 >
-                                  {sig.rule_id}
+                                  {r.rule_id}
                                 </span>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-slate-400 text-[11px]">No signals</span>
+                            <span className="text-[11px] text-slate-400 italic">No red flags</span>
                           )}
                         </td>
-                        <td className="py-3.5 px-4 capitalize">
-                          <span className="font-semibold text-slate-700">
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              c.status === "approved"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : c.status === "referred"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
                             {c.status.replace("_", " ")}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="px-6 py-4 text-right">
                           <Link
-                            href={`/review/case/${c.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:border-teal-500 text-slate-700 hover:text-teal-700 rounded-lg font-semibold text-xs shadow-2xs transition-all"
+                            href={`/review/case/${caseKey}`}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg transition-colors"
                           >
                             <span>Open Case</span>
                             <ArrowRight className="w-3.5 h-3.5" />

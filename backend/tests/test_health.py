@@ -21,3 +21,14 @@ async def test_health_check_endpoint(async_client: AsyncClient):
     assert data["status"] == "healthy"
     assert data["app_name"] in ["Clinova AI", "CLINOVA AI"]
     assert "timestamp" in data
+
+
+@pytest.mark.asyncio
+async def test_ping_endpoint(async_client: AsyncClient):
+    """Test that the lightweight ping endpoint returns 200 and ok status."""
+    response = await async_client.get("/api/v1/ping")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "timestamp" in data
+

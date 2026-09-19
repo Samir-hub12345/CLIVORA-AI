@@ -9,7 +9,6 @@ import {
   X,
   LogOut,
   Sparkles,
-  WifiOff,
   ArrowRight,
   ShieldCheck,
   User,
@@ -17,36 +16,17 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { NetworkIndicator } from "@/components/common/network-indicator";
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
   const { user, logout, isDoctor, isAdmin, isPatient } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [lowBandwidth, setLowBandwidth] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("clinova_low_bandwidth") === "true";
-    setLowBandwidth(saved);
-    if (saved) {
-      document.documentElement.classList.add("low-bandwidth");
-    }
-  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
-
-  const toggleLowBandwidth = () => {
-    const next = !lowBandwidth;
-    setLowBandwidth(next);
-    localStorage.setItem("clinova_low_bandwidth", String(next));
-    if (next) {
-      document.documentElement.classList.add("low-bandwidth");
-    } else {
-      document.documentElement.classList.remove("low-bandwidth");
-    }
-  };
 
   const isHomePage = pathname === "/";
 
@@ -122,9 +102,7 @@ export const Header: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links:
-              On Home page, always show public section anchors.
-              On other pages, if authenticated show role-specific navigation, else show public links back to home sections. */}
+          {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1">
             {isHomePage
               ? publicNavLinks.map((item) => (
@@ -165,22 +143,10 @@ export const Header: React.FC = () => {
           </nav>
         </div>
 
-        {/* Right side controls: Low bandwidth, User Auth / CTAs, Hamburger */}
+        {/* Right side controls: Real-Time Network Indicator, User Auth / CTAs, Hamburger */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Low Bandwidth Toggle */}
-          <button
-            type="button"
-            onClick={toggleLowBandwidth}
-            title="Toggle low-bandwidth mode for rural or slow connectivity facilities"
-            className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
-              lowBandwidth
-                ? "bg-amber-100 text-amber-900 border-amber-300"
-                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-            }`}
-          >
-            <WifiOff className="w-3.5 h-3.5" />
-            <span>Low-Bandwidth {lowBandwidth ? "ON" : "OFF"}</span>
-          </button>
+          {/* Real-Time Adaptive Network Indicator */}
+          <NetworkIndicator />
 
           {/* User state handling */}
           {user ? (
@@ -291,19 +257,6 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={toggleLowBandwidth}
-              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border ${
-                lowBandwidth
-                  ? "bg-amber-100 text-amber-900 border-amber-300"
-                  : "bg-slate-50 text-slate-700 border-slate-200"
-              }`}
-            >
-              <WifiOff className="w-4 h-4" />
-              <span>Low-Bandwidth Mode: {lowBandwidth ? "ON" : "OFF"}</span>
-            </button>
-
             {user ? (
               <div className="flex items-center justify-between pt-1">
                 <div>

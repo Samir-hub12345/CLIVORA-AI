@@ -15,8 +15,10 @@ import {
   Stethoscope,
   Clock,
   CheckCircle,
+  WifiOff,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useConnectivity } from "@/lib/connectivity";
 import { Header } from "@/components/common/header";
 import { Footer } from "@/components/common/footer";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,7 @@ import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 import { Patient, TriageResponse, VitalsInput } from "@/types";
 
 function TriageConsole() {
+  const { state: networkState, isLowBandwidthActive } = useConnectivity();
   const searchParams = useSearchParams();
   const initialPatientId = searchParams.get("patientId") || "";
 
@@ -106,6 +109,10 @@ function TriageConsole() {
 
   const handleRunTriage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (networkState === "OFFLINE") {
+      setError("You are currently offline. AI clinical triage requires an active network connection.");
+      return;
+    }
     if (symptoms.length === 0) {
       setError("Please add at least one symptom for clinical evaluation.");
       return;
@@ -384,9 +391,21 @@ function TriageConsole() {
                 </div>
               </div>
 
-              <Button type="submit" loading={loading} className="w-full py-3 gap-2 mt-4 text-sm font-semibold">
+              {networkState === "OFFLINE" && (
+                <div className="mt-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
+                  <WifiOff className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <span>Offline: AI triage analysis requires an active server connection.</span>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                loading={loading}
+                disabled={networkState === "OFFLINE" || loading}
+                className="w-full py-3 gap-2 mt-4 text-sm font-semibold disabled:opacity-50"
+              >
                 <BrainCircuit className="w-4 h-4" />
-                Analyze Clinical Presentation
+                {networkState === "OFFLINE" ? "Offline — Connect to Analyze" : "Analyze Clinical Presentation"}
               </Button>
             </form>
           </div>
