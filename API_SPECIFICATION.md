@@ -96,19 +96,24 @@ All error responses adhere to standard FastAPI JSON formatting with appropriate 
 | `POST` | `/api/v1/auth/register` | Authentication | Public | Register a new user account |
 | `POST` | `/api/v1/auth/login` | Authentication | Public | Authenticate user and receive JWT access token |
 | `GET` | `/api/v1/auth/me` | Authentication | Authenticated | Retrieve current user profile and role |
+| `GET` | `/api/v1/auth/users` | Authentication | Admin | Retrieve all facility user accounts |
+| `PUT` | `/api/v1/auth/users/{user_id}/status` | Authentication | Admin | Activate or deactivate a user account |
 | `POST` | `/api/v1/intake/speech` | Multimodal Intake | Public / Kiosk | Transcribe spoken audio (Odia, Hindi, English) |
 | `POST` | `/api/v1/intake/translate` | Multimodal Intake | Public / Kiosk | Normalize vernacular symptoms into clinical English |
 | `POST` | `/api/v1/intake/ocr` | Multimodal Intake | Public / Kiosk | Parse CBC pathology reports with confidence metrics |
-| `POST` | `/api/v1/cases/` | Triage Cases | Public / Kiosk | Create triage case with PII scrub and AI synthesis |
-| `GET` | `/api/v1/cases/` | Triage Cases | Public / Clinician | List prioritized queue of triage cases |
-| `GET` | `/api/v1/cases/{case_id}` | Triage Cases | Public / Clinician | Retrieve individual triage case by UUID or synthetic ID |
+| `POST` | `/api/v1/cases/` | Triage Cases | Public / Patient | Create triage case with PII scrub and AI synthesis |
+| `GET` | `/api/v1/cases/` | Triage Cases | Role-Enforced | List triage cases (isolated by patient_id for patients) |
+| `GET` | `/api/v1/cases/{case_id}` | Triage Cases | Role-Enforced | Retrieve case (patient isolation enforced) |
+| `POST` | `/api/v1/cases/{case_id}/assign` | Triage Cases | Clinician / Staff | Assign case to attending physician & department |
+| `POST` | `/api/v1/cases/{case_id}/verify-intake` | Triage Cases | Clinician / Staff | Verify intake, record vitals, and hand off |
 | `DELETE`| `/api/v1/cases/{case_id}` | Triage Cases | Clinician | One-click retention data purge |
-| `POST` | `/api/v1/review/{case_id}/action`| Reviewer | Doctor / Nurse | Execute human review action (Approve, Edit, Reject, Escalate) |
-| `GET` | `/api/v1/review/{case_id}/referral`| Reviewer | Public / Clinician | Retrieve structured printable referral support document |
+| `POST` | `/api/v1/review/{case_id}/action`| Reviewer | Clinician (`doctor`, `nurse`, `admin`) | Execute human review action (Approve, Edit, Reject, Escalate) |
+| `GET` | `/api/v1/review/{case_id}/referral`| Reviewer | Patient / Clinician | Retrieve structured printable referral support document |
 | `POST` | `/api/v1/ai/triage` | AI Support | Clinician | Generate urgency score, emergency flags, and differentials |
 | `POST` | `/api/v1/ai/soap-summary` | AI Support | Clinician | Synthesize clinical notes into structured SOAP format |
 | `GET` | `/api/v1/patients` | Patients EHR | Clinician | Search and list patient registry records |
 | `POST` | `/api/v1/patients` | Patients EHR | Clinician | Create a new patient EHR chart |
+| `GET` | `/api/v1/patients/me` | Patients EHR | Authenticated | Retrieve current user's linked clinical chart |
 | `GET` | `/api/v1/patients/{patient_id}` | Patients EHR | Authenticated | Retrieve patient medical chart and history |
 | `PUT` | `/api/v1/patients/{patient_id}` | Patients EHR | Clinician | Update patient demographics and medical history |
 | `DELETE`| `/api/v1/patients/{patient_id}` | Patients EHR | Doctor | Delete or archive a patient record |

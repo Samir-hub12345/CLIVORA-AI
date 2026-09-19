@@ -32,9 +32,25 @@ class TriageCase(Base):
     consent_status: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Patient Context (Synthetic / Minimal)
+    patient_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
     approximate_age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     gender: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     context_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    vitals: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON: bp, hr, spo2, temp, rr
+    intake_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Assignment & Department Routing
+    assigned_doctor_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
+    assigned_doctor_name: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )
+    assigned_department: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )
 
     # Multimodal Intake Inputs
     raw_symptoms: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

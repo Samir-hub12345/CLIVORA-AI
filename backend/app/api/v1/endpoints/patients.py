@@ -108,6 +108,54 @@ async def create_patient(
     return patient
 
 
+@router.get("/me", response_model=PatientResponse)
+async def get_my_patient_profile(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve the logged-in user's linked clinical patient record."""
+    stmt = (
+        select(Patient)
+        .options(selectinload(Patient.consultations))
+        .where(Patient.email == current_user.email)
+    )
+    res = await db.execute(stmt)
+    patient = res.scalar_one_or_none()
+
+    if not patient:
+        name_parts = current_user.full_name.split(" ", 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else "Patient"
+        mrn = generate_mrn()
+        patient = Patient(
+            mrn=mrn,
+            first_name=first_name,
+            last_name=last_name,
+            date_of_birth="1990-01-01",
+            gender="Unspecified",
+            blood_group="Unknown",
+            email=current_user.email,
+            medical_history="No recorded chronic conditions.",
+        )
+        db.add(patient)
+        await db.commit()
+        await db.refresh(patient)
+
+    await AuditService.log_event(
+        db=db,
+        action="PATIENT_PHI_READ",
+        resource_type="PATIENT",
+        resource_id=patient.id,
+        user=current_user,
+        ip_address=get_client_ip(request),
+        user_agent=request.headers.get("User-Agent"),
+        details=f"Patient {current_user.full_name} accessed their own chart (MRN: {patient.mrn})",
+    )
+
+    return patient
+
+
 @router.get("/{patient_id}", response_model=PatientResponse)
 async def get_patient_profile(
     patient_id: str,

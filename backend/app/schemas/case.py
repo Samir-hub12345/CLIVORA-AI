@@ -110,7 +110,26 @@ class CaseCreateRequest(BaseModel):
     report_filename: Optional[str] = None
     report_ocr_data: Optional[List[OCRFieldSchema]] = None
     image_reference: Optional[str] = None
+    patient_id: Optional[str] = None
+    vitals: Optional[Dict[str, Any]] = None
     consent_acknowledged: bool = True
+
+
+class CaseAssignRequest(BaseModel):
+    assigned_doctor_id: Optional[str] = None
+    assigned_doctor_name: Optional[str] = None
+    assigned_department: Optional[str] = None
+    priority_category: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class CaseVerifyIntakeRequest(BaseModel):
+    verified: bool = True
+    vitals: Optional[Dict[str, Any]] = None
+    staff_notes: Optional[str] = None
+    route_to_doctor_id: Optional[str] = None
+    route_to_doctor_name: Optional[str] = None
+    route_to_department: Optional[str] = None
 
 
 class CaseReviewActionRequest(BaseModel):
@@ -145,6 +164,7 @@ class ReferralNoteResponse(BaseModel):
 class CaseResponse(BaseModel):
     id: str
     synthetic_case_id: str
+    patient_id: Optional[str] = None
     language: str
     facility_type: str
     visit_type: str
@@ -167,6 +187,11 @@ class CaseResponse(BaseModel):
     follow_up_questions: Optional[List[str]] = None
     risk_signals: Optional[List[Dict[str, Any]]] = None
     timeline_events: Optional[List[Dict[str, Any]]] = None
+    vitals: Optional[Dict[str, Any]] = None
+    intake_verified: bool = False
+    assigned_doctor_id: Optional[str] = None
+    assigned_doctor_name: Optional[str] = None
+    assigned_department: Optional[str] = None
     reviewer_notes: Optional[str] = None
     reviewer_id: Optional[str] = None
     reviewer_name: Optional[str] = None

@@ -68,17 +68,7 @@ function LoginForm() {
       setError(res.error);
     } else if (res.data) {
       setUser(res.data.user);
-      // Route appropriately according to role
-      const role = res.data.user.role;
-      if (role === "doctor") {
-        router.push("/review");
-      } else if (role === "nurse") {
-        router.push("/intake");
-      } else if (role === "admin") {
-        router.push("/audit");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     }
   };
 

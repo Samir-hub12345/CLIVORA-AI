@@ -110,6 +110,7 @@ export interface AuditLog {
 export type QueueCategory = "urgent-review" | "priority" | "routine";
 export type CaseStatus =
   | "awaiting_review"
+  | "ready_for_doctor"
   | "in_review"
   | "approved"
   | "rejected"
@@ -180,9 +181,15 @@ export interface TriageCase {
   queue_category: QueueCategory;
   queue_reason?: string;
   consent_status: boolean;
+  patient_id?: string;
   approximate_age?: number;
   gender?: string;
   context_notes?: string;
+  vitals?: Record<string, any>;
+  intake_verified?: boolean;
+  assigned_doctor_id?: string;
+  assigned_doctor_name?: string;
+  assigned_department?: string;
   raw_symptoms?: string;
   normalized_symptoms?: string;
   speech_transcript?: string;

@@ -443,4 +443,69 @@ export const api = {
   async getReferralNote(caseId: string) {
     return fetchApi<ReferralNote>(`/api/v1/review/${caseId}/referral`);
   },
+
+  async getTriageCases(params?: {
+    queue_category?: string;
+    status_filter?: string;
+    assigned_doctor_id?: string;
+    patient_id?: string;
+    limit?: number;
+  }) {
+    const q = new URLSearchParams();
+    if (params?.queue_category) q.set("queue_category", params.queue_category);
+    if (params?.status_filter) q.set("status_filter", params.status_filter);
+    if (params?.assigned_doctor_id) q.set("assigned_doctor_id", params.assigned_doctor_id);
+    if (params?.patient_id) q.set("patient_id", params.patient_id);
+    if (params?.limit) q.set("limit", String(params.limit));
+
+    const qs = q.toString() ? `?${q.toString()}` : "";
+    return fetchApi<TriageCase[]>(`/api/v1/cases${qs}`);
+  },
+
+  async assignCase(
+    caseId: string,
+    payload: {
+      assigned_doctor_id?: string;
+      assigned_doctor_name?: string;
+      assigned_department?: string;
+      priority_category?: string;
+      notes?: string;
+    }
+  ) {
+    return fetchApi<TriageCase>(`/api/v1/cases/${caseId}/assign`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async verifyCaseIntake(
+    caseId: string,
+    payload: {
+      verified?: boolean;
+      vitals?: Record<string, any>;
+      staff_notes?: string;
+      route_to_doctor_id?: string;
+      route_to_doctor_name?: string;
+      route_to_department?: string;
+    }
+  ) {
+    return fetchApi<TriageCase>(`/api/v1/cases/${caseId}/verify-intake`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getMyPatientProfile() {
+    return fetchApi<Patient>("/api/v1/patients/me");
+  },
+
+  async listFacilityUsers() {
+    return fetchApi<User[]>("/api/v1/auth/users");
+  },
+
+  async toggleUserStatus(userId: string, isActive: boolean) {
+    return fetchApi<User>(`/api/v1/auth/users/${userId}/status?is_active=${isActive}`, {
+      method: "PUT",
+    });
+  },
 };
