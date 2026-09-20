@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("doctor");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export default function RegisterPage() {
       full_name: fullName,
       email,
       password,
-      role,
+      role: "patient",
     });
     setLoading(false);
 
@@ -49,9 +49,9 @@ export default function RegisterPage() {
             <div className="inline-flex p-3 bg-teal-50 text-teal-600 rounded-xl border border-teal-100 mb-3">
               <Activity className="w-7 h-7 text-teal-600" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create Clinical Account</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create Patient Account</h1>
             <p className="text-xs text-slate-500 mt-1">
-              Join the Clinova AI clinical decision network
+              Track your intake submissions and your own records
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export default function RegisterPage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Dr. Jordan Mitchell, MD"
+                  placeholder="Your full name"
                   className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 />
               </div>
@@ -92,19 +92,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Account Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-              >
-                <option value="doctor">Physician / Doctor</option>
-                <option value="nurse">Nurse / Triage Officer</option>
-                <option value="patient">Patient</option>
-                <option value="admin">Clinical Administrator</option>
-              </select>
-            </div>
+            <p className="text-xs text-slate-500">Staff accounts are provided by your system administrator.</p>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>

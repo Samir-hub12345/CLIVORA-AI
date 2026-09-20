@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_clinician
+from app.core.deps import get_current_admin
 from app.db.session import get_db
 from app.models.audit import AuditLog
 from app.models.user import User
@@ -19,10 +19,10 @@ async def list_audit_logs(
     user_email: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-    current_user: User = Depends(get_current_clinician),
+    current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve immutable HIPAA-ready audit access logs (Clinicians and Admins)."""
+    """Retrieve immutable HIPAA-ready audit access logs (Admins only)."""
     stmt = select(AuditLog)
 
     if action:

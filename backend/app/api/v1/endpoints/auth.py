@@ -23,6 +23,8 @@ async def register(
     db: AsyncSession = Depends(get_db),
 ):
     """Register a new user account."""
+    if user_in.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Public registration creates patient accounts only. Staff accounts are provisioned by the administrator.")
     stmt = select(User).where(User.email == user_in.email)
     result = await db.execute(stmt)
     if result.scalar_one_or_none():

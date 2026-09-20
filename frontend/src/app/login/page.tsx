@@ -1,18 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Activity, ShieldCheck, Lock, Mail, ArrowRight, UserCheck, Stethoscope, User } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { dashboardPath } from "@/lib/permissions";
 import { Header } from "@/components/common/header";
 import { Footer } from "@/components/common/footer";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { setUser, user, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (!authLoading && user) router.replace(dashboardPath(user.role));
+  }, [user, authLoading, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +35,7 @@ export default function LoginPage() {
       setError(res.error);
     } else if (res.data) {
       setUser(res.data.user);
-      router.push("/dashboard");
+      router.replace(dashboardPath(res.data.user.role));
     }
   };
 

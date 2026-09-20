@@ -9,6 +9,7 @@ import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 import { TimelineView } from "@/components/clinical/timeline-view";
 import { ProvenanceBadge } from "@/components/clinical/provenance-badge";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { TriageCase, OCRField } from "@/types";
 import {
   ArrowLeft,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 
 export default function CaseReviewDetailPage() {
+  const { isDoctor } = useAuth();
   const params = useParams();
   const router = useRouter();
   const caseId = params.caseId as string;
@@ -83,6 +85,8 @@ export default function CaseReviewDetailPage() {
         if (action === "escalate") {
           router.push(`/review/case/${caseId}/referral`);
         }
+      } else {
+        setError(res.error || "Unable to save this review.");
       }
     } catch (e: any) {
       setError("Action execution failed.");
@@ -285,14 +289,14 @@ export default function CaseReviewDetailPage() {
 
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
               <span>Provenance: Extracted from patient narrative &amp; normalized.</span>
-              <button
+              {isDoctor && <button
                 type="button"
                 onClick={() => setIsEditing(!isEditing)}
                 className="text-teal-700 hover:text-teal-800 font-bold flex items-center gap-1 text-xs"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 {isEditing ? "Cancel Edit" : "Edit Summary"}
-              </button>
+              </button>}
             </div>
           </div>
         </div>
@@ -431,6 +435,7 @@ export default function CaseReviewDetailPage() {
             <label className="text-xs font-semibold text-slate-300">Reviewer Clinical Notes</label>
             <input
               type="text"
+              disabled={!isDoctor}
               value={reviewerNotes}
               onChange={(e) => setReviewerNotes(e.target.value)}
               placeholder="e.g. Verified by Dr. S. Chen: Patient stable, proceed with OPD consultation or tertiary referral..."
@@ -438,8 +443,9 @@ export default function CaseReviewDetailPage() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <div className="flex items-center gap-2">
+          {isDoctor ? <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {isEditing && <button type="button" disabled={actionLoading} onClick={() => handleReviewAction("edit")} className="px-4 py-2.5 bg-teal-700 rounded-xl text-xs font-bold">Save edits</button>}
               <button
                 type="button"
                 disabled={actionLoading}
@@ -481,7 +487,7 @@ export default function CaseReviewDetailPage() {
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete Case Data</span>
             </button>
-          </div>
+          </div> : <p className="text-sm text-slate-300">Doctor sign-off is required. Nurse access is view only.</p>}
         </div>
       </main>
 

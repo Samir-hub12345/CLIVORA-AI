@@ -1,27 +1,55 @@
+import os
+# Tests always use disposable SQLite databases and the offline AI provider.
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["DEBUG"] = "false"
+os.environ["LLM_PROVIDER"] = "mock"
+os.environ["GEMINI_API_KEY"] = ""
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from app.main import app
-from app.core.security import create_access_token
-
+import app.main as main_module
+import app.services.audit as audit_module
+from app.db.base import Base
+from app.db.session import get_db
+from app.db.migrations import upgrade_ownership
+from app.core.security import create_access_token, get_password_hash
+from app.models.user import User, UserRole
 
 @pytest_asyncio.fixture
-async def async_client():
-    """Async test client fixture for FastAPI app testing."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
+async def database(tmp_path, monkeypatch):
+    engine = create_async_engine("sqlite+aiosqlite:///" + str(tmp_path / "test.db"))
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(upgrade_ownership)
+    monkeypatch.setattr(main_module, "async_session_factory", sessions)
+    monkeypatch.setattr(audit_module, "async_session_factory", sessions)
+    await main_module.seed_initial_data()
+    async with sessions() as db:
+        db.add_all([
+            User(email="nurse@test.invalid", full_name="Test Nurse", role=UserRole.NURSE, hashed_password=get_password_hash("TestPassword123!")),
+            User(email="second.doctor@test.invalid", full_name="Second Doctor", role=UserRole.DOCTOR, hashed_password=get_password_hash("TestPassword123!")),
+        ])
+        await db.commit()
+    async def test_db():
+        async with sessions() as db:
+            yield db
+    app.dependency_overrides[get_db] = test_db
+    yield sessions
+    app.dependency_overrides.clear()
+    await engine.dispose()
 
+@pytest_asyncio.fixture
+async def async_client(database):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        yield client
 
 @pytest.fixture
 def doctor_auth_headers():
-    """Header fixture for Doctor role."""
-    token = create_access_token(subject="doctor-test-id", role="doctor")
-    return {"Authorization": f"Bearer {token}"}
-
+    return {"Authorization": "Bearer " + create_access_token(subject="doctor-test-id", role="doctor")}
 
 @pytest.fixture
 def patient_auth_headers():
-    """Header fixture for Patient role."""
-    token = create_access_token(subject="patient-test-id", role="patient")
-    return {"Authorization": f"Bearer {token}"}
+    return {"Authorization": "Bearer " + create_access_token(subject="patient-test-id", role="patient")}

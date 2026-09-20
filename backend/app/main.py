@@ -10,6 +10,7 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db.base import Base
+from app.db.migrations import upgrade_ownership
 from app.db.session import engine, async_session_factory
 import json
 from app.models.user import User, UserRole
@@ -54,6 +55,7 @@ async def seed_initial_data():
 
             # 2. Demo Patients
             patient1 = Patient(
+                user_id=patient_user.id,
                 mrn="CLN-2026-10482",
                 first_name="James",
                 last_name="Miller",
@@ -116,6 +118,16 @@ async def seed_initial_data():
             db.add(consultation)
             await db.commit()
             logger.info("Clinova AI demo users and patients seeded successfully.")
+
+        # Only the well-known synthetic demo chart may be linked automatically.
+        # Other legacy charts stay unlinked until an operator verifies ownership.
+        demo_user = (await db.execute(select(User).where(User.email == "patient@clinova.ai", User.role == UserRole.PATIENT))).scalar_one_or_none()
+        demo_chart = (await db.execute(select(Patient).where(Patient.mrn == "CLN-2026-10482", Patient.email == "patient@clinova.ai", Patient.first_name == "James", Patient.last_name == "Miller"))).scalar_one_or_none()
+        if demo_user and demo_chart and demo_chart.user_id is None:
+            existing_link = (await db.execute(select(Patient).where(Patient.user_id == demo_user.id))).scalar_one_or_none()
+            if existing_link is None:
+                demo_chart.user_id = demo_user.id
+                await db.commit()
 
         # Check if triage cases exist
         case_res = await db.execute(select(TriageCase).limit(1))
@@ -295,9 +307,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        await seed_initial_data()
+            await conn.run_sync(upgrade_ownership)
+        if settings.DEMO_MODE and settings.ENVIRONMENT != "production":
+            await seed_initial_data()
     except Exception as e:
-        logger.error(f"Error during database initialization/seeding: {e}", exc_info=True)
+        logger.error("Database initialization failed", exc_info=True)
+        raise
 
     yield
 

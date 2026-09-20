@@ -12,6 +12,7 @@ import {
   TranslationResult,
   ReferralNote,
   OCRField,
+  PatientCase, PatientConsultation, CaseReceipt, PortalProfileInput, AdminOverview,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -64,7 +65,7 @@ export async function fetchApi<T>(
   const token = getToken();
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   };
 
@@ -76,11 +77,19 @@ export async function fetchApi<T>(
     const response = await fetch(url, {
       ...options,
       headers,
+      cache: "no-store",
     });
 
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 401 && token && token === getToken() && !endpoint.startsWith("/api/v1/auth/login")) {
+        clearToken();
+        window.dispatchEvent(new Event("clinova:session-expired"));
+      }
+      if (response.status === 403 && !endpoint.startsWith("/api/v1/auth/")) {
+        window.dispatchEvent(new Event("clinova:access-denied"));
+      }
       let errorMsg = response.statusText;
       if (data?.detail) {
         errorMsg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
@@ -95,9 +104,9 @@ export async function fetchApi<T>(
       data,
       status: response.status,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      error: error?.message || "Network error. Please ensure Clinova AI services are running.",
+      error: error instanceof Error ? error.message : "Network error. Please ensure Clinova AI services are running.",
       status: 500,
     };
   }
@@ -105,6 +114,12 @@ export async function fetchApi<T>(
 
 // API Service Callers
 export const api = {
+  getMyProfile: () => fetchApi<Patient | null>("/api/v1/portal/profile"),
+  saveMyProfile: (payload: PortalProfileInput) => fetchApi<Patient>("/api/v1/portal/profile", { method: "PUT", body: JSON.stringify(payload) }),
+  getMyCases: () => fetchApi<PatientCase[]>("/api/v1/portal/cases"),
+  getMyConsultations: () => fetchApi<PatientConsultation[]>("/api/v1/portal/consultations"),
+  getAdminOverview: () => fetchApi<AdminOverview>("/api/v1/admin/overview"),
+  getAdminUsers: () => fetchApi<User[]>("/api/v1/admin/users"),
   // Auth
   async login(email: string, password: string) {
     const res = await fetchApi<{ access_token: string; user: User }>("/api/v1/auth/login", {
@@ -251,7 +266,7 @@ export const api = {
     image_reference?: string;
     consent_acknowledged?: boolean;
   }) {
-    return fetchApi<TriageCase>("/api/v1/cases", {
+    return fetchApi<CaseReceipt>("/api/v1/cases", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -264,20 +279,7 @@ export const api = {
   },
 
   async transcribeSpeech(formData: FormData) {
-    const token = getToken();
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    const res = await fetch(`${API_BASE_URL}/api/v1/intake/speech`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-    if (!res.ok) {
-      return { data: null, error: `Upload error: ${res.statusText}` };
-    }
-    const data = await res.json();
-    return { data, error: null };
+    return fetchApi<SpeechTranscribeResult>("/api/v1/intake/speech", { method: "POST", body: formData });
   },
 
   async translateText(text: string, source_language: string = "or") {
@@ -288,20 +290,7 @@ export const api = {
   },
 
   async processReportOCR(formData: FormData) {
-    const token = getToken();
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    const res = await fetch(`${API_BASE_URL}/api/v1/intake/ocr`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-    if (!res.ok) {
-      return { data: null, error: `OCR error: ${res.statusText}` };
-    }
-    const data = await res.json();
-    return { data, error: null };
+    return fetchApi<ReportOCRResult>("/api/v1/intake/ocr", { method: "POST", body: formData });
   },
 
   async performReviewAction(

@@ -43,7 +43,7 @@ async def get_current_user(
         raise credentials_exception
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Inactive user account",
         )
     return user
@@ -62,9 +62,11 @@ def require_roles(allowed_roles: List[UserRole]):
 
 
 # Role-specific shortcut dependencies
-get_current_clinician = require_roles([UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN])
-get_current_doctor = require_roles([UserRole.DOCTOR, UserRole.ADMIN])
+get_current_clinician = require_roles([UserRole.DOCTOR, UserRole.NURSE])
+get_current_doctor = require_roles([UserRole.DOCTOR])
 get_current_admin = require_roles([UserRole.ADMIN])
+get_current_patient = require_roles([UserRole.PATIENT])
+get_intake_user = require_roles([UserRole.PATIENT, UserRole.DOCTOR, UserRole.NURSE])
 
 
 def get_client_ip(request: Request) -> Optional[str]:

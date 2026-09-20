@@ -9,7 +9,8 @@ import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 import { VoiceRecorder } from "@/components/clinical/voice-recorder";
 import { ReportUploader } from "@/components/clinical/report-uploader";
 import { api } from "@/lib/api";
-import { OCRField, TriageCase } from "@/types";
+import { useAuth } from "@/lib/auth";
+import { OCRField, CaseReceipt } from "@/types";
 import {
   ShieldCheck,
   Languages,
@@ -25,6 +26,7 @@ import {
 
 export default function PatientIntakePage() {
   const router = useRouter();
+  const { isPatient } = useAuth();
 
   // Step indicator: 1 = Consent, 2 = Context, 3 = Symptoms, 4 = Optional Report, 5 = Review & Submit
   const [step, setStep] = useState(1);
@@ -51,7 +53,7 @@ export default function PatientIntakePage() {
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
-  const [createdCase, setCreatedCase] = useState<TriageCase | null>(null);
+  const [createdCase, setCreatedCase] = useState<CaseReceipt | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Multilingual auto-normalization
@@ -145,9 +147,9 @@ export default function PatientIntakePage() {
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 max-w-md mx-auto text-left text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">Queue Category:</span>
+                <span className="text-slate-500">Submission status:</span>
                 <span className="font-bold text-slate-900 uppercase">
-                  {createdCase.queue_category.replace("-", " ")}
+                  Waiting for review
                 </span>
               </div>
               <div className="flex justify-between">
@@ -166,16 +168,22 @@ export default function PatientIntakePage() {
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Link
-                href={`/review/case/${createdCase.id}`}
+                href={isPatient ? "/dashboard/patient#submissions" : `/review/case/${createdCase.id}`}
                 className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-2"
               >
-                <span>Open in Reviewer Workspace</span> <ArrowRight className="w-4 h-4" />
+                <span>{isPatient ? "View my submissions" : "Open in Reviewer Workspace"}</span> <ArrowRight className="w-4 h-4" />
               </Link>
               <button
                 type="button"
                 onClick={() => {
                   setCreatedCase(null);
                   setStep(1);
+                  setConsentGiven(false);
+                  setApproxAge("");
+                  setGender("Unspecified");
+                  setContextNotes("");
+                  setDetectedLang("");
+                  setSubmitError(null);
                   setSymptomsText("");
                   setSpeechTranscript("");
                   setTranslatedText("");
@@ -184,7 +192,7 @@ export default function PatientIntakePage() {
                 }}
                 className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs"
               >
-                Intake Another Patient
+                {isPatient ? "Start another intake" : "Intake another patient"}
               </button>
             </div>
           </div>

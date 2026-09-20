@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuth } from "@/lib/auth";
+import { dashboardPath } from "@/lib/permissions";
 import React from "react";
 import Link from "next/link";
 import { Header } from "@/components/common/header";
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 
 export default function DemoPage() {
+  const { user, isClinician } = useAuth();
   const demoCases = [
     {
       id: "CLV-DEMO-001",
@@ -155,11 +158,11 @@ export default function DemoPage() {
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <Link
-                  href={`/review/case/${c.id}`}
+                  href={isClinician ? `/review/case/${c.id}` : user ? dashboardPath(user.role) : "/login"}
                   className="w-full text-center px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs shadow-xs flex items-center justify-center gap-1.5 transition-all"
                 >
                   <Play className="w-3.5 h-3.5 fill-white" />
-                  <span>Launch Case Review</span>
+                  <span>{isClinician ? "Launch case review" : user ? "My dashboard" : "Sign in to continue"}</span>
                 </Link>
               </div>
             </div>

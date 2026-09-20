@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.case import TriageCase
-from app.core.deps import get_client_ip
+from app.core.deps import get_client_ip, get_current_doctor, get_current_clinician
+from app.models.user import User
 from app.schemas.case import (
     CaseReviewActionRequest,
     CaseResponse,
@@ -27,19 +28,30 @@ async def perform_review_action(
     case_id: str,
     req: CaseReviewActionRequest,
     request: Request,
-    reviewer_name: str = "Dr. S. Chen, Medical Officer",
+    current_user: User = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),
 ):
     """Executes human-in-the-loop review action: approve, edit, reject, or escalate."""
     stmt = select(TriageCase).where(
-        (TriageCase.id == case_id) | (TriageCase.synthetic_case_id == case_id)
+        (TriageCase.id == case_id) | (TriageCase.synthetic_case_id == case_id),
+        TriageCase.is_deleted.is_(False),
     )
     case = (await db.execute(stmt)).scalar_one_or_none()
     if not case:
         raise HTTPException(status_code=404, detail="Triage case not found.")
 
+    reviewer_name = current_user.full_name
+    case.reviewer_id = current_user.id
     action = req.action.lower()
     now = datetime.now(timezone.utc)
+
+    if action in ("approve", "edit", "escalate"):
+        if req.edited_summary:
+            case.normalized_symptoms = req.edited_summary
+        if req.confirmed_queue_category:
+            case.queue_category = req.confirmed_queue_category
+        if req.verified_ocr_fields is not None:
+            case.report_ocr_data = json.dumps([field.model_dump() for field in req.verified_ocr_fields])
 
     if action == "approve":
         case.status = "approved"
@@ -51,6 +63,7 @@ async def perform_review_action(
 
     elif action == "edit":
         case.status = "in_review"
+        case.approved_at = None
         case.reviewed_at = now
         case.reviewer_name = reviewer_name
         if req.edited_summary:
@@ -62,6 +75,7 @@ async def perform_review_action(
 
     elif action == "reject":
         case.status = "rejected"
+        case.approved_at = None
         case.reviewed_at = now
         case.reviewer_name = reviewer_name
         case.reviewer_notes = req.reviewer_notes or "Rejected by reviewer: requires re-intake or manual physician exam."
@@ -92,7 +106,7 @@ async def perform_review_action(
             "review_signals": signals_list,
             "reviewer_reason": req.reviewer_notes or "Clinical referral prepared for secondary healthcare facility review.",
             "reviewer_name": reviewer_name,
-            "reviewer_role": "Medical Officer",
+            "reviewer_role": current_user.role.value,
             "timestamp": now.strftime("%Y-%m-%d %H:%M:%S UTC"),
             "footer_disclaimer": (
                 "AI-assisted organization of information. Not a diagnosis or treatment recommendation. "
@@ -111,7 +125,7 @@ async def perform_review_action(
         action=f"REVIEW_ACTION_{action.upper()}",
         resource_type="TRIAGE_CASE",
         resource_id=case.synthetic_case_id,
-        user=None,
+        user=current_user,
         ip_address=get_client_ip(request),
         user_agent=request.headers.get("User-Agent"),
         details=f"Reviewer: {reviewer_name} | Action: {action.upper()} | Case: {case.synthetic_case_id}",
@@ -124,11 +138,13 @@ async def perform_review_action(
 @router.get("/{case_id}/referral", response_model=ReferralNoteResponse)
 async def get_referral_note(
     case_id: str,
+    current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve structured referral note for export and printing."""
     stmt = select(TriageCase).where(
-        (TriageCase.id == case_id) | (TriageCase.synthetic_case_id == case_id)
+        (TriageCase.id == case_id) | (TriageCase.synthetic_case_id == case_id),
+        TriageCase.is_deleted.is_(False),
     )
     case = (await db.execute(stmt)).scalar_one_or_none()
     if not case:

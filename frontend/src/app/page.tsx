@@ -1,3 +1,6 @@
+"use client";
+import { useAuth } from "@/lib/auth";
+import { dashboardPath } from "@/lib/permissions";
 import React from "react";
 import Link from "next/link";
 import { Header } from "@/components/common/header";
@@ -20,6 +23,7 @@ import {
 } from "lucide-react";
 
 export default function Home() {
+  const { user, isClinician } = useAuth();
   const features = [
     {
       icon: <Mic className="w-5 h-5 text-teal-600" />,
@@ -100,18 +104,18 @@ export default function Home() {
           {/* Action CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
             <Link
-              href="/intake"
+              href={user ? dashboardPath(user.role) : "/login"}
               className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all flex items-center gap-2"
             >
-              <span>Start Patient Intake</span> <ArrowRight className="w-4 h-4" />
+              <span>{user ? "Open my dashboard" : "Sign in to get started"}</span> <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
+            {isClinician && <Link
               href="/review"
               className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-xl text-sm shadow-sm transition-all flex items-center gap-2"
             >
               <Activity className="w-4 h-4 text-teal-600" />
               <span>Reviewer Dashboard</span>
-            </Link>
+            </Link>}
             <Link
               href="/demo"
               className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all flex items-center gap-2"
