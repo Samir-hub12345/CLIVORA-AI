@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { dashboardPath } from "@/lib/permissions";
 import { Header } from "@/components/common/header";
 import { Footer } from "@/components/common/footer";
 import { Button } from "@/components/ui/button";
@@ -25,6 +28,10 @@ import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 
 function LoginForm() {
   const router = useRouter();
+  const { setUser, user, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (!authLoading && user) router.replace(dashboardPath(user.role));
+  }, [user, authLoading, router]);
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
 
@@ -68,7 +75,7 @@ function LoginForm() {
       setError(res.error);
     } else if (res.data) {
       setUser(res.data.user);
-      router.push("/dashboard");
+      router.replace(dashboardPath(res.data.user.role));
     }
   };
 

@@ -48,3 +48,10 @@ Thumbs.db
 # Docker logs
 *.log
 docker-compose.override.yml
+
+# Local role workflow demo and test outputs
+*.db
+*.db-shm
+*.db-wal
+.pytest_cache/
+*.tsbuildinfo

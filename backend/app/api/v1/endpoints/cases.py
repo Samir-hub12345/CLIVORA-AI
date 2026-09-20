@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.models.case import TriageCase
 from app.models.user import User, UserRole
+from app.core.deps import get_intake_user, get_current_clinician, get_current_doctor, get_client_ip
+from app.schemas.portal import PatientCaseResponse
+from app.api.v1.endpoints.portal import patient_case_response
 from app.core.deps import get_current_user, get_current_user_optional, get_current_clinician, get_client_ip
 from app.schemas.case import (
     CaseCreateRequest,
@@ -25,15 +28,21 @@ logger = logging.getLogger("clinova")
 router = APIRouter()
 
 
-@router.post("", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
-@router.post("/", response_model=CaseResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
+@router.post("", response_model=PatientCaseResponse | CaseResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=PatientCaseResponse | CaseResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def create_triage_case(
     req: CaseCreateRequest,
     request: Request,
+    current_user: User = Depends(get_intake_user),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new multimodal triage case with anonymization and structured decision support."""
+    if not req.consent_acknowledged or not req.raw_symptoms.strip():
+        raise HTTPException(422, "Consent and a symptom description are required.")
+    if req.report_ocr_data:
+        for field in req.report_ocr_data:
+            field.verification_status = "pending"
     # 1. Anonymize patient reported text
     sanitized_symptoms, was_redacted = anonymizer.sanitize_text(req.raw_symptoms)
     synthetic_case_id = anonymizer.generate_synthetic_case_id()
@@ -60,6 +69,7 @@ async def create_triage_case(
 
     # 3. Create case record
     case = TriageCase(
+        owner_user_id=current_user.id,
         synthetic_case_id=synthetic_case_id,
         patient_id=resolved_patient_id,
         language=req.preferred_language,
@@ -107,7 +117,7 @@ async def create_triage_case(
         ),
     )
 
-    return _format_case_response(case)
+    return patient_case_response(case) if current_user.role == UserRole.PATIENT else _format_case_response(case)
 
 
 @router.get("", response_model=List[CaseResponse])
@@ -118,6 +128,7 @@ async def list_cases(
     assigned_doctor_id: Optional[str] = Query(None, description="Filter by assigned clinician ID"),
     patient_id: Optional[str] = Query(None, description="Filter by patient record ID"),
     limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(get_current_clinician),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
@@ -148,6 +159,7 @@ async def list_cases(
 @router.get("/{case_id}", response_model=CaseResponse)
 async def get_case(
     case_id: str,
+    current_user: User = Depends(get_current_clinician),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
@@ -278,6 +290,7 @@ async def verify_case_intake(
 async def delete_case_data(
     case_id: str,
     request: Request,
+    current_user: User = Depends(get_current_doctor),
     current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
@@ -294,6 +307,17 @@ async def delete_case_data(
     case.speech_transcript = None
     case.report_ocr_data = None
     case.status = "deleted"
+    case.normalized_symptoms = None
+    case.context_notes = None
+    case.triage_summary = None
+    case.missing_information = None
+    case.follow_up_questions = None
+    case.risk_signals = None
+    case.timeline_events = None
+    case.report_filename = None
+    case.image_reference = None
+    case.referral_note = None
+    case.reviewer_notes = None
     await db.commit()
 
     await AuditService.log_event(

@@ -11,7 +11,7 @@ async def test_auth_flow(async_client: AsyncClient):
         "email": email,
         "password": "SecurePassword123!",
         "full_name": "Dr. Alex Taylor",
-        "role": "doctor",
+        "role": "patient",
     }
     response = await async_client.post("/api/v1/auth/register", json=reg_payload)
     assert response.status_code in [201, 400]  # 201 if first time, 400 if already exists
@@ -36,7 +36,7 @@ async def test_auth_flow(async_client: AsyncClient):
     assert me_res.status_code == 200
     user_data = me_res.json()
     assert user_data["email"] == email
-    assert user_data["role"] == "doctor"
+    assert user_data["role"] == "patient"
 
 
 @pytest.mark.asyncio

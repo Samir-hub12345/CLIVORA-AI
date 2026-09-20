@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
+from sqlalchemy import String, Text, DateTime, ForeignKey
 from sqlalchemy import String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
@@ -13,6 +14,9 @@ class Patient(Base):
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
+    # Set only by trusted server workflows; an email address is not proof of ownership.
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("users.id"), unique=True, index=True, nullable=True
     facility_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("facilities.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -59,5 +63,7 @@ class Patient(Base):
     diagnoses_list = relationship("Diagnosis", back_populates="patient", cascade="save-update, merge")
     notes = relationship("ClinicalNote", back_populates="patient", cascade="save-update, merge")
     consultations: Mapped[List["Consultation"]] = relationship(
+        "Consultation", back_populates="patient", cascade="all, delete-orphan"
+    )
         "Consultation", back_populates="patient", cascade="save-update, merge"
     )

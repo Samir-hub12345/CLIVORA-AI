@@ -15,6 +15,7 @@ export default function AuditLogsPage() {
   const { isClinician, isAdmin } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLogs();
@@ -22,9 +23,12 @@ export default function AuditLogsPage() {
 
   const fetchLogs = async () => {
     setLoading(true);
+    setError(null);
     const res = await api.getAuditLogs(100);
     if (res.data) {
       setLogs(res.data.items);
+    } else {
+      setError(res.error || "Unable to load data. Please retry.");
     }
     setLoading(false);
   };
@@ -34,6 +38,7 @@ export default function AuditLogsPage() {
       <Header />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+        {error && <div role="alert" className="p-4 rounded-xl bg-rose-50 text-rose-700">{error} <button onClick={fetchLogs} className="underline ml-2">Retry</button></div>}
         {/* Title and Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

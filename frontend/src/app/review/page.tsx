@@ -29,15 +29,21 @@ export default function ReviewQueuePage() {
   const { state: networkState, isLowBandwidthActive, pollingIntervalMs, pollingStatus } =
     useConnectivity();
   const [cases, setCases] = useState<TriageCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   const loadCases = async () => {
+    setLoading(true);
+    setError(null);
     const cat = selectedCategory === "all" ? undefined : selectedCategory;
     const stat = selectedStatus === "all" ? undefined : selectedStatus;
     const res = await api.getCases(cat, stat);
     if (res.data) {
       setCases(res.data);
+    } else {
+      setError(res.error || "Unable to load data. Please retry.");
     }
   };
 
@@ -63,6 +69,7 @@ export default function ReviewQueuePage() {
       <Header />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 w-full space-y-6">
+        {error && <div role="alert" className="p-4 rounded-xl bg-rose-50 text-rose-700">{error} <button onClick={loadCases} className="underline ml-2">Retry</button></div>}
         {/* Safety Disclaimer */}
         <ClinicalDisclaimer />
 

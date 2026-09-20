@@ -5,7 +5,8 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import get_current_user, get_current_clinician, get_client_ip
+from app.core.deps import get_current_clinician, get_current_doctor, get_client_ip
+from app.core.access import check_encounter_access
 from app.db.session import get_db
 from app.models.consultation import Consultation, ConsultationStatus, TriageLevel
 from app.models.patient import Patient
@@ -30,7 +31,7 @@ async def list_consultations(
     triage_level: Optional[TriageLevel] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
     """List clinical consultations with optional filtering."""
@@ -39,10 +40,10 @@ async def list_consultations(
         .options(selectinload(Consultation.patient), selectinload(Consultation.doctor))
     )
 
-    # Patients can only see their own consultations
-    if current_user.role == UserRole.PATIENT:
-        stmt = stmt.join(Consultation.patient).where(Patient.email == current_user.email)
-    elif patient_id:
+    # Doctors see assigned encounters; nurses support the shared clinical team.
+    if current_user.role == UserRole.DOCTOR:
+        stmt = stmt.where(Consultation.doctor_id == current_user.id)
+    if patient_id:
         stmt = stmt.where(Consultation.patient_id == patient_id)
 
     if status_filter:
@@ -65,7 +66,7 @@ async def list_consultations(
 async def create_consultation(
     consultation_in: ConsultationCreate,
     request: Request,
-    current_user: User = Depends(get_current_clinician),
+    current_user: User = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),
 ):
     """Schedule or initiate a new clinical consultation encounter."""
@@ -79,7 +80,9 @@ async def create_consultation(
         )
 
     # Assign doctor: specified doctor or currently logged-in clinician
-    doctor_id = consultation_in.doctor_id or current_user.id
+    if consultation_in.doctor_id and consultation_in.doctor_id != current_user.id:
+        raise HTTPException(403, "You can create encounters only for yourself.")
+    doctor_id = current_user.id
     scheduled_at = consultation_in.scheduled_at or datetime.now(timezone.utc)
 
     consultation = Consultation(
@@ -120,7 +123,7 @@ async def create_consultation(
 async def get_consultation(
     consultation_id: str,
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve full consultation details, clinical notes, and AI synthesis."""
@@ -138,6 +141,7 @@ async def get_consultation(
             detail="Consultation record not found.",
         )
 
+    check_encounter_access(current_user, consultation)
     # Resource-level authorization (IDOR protection):
     # Patient role can ONLY view their own consultation records
     if current_user.role == UserRole.PATIENT:
@@ -166,7 +170,7 @@ async def update_consultation(
     consultation_id: str,
     consultation_in: ConsultationUpdate,
     request: Request,
-    current_user: User = Depends(get_current_clinician),
+    current_user: User = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),
 ):
     """Update consultation notes, triage severity, or status."""
@@ -184,6 +188,7 @@ async def update_consultation(
             detail="Consultation record not found.",
         )
 
+    check_encounter_access(current_user, consultation)
     update_data = consultation_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(consultation, field, value)
@@ -210,7 +215,7 @@ async def update_soap_notes(
     consultation_id: str,
     soap_in: SOAPNotesUpdate,
     request: Request,
-    current_user: User = Depends(get_current_clinician),
+    current_user: User = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),
 ):
     """Directly save Subjective, Objective, Assessment, and Plan (SOAP) clinical notes."""
@@ -228,6 +233,7 @@ async def update_soap_notes(
             detail="Consultation record not found.",
         )
 
+    check_encounter_access(current_user, consultation)
     consultation.subjective = soap_in.subjective
     consultation.objective = soap_in.objective
     consultation.assessment = soap_in.assessment

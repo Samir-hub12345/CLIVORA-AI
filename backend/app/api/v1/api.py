@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from app.api.v1.endpoints import health, auth, patients, consultations, ai_assist, audit, cases, intake, review
+from app.api.v1.endpoints import portal, admin
 from app.api.v1.endpoints import (
     health,
     auth,
@@ -17,6 +19,8 @@ from app.api.v1.endpoints import (
 )
 
 api_router = APIRouter()
+api_router.include_router(portal.router, prefix="/portal", tags=["Patient Portal"])
+api_router.include_router(admin.router, prefix="/admin", tags=["Administration"])
 
 # Core Foundation & EHR
 api_router.include_router(health.router)

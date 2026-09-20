@@ -18,7 +18,7 @@ class GeminiClinicalService:
     def __init__(self):
         self.api_key = settings.GEMINI_API_KEY
         self.client = None
-        if self.api_key and self.api_key.strip():
+        if not settings.OFFLINE_DEMO and self.api_key and self.api_key.strip():
             try:
                 from google import genai
                 self.client = genai.Client(api_key=self.api_key)
@@ -398,6 +398,7 @@ Provide structured JSON with:
                 "All AI-generated information requires human review."
             ),
         }
+
 
 
 ai_service = GeminiClinicalService()
