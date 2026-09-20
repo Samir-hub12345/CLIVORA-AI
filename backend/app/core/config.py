@@ -48,6 +48,7 @@ class Settings(BaseSettings):
 
     # AI Configuration & Prototype Settings
     DEMO_MODE: bool = True
+    OFFLINE_DEMO: bool = False  # Enabled by the beginner local launch script.
     GEMINI_API_KEY: str = ""
     LLM_PROVIDER: str = "mock"  # "mock", "gemini"
     STT_PROVIDER: str = "local"  # "local", "faster-whisper", "mock"

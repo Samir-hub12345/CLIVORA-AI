@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException, Depends
+from app.core.deps import get_intake_user
 from pydantic import BaseModel
 
 from app.schemas.case import (
@@ -13,7 +14,7 @@ from app.services.translation_service import translation_service
 from app.services.ocr_service import ocr_service
 
 logger = logging.getLogger("clinova")
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_intake_user)])
 
 
 class TranslationInput(BaseModel):

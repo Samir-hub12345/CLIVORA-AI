@@ -29,7 +29,7 @@ function RegisterForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("doctor");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +52,7 @@ function RegisterForm() {
       full_name: fullName,
       email,
       password,
-      role,
+      role: "patient",
     });
     setLoading(false);
 
@@ -100,6 +100,16 @@ function RegisterForm() {
           </div>
         </div>
 
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+          <div className="text-center mb-6">
+            <div className="inline-flex p-3 bg-teal-50 text-teal-600 rounded-xl border border-teal-100 mb-3">
+              <Activity className="w-7 h-7 text-teal-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create Patient Account</h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Track your intake submissions and your own records
+            </p>
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
             Institutional Email Address
@@ -135,6 +145,74 @@ function RegisterForm() {
           </p>
         </div>
 
+          {error && (
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-medium">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Full Legal Name</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your full name"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jordan.mitchell@hospital.org"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500">Staff accounts are provided by your system administrator.</p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" loading={loading} className="w-full py-2.5 mt-2 gap-2 text-sm">
+              Register Account <ArrowRight className="w-4 h-4" />
+            </Button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+              HIPAA-Ready Architecture
+            </span>
+            <Link href="/login" className="text-teal-600 font-semibold hover:underline">
+              Already have an account?
+            </Link>
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
           <div className="relative">

@@ -185,7 +185,7 @@ async def get_my_patient_profile(
 async def get_patient_profile(
     patient_id: str,
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve full clinical patient chart and past medical history."""
@@ -205,7 +205,7 @@ async def get_patient_profile(
 
     # Patient role can only view their own linked record (if applicable)
     if current_user.role == UserRole.PATIENT:
-        if current_user.email != patient.email:
+        if current_user.id != patient.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to another patient's medical records.",

@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_clinician, get_client_ip
 from app.db.session import get_db
 from app.models.consultation import Consultation, TriageLevel
-from app.models.user import User
+from app.models.user import User, UserRole
+from app.core.access import check_encounter_access
 from app.schemas.ai import (
     TriageRequest,
     TriageResponse,
@@ -29,6 +30,14 @@ async def perform_clinical_triage(
     db: AsyncSession = Depends(get_db),
 ):
     """Execute AI clinical decision support triage, emergency red flag detection, and differential diagnosis."""
+    # Validate ownership before invoking an AI provider or updating an encounter.
+    if consultation_id:
+        if current_user.role != UserRole.DOCTOR:
+            raise HTTPException(403, "Only doctors can update an encounter.")
+        linked = (await db.execute(select(Consultation).where(Consultation.id == consultation_id))).scalar_one_or_none()
+        if linked is None:
+            raise HTTPException(404, "Consultation not found.")
+        check_encounter_access(current_user, linked)
     # Analyze with Gemini (or fallback rule engine)
     result = await ai_service.analyze_triage(req)
 

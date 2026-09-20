@@ -26,7 +26,7 @@ import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 import { Consultation, Patient } from "@/types";
 
 export default function ConsultationsPage() {
-  const { isClinician, user } = useAuth();
+  const { isDoctor, user } = useAuth();
 
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -158,7 +158,7 @@ export default function ConsultationsPage() {
             </p>
           </div>
 
-          {isClinician && (
+          {isDoctor && (
             <Button onClick={() => setModalOpen(true)} className="gap-2">
               <Plus className="w-4 h-4" />
               New Consultation
@@ -237,7 +237,7 @@ export default function ConsultationsPage() {
                         <CheckCircle2 className="w-4 h-4" /> Signed &amp; Saved
                       </span>
                     )}
-                    {isClinician && (
+                    {isDoctor && (
                       <Button onClick={handleSaveSoap} loading={savingSoap} className="gap-2">
                         <Save className="w-4 h-4" /> Sign &amp; Save SOAP
                       </Button>
@@ -246,7 +246,7 @@ export default function ConsultationsPage() {
                 </div>
 
                 {/* AI SOAP Copilot Trigger */}
-                {isClinician && (
+                {isDoctor && (
                   <div className="p-4 bg-teal-50/60 border border-teal-200 rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-teal-900 font-bold text-xs">
@@ -287,7 +287,7 @@ export default function ConsultationsPage() {
                     </label>
                     <textarea
                       rows={3}
-                      disabled={!isClinician}
+                      disabled={!isDoctor}
                       value={subjective}
                       onChange={(e) => setSubjective(e.target.value)}
                       placeholder="Patient reports onset of..."
@@ -302,7 +302,7 @@ export default function ConsultationsPage() {
                     </label>
                     <textarea
                       rows={3}
-                      disabled={!isClinician}
+                      disabled={!isDoctor}
                       value={objective}
                       onChange={(e) => setObjective(e.target.value)}
                       placeholder="Vitals: BP, HR. Physical exam findings..."
@@ -317,7 +317,7 @@ export default function ConsultationsPage() {
                     </label>
                     <textarea
                       rows={3}
-                      disabled={!isClinician}
+                      disabled={!isDoctor}
                       value={assessment}
                       onChange={(e) => setAssessment(e.target.value)}
                       placeholder="Primary clinical impression..."
@@ -332,7 +332,7 @@ export default function ConsultationsPage() {
                     </label>
                     <textarea
                       rows={3}
-                      disabled={!isClinician}
+                      disabled={!isDoctor}
                       value={plan}
                       onChange={(e) => setPlan(e.target.value)}
                       placeholder="1. Laboratory workup... 2. Medications..."

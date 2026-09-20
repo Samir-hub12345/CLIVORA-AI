@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Literal
 from pydantic import BaseModel, Field
 
 
@@ -110,6 +110,7 @@ class CaseCreateRequest(BaseModel):
     report_filename: Optional[str] = None
     report_ocr_data: Optional[List[OCRFieldSchema]] = None
     image_reference: Optional[str] = None
+    consent_acknowledged: bool = False
     patient_id: Optional[str] = None
     vitals: Optional[Dict[str, Any]] = None
     consent_acknowledged: bool = True
@@ -133,10 +134,10 @@ class CaseVerifyIntakeRequest(BaseModel):
 
 
 class CaseReviewActionRequest(BaseModel):
-    action: str = Field(description="approve, edit, reject, escalate")
+    action: Literal["approve", "edit", "reject", "escalate"]
     reviewer_notes: Optional[str] = None
     edited_summary: Optional[str] = None
-    confirmed_queue_category: Optional[str] = None
+    confirmed_queue_category: Optional[Literal["routine", "priority", "urgent-review"]] = None
     verified_ocr_fields: Optional[List[OCRFieldSchema]] = None
 
 

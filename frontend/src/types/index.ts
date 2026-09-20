@@ -1,5 +1,48 @@
 export type UserRole = "admin" | "doctor" | "nurse" | "patient";
 
+export interface PatientCase {
+  id: string;
+  synthetic_case_id: string;
+  language: string;
+  facility_type: string;
+  visit_type: string;
+  status: CaseStatus;
+  raw_symptoms: string | null;
+  report_filename: string | null;
+  summary: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CaseReceipt = Pick<PatientCase, "id" | "synthetic_case_id" | "language" | "facility_type" | "visit_type" | "status">;
+
+export interface PatientConsultation {
+  id: string;
+  scheduled_at: string;
+  chief_complaint: string;
+  status: ConsultationStatus;
+  doctor_name: string;
+  summary: string | null;
+}
+
+export interface PortalProfileInput {
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+  gender: string;
+  phone: string;
+  emergency_contact: string;
+}
+
+export interface AdminOverview {
+  users: number;
+  patients: number;
+  consultations: number;
+  cases: number;
+  awaiting_review: number;
+  audit_records: number;
+}
+
 export interface User {
   id: string;
   email: string;

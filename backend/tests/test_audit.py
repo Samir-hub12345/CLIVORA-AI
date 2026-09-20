@@ -2,17 +2,17 @@ import pytest
 from httpx import AsyncClient
 
 
-async def get_doctor_token(client: AsyncClient) -> str:
+async def get_admin_token(client: AsyncClient) -> str:
     login_res = await client.post(
         "/api/v1/auth/login",
-        json={"email": "doctor@clinova.ai", "password": "ClinovaDoctor2026!"},
+        json={"email": "admin@clinova.ai", "password": "ClinovaAdmin2026!"},
     )
     return login_res.json()["access_token"]
 
 
 @pytest.mark.asyncio
 async def test_audit_logging_trail(async_client: AsyncClient):
-    token = await get_doctor_token(async_client)
+    token = await get_admin_token(async_client)
     headers = {"Authorization": f"Bearer {token}"}
 
     # Query audit logs
