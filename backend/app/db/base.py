@@ -13,7 +13,7 @@ from app.models.facility import Facility  # noqa: E402, F401
 from app.models.patient import Patient  # noqa: E402, F401
 from app.models.consultation import Consultation, ConsultationStatus, TriageLevel  # noqa: E402, F401
 from app.models.case import TriageCase  # noqa: E402, F401
-from app.models.document import Document, DocumentType, DocumentStatus  # noqa: E402, F401
+from app.models.document import Document, DocumentType, DocumentStatus, DocumentArtifact, ScanStatus, ArtifactType  # noqa: E402, F401
 from app.models.job import BackgroundJob, JobStatus, JobType  # noqa: E402, F401
 from app.models.audit import AuditLog  # noqa: E402, F401
 

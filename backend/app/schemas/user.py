@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     email: str = Field(..., max_length=255, description="Email address")
     full_name: str = Field(..., min_length=2, max_length=100)
     role: UserRole = UserRole.PATIENT
+    facility_id: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -17,6 +18,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[UserRole] = None
+    facility_id: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
 

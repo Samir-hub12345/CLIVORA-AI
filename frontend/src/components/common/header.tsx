@@ -47,6 +47,7 @@ export const Header: React.FC = () => {
       return [
         { label: "Patient Intake", href: "/intake" },
         { label: "My Records", href: "/dashboard" },
+        { label: "Documents", href: "/documents" },
       ];
     }
 
@@ -54,6 +55,7 @@ export const Header: React.FC = () => {
       return [
         { label: "Patient Intake", href: "/intake" },
         { label: "Review Queue", href: "/review" },
+        { label: "Documents", href: "/documents" },
         { label: "Staff Dashboard", href: "/dashboard" },
       ];
     }
@@ -62,6 +64,7 @@ export const Header: React.FC = () => {
       return [
         { label: "Review Queue", href: "/review" },
         { label: "EHR Directory", href: "/patients" },
+        { label: "Documents", href: "/documents" },
         { label: "Doctor Dashboard", href: "/dashboard" },
       ];
     }
@@ -69,11 +72,12 @@ export const Header: React.FC = () => {
     if (isAdmin) {
       return [
         { label: "Audit Trail", href: "/audit" },
+        { label: "Documents", href: "/documents" },
         { label: "Admin Console", href: "/dashboard" },
       ];
     }
 
-    return [{ label: "Dashboard", href: "/dashboard" }];
+    return [{ label: "Dashboard", href: "/dashboard" }, { label: "Documents", href: "/documents" }];
   };
 
   const authNavItems = getAuthenticatedNavItems();

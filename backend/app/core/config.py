@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,9 +16,15 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/clinova"
     REDIS_URL: str = "redis://localhost:6379/0"
     
-    # Object Storage
+    # Object Storage & Documents
     STORAGE_PROVIDER: str = "local_object_store"  # "local_object_store", "s3", "minio"
     STORAGE_LOCAL_DIR: str = "storage_data"
+    STORAGE_BUCKET: str = "medical-documents"
+    MAX_FILE_SIZE_BYTES: int = 500 * 1024 * 1024  # 500 MB limit for medical files
+    PRESIGNED_URL_TTL_SECONDS: int = 900  # 15 minutes
+    SCAN_ENABLED: bool = True
+    CLAMAV_HOST: Optional[str] = None
+    CLAMAV_PORT: int = 3310
     
     # CORS
     CORS_ORIGINS: Union[List[str], str] = [

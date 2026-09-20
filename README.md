@@ -251,7 +251,7 @@ npm run dev
 
 ## 🧪 Running Automated Tests
 
-### Backend Pytest Suite (34 Tests — 100% Pass Rate)
+### Backend Pytest Suite (47 Tests — 100% Pass Rate)
 
 Run the full automated test suite inside the container:
 
@@ -260,6 +260,7 @@ docker compose exec backend pytest -v
 ```
 
 *Tests cover:*
+* **Phase 3 Medical Documents & Object Storage (13 tests):** Valid PDF/image uploads with SHA-256 integrity, magic byte file signature validation (PDF, PNG, JPEG, TIFF, WEBP, DICOM) and disguised executable/script rejection (`MZ`, `ELF`, shell), path traversal sanitization, anti-malware scanning with unmapped quarantine vault isolation & HTTP 403 blocks, IDOR cross-patient isolation, HMAC-SHA256 presigned access tokens, document versioning & clinical amendment lineage (`POST /{id}/amend`), derived analytical artifacts (`document_artifacts`), soft deletion & retention compliance, zero-buffering 64KB chunked large file streaming (10MB–500MB), cross-facility multi-tenant isolation, anonymous denial, and search/filtering/pagination.
 * **Phase 2 Clinical Architecture (11 tests):** Clinical encounters lifecycle, discrete observations/vitals & LOINC verification, allergies & intolerances, medication regimens, diagnoses with AI attribution & clinician verification, clinical notes immutability & amendment audit tracking, referral management, multi-tenancy cross-facility isolation, patient multi-system identifiers & auto-MRN, longitudinal patient timeline aggregation, and synthetic scale benchmark (1,000+ observations < 5ms).
 * **Phase 1 Foundation & Security (23 tests):** Anonymization, Aadhaar redaction, Risk engine breathing/cardiovascular rules, Routine presentations, Non-diagnostic triage note synthesis, Consultation lifecycle, EHR patient CRUD, Authentication, IDOR cross-patient isolation (OWASP API1:2023), Health liveness & readiness (PostgreSQL + Redis ping), Multi-facility scoping, Object storage lifecycle & MIME/traversal validation, and Asynchronous background task queues.
 
@@ -270,6 +271,17 @@ cd frontend
 npx tsc --noEmit
 npm run build
 ```
+
+---
+
+## 📚 Architectural & Clinical Documentation
+
+* **[Medical Document Architecture](docs/DOCUMENT_ARCHITECTURE.md)**: Metadata schema, magic byte detection table, quarantine isolation, immutable amendment versioning, and derived artifacts.
+* **[Object Storage Architecture](docs/OBJECT_STORAGE_ARCHITECTURE.md)**: Storage backend abstraction (`BaseStorageBackend`, `LocalStorageBackend`, `S3StorageBackend`), bucket key hierarchy, zero-buffering streaming pipeline, and HMAC presigned URLs.
+* **[Clinical Data Model & EHR Architecture](docs/CLINICAL_DATA_MODEL.md)**: Encounters, observations, diagnoses, notes, allergies, medications, and referrals.
+* **[Database Schema & Tenancy Guide](docs/DATABASE_SCHEMA.md)**: PostgreSQL schemas, indexes, and multi-tenant isolation.
+* **[Phase 3 Inspection Report](docs/PHASE_3_INSPECTION_REPORT.md)**: Pre-implementation audit and final post-implementation re-inspection matrix.
+* **[Phase 3 Completion Report](docs/PHASE_3_COMPLETION_REPORT.md)**: Formal GO certification and verification results.
 
 ---
 

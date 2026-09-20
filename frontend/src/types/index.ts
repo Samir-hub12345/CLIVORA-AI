@@ -230,3 +230,57 @@ export interface ReferralNote {
   timestamp: string;
   footer_disclaimer: string;
 }
+
+export interface DocumentArtifact {
+  id: string;
+  document_id: string;
+  artifact_type: string;
+  filename: string;
+  mime_type: string;
+  file_size_bytes: number;
+  checksum_sha256?: string;
+  storage_key?: string;
+  storage_provider?: string;
+  content_text?: string;
+  created_at: string;
+}
+
+export interface MedicalDocument {
+  id: string;
+  patient_id?: string;
+  encounter_id?: string;
+  consultation_id?: string;
+  case_id?: string;
+  facility_id?: string;
+  document_type: string;
+  filename: string;
+  safe_filename?: string;
+  mime_type: string;
+  detected_mime_type?: string;
+  file_size_bytes: number;
+  checksum_sha256: string;
+  checksum_algorithm?: string;
+  storage_key: string;
+  storage_provider: string;
+  storage_bucket?: string;
+  status: string;
+  scan_status: string;
+  scan_details?: string;
+  quarantined_at?: string;
+  version: number;
+  parent_document_id?: string;
+  is_current_version: boolean;
+  deleted_at?: string;
+  uploaded_by?: string;
+  created_at: string;
+  updated_at: string;
+  artifacts?: DocumentArtifact[];
+}
+
+export interface PresignedUrlResponse {
+  document_id: string;
+  filename: string;
+  access_url: string;
+  expires_in_seconds: number;
+  expires_at: string;
+}

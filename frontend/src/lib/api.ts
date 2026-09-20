@@ -12,6 +12,9 @@ import {
   TranslationResult,
   ReferralNote,
   OCRField,
+  MedicalDocument,
+  DocumentArtifact,
+  PresignedUrlResponse,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -89,6 +92,10 @@ export async function fetchApi<T>(
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+
+  if (options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
 
   if (token && !headers["Authorization"]) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -506,6 +513,76 @@ export const api = {
   async toggleUserStatus(userId: string, isActive: boolean) {
     return fetchApi<User>(`/api/v1/auth/users/${userId}/status?is_active=${isActive}`, {
       method: "PUT",
+    });
+  },
+};
+
+export const documentsApi = {
+  async listDocuments(params?: {
+    patient_id?: string;
+    document_type?: string;
+    status?: string;
+    facility_id?: string;
+    include_archived?: boolean;
+    skip?: number;
+    limit?: number;
+  }) {
+    const q = new URLSearchParams();
+    if (params?.patient_id) q.set("patient_id", params.patient_id);
+    if (params?.document_type) q.set("document_type", params.document_type);
+    if (params?.status) q.set("status", params.status);
+    if (params?.facility_id) q.set("facility_id", params.facility_id);
+    if (params?.include_archived) q.set("include_archived", "true");
+    if (params?.skip) q.set("skip", String(params.skip));
+    if (params?.limit) q.set("limit", String(params.limit));
+
+    const qs = q.toString() ? `?${q.toString()}` : "";
+    return fetchApi<MedicalDocument[]>(`/api/v1/documents${qs}`);
+  },
+
+  async uploadDocument(formData: FormData) {
+    return fetchApi<MedicalDocument>("/api/v1/documents/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  async getDocument(id: string) {
+    return fetchApi<MedicalDocument>(`/api/v1/documents/${id}`);
+  },
+
+  async getPresignedUrl(id: string, expiresInMinutes: number = 15) {
+    return fetchApi<PresignedUrlResponse>(
+      `/api/v1/documents/${id}/presigned-url?expires_in_minutes=${expiresInMinutes}`
+    );
+  },
+
+  async amendDocument(id: string, formData: FormData) {
+    return fetchApi<MedicalDocument>(`/api/v1/documents/${id}/amend`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  async deleteDocument(id: string) {
+    return fetchApi<{ message: string; document_id: string }>(`/api/v1/documents/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  async listArtifacts(documentId: string) {
+    return fetchApi<DocumentArtifact[]>(`/api/v1/documents/${documentId}/artifacts`);
+  },
+
+  async createArtifact(documentId: string, payload: {
+    artifact_type: string;
+    filename: string;
+    mime_type: string;
+    content_text?: string;
+  }) {
+    return fetchApi<DocumentArtifact>(`/api/v1/documents/${documentId}/artifacts`, {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
   },
 };

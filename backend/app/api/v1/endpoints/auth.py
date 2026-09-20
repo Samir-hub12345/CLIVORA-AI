@@ -36,6 +36,7 @@ async def register(
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
         role=user_in.role,
+        facility_id=user_in.facility_id,
         is_active=True,
     )
     db.add(user)
