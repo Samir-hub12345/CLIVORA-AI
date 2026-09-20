@@ -138,6 +138,15 @@ async def get_consultation(
             detail="Consultation record not found.",
         )
 
+    # Resource-level authorization (IDOR protection):
+    # Patient role can ONLY view their own consultation records
+    if current_user.role == UserRole.PATIENT:
+        if not consultation.patient or consultation.patient.email != current_user.email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to another patient's consultation records.",
+            )
+
     await AuditService.log_event(
         db=db,
         action="CONSULTATION_READ",

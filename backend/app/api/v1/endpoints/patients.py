@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.core.deps import get_current_user, get_current_clinician, get_current_doctor, get_client_ip
 from app.db.session import get_db
 from app.models.patient import Patient
+from app.models.identifier import PatientIdentifier, IdentifierType
 from app.models.user import User, UserRole
 from app.schemas.patient import PatientCreate, PatientUpdate, PatientResponse, PatientListResponse
 from app.services.audit import AuditService
@@ -34,6 +35,16 @@ async def list_patients(
 ):
     """Search and retrieve patient directory records (Clinicians only)."""
     stmt = select(Patient)
+
+    # Multi-tenant facility isolation for non-admin clinicians
+    if current_user.role != UserRole.ADMIN and current_user.facility_id:
+        stmt = stmt.where(
+            or_(
+                Patient.facility_id == current_user.facility_id,
+                Patient.facility_id.is_(None),
+            )
+        )
+
     if q and q.strip():
         search = f"%{q.strip()}%"
         stmt = stmt.where(
@@ -89,8 +100,22 @@ async def create_patient(
         mrn = generate_mrn()
 
     patient_data = patient_in.model_dump(exclude={"mrn"})
+    if not patient_data.get("facility_id") and current_user.facility_id:
+        patient_data["facility_id"] = current_user.facility_id
+
     patient = Patient(**patient_data, mrn=mrn)
     db.add(patient)
+    await db.flush()
+
+    # Automatically create primary MRN identifier in patient_identifiers
+    primary_id = PatientIdentifier(
+        patient_id=patient.id,
+        identifier_type=IdentifierType.MRN,
+        identifier_value=mrn,
+        issuing_system="Clinova EHR",
+        is_primary=True,
+    )
+    db.add(primary_id)
     await db.commit()
     await db.refresh(patient)
 
@@ -185,6 +210,12 @@ async def get_patient_profile(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to another patient's medical records.",
             )
+    elif current_user.role != UserRole.ADMIN and current_user.facility_id and patient.facility_id:
+        if current_user.facility_id != patient.facility_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Patient belongs to another healthcare facility.",
+            )
 
     await AuditService.log_event(
         db=db,
@@ -218,6 +249,13 @@ async def update_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Patient record not found.",
         )
+
+    if current_user.role != UserRole.ADMIN and current_user.facility_id and patient.facility_id:
+        if current_user.facility_id != patient.facility_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Patient belongs to another healthcare facility.",
+            )
 
     update_data = patient_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -257,6 +295,13 @@ async def delete_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Patient record not found.",
         )
+
+    if current_user.role != UserRole.ADMIN and current_user.facility_id and patient.facility_id:
+        if current_user.facility_id != patient.facility_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Patient belongs to another healthcare facility.",
+            )
 
     mrn = patient.mrn
     await db.delete(patient)

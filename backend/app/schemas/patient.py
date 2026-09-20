@@ -12,6 +12,7 @@ class PatientBase(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     email: Optional[str] = Field(None, max_length=255)
     emergency_contact: Optional[str] = Field(None, max_length=255)
+    facility_id: Optional[str] = None
     allergies: Optional[str] = None
     current_medications: Optional[str] = None
     medical_history: Optional[str] = None
@@ -30,6 +31,7 @@ class PatientUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     emergency_contact: Optional[str] = None
+    facility_id: Optional[str] = None
     allergies: Optional[str] = None
     current_medications: Optional[str] = None
     medical_history: Optional[str] = None

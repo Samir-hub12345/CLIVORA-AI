@@ -98,14 +98,20 @@ CLINOVA AI maintains a comprehensive, production-grade technical and clinical do
 
 | Document | Primary Focus | Target Audience |
 | :--- | :--- | :--- |
+| **[docs/DATABASE_ARCHITECTURE.md](docs/DATABASE_ARCHITECTURE.md)** | Phase 2 full clinical database spec: 18 tables, Mermaid ERD, lifecycles, and indexes. | System Architects, Database Engineers |
+| **[docs/PHASE_2_COMPLETION_REPORT.md](docs/PHASE_2_COMPLETION_REPORT.md)** | Phase 2 completion declaration, migration verification, scaling benchmarks, GO verdict. | Technical Leads, Evaluators |
+| **[docs/PHASE_2_INSPECTION_REPORT.md](docs/PHASE_2_INSPECTION_REPORT.md)** | Phase 2 pre/post audit, schema gap analysis, and before-vs-after comparison matrix. | System Architects, Auditors |
+| **[docs/PHASE_1_COMPLETION_REPORT.md](docs/PHASE_1_COMPLETION_REPORT.md)** | Official Phase 1 completion declaration, verification matrix, test evidence, GO verdict. | Engineering Leads, Evaluators |
+| **[docs/PHASE_1_FOUNDATION.md](docs/PHASE_1_FOUNDATION.md)** | Phase 1 technical specification: migrations, object storage, workers, multi-facility. | Backend Engineers, SREs |
+| **[docs/PHASE_1_INSPECTION_REPORT.md](docs/PHASE_1_INSPECTION_REPORT.md)** | Baseline freeze and re-inspection matrix for Phase 1 foundation. | System Architects, Auditors |
 | **[FEATURES.md](FEATURES.md)** | Multimodal intake, risk engine, queue, review gate, referrals, demo hub. | Clinicians, Product Owners, Developers |
 | **[INFRASTRUCTURE.md](INFRASTRUCTURE.md)** | Topology, Docker Compose, ports, PM2, systemd, TLS, hardware profiles. | DevOps, SREs, Systems Administrators |
 | **[SECURITY.md](SECURITY.md)** | DISHA/ABDM compliance, PII/Aadhaar scrubbing, JWT, audit logs, purge. | Security Engineers, Compliance Officers |
-| **[TESTING.md](TESTING.md)** | 15 backend tests, standalone vs. Docker testing, frontend lint, checklist. | QA Engineers, Backend Developers |
+| **[TESTING.md](TESTING.md)** | Automated test suite (34 tests), Docker testing, frontend build, checklist. | QA Engineers, Backend Developers |
 | **[ROADMAP.md](ROADMAP.md)** | Phased roadmap: MTS pediatric matrix, PWA, Bhashini, ABDM, biomarkers. | Clinical Informatics, Engineering Leads |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | End-to-end data flow, neuro-symbolic patterns, subsystem architecture. | Software Architects, Full-Stack Devs |
 | **[API_SPECIFICATION.md](API_SPECIFICATION.md)**| REST API endpoints, schemas, authentication, status codes, examples. | Backend & Frontend API Integrators |
-| **[clinical-rules.md](clinical-rules.md)** | Deterministic triage rules (`TRIAGE-R01`â€“`R06`), safety thresholds. | Medical Officers, Informatics Reviewers |
+| **[clinical-rules.md](clinical-rules.md)** | Deterministic triage rules (`TRIAGE-R01`–`R06`), safety thresholds. | Medical Officers, Informatics Reviewers |
 | **[deploy.md](deploy.md)** | Step-by-step production deployment, Docker, bare-metal, disaster recovery. | Infrastructure & DevOps Teams |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contributor setup, branching, git guidelines, validation checklist. | Open-Source Contributors |
 | **[CHANGELOG.md](CHANGELOG.md)** | Semantic release history and implemented vs. planned status matrix. | Maintainers & Evaluators |
@@ -136,38 +142,56 @@ CLINOVA-AI/
 â”‚   â”œâ”€â”€ package.json
 â”‚   â””â”€â”€ Dockerfile
 â”‚
-â”œâ”€â”€ backend/
-â”‚   â”œâ”€â”€ app/
-â”‚   â”‚   â”œâ”€â”€ api/v1/endpoints/
-â”‚   â”‚   â”‚   â”œâ”€â”€ cases.py                    # Triage cases CRUD & queue
-â”‚   â”‚   â”‚   â”œâ”€â”€ intake.py                   # Speech, translation & OCR endpoints
-â”‚   â”‚   â”‚   â”œâ”€â”€ review.py                   # Review actions & referral generation
-â”‚   â”‚   â”‚   â”œâ”€â”€ auth.py                     # Authentication & JWT
-â”‚   â”‚   â”‚   â”œâ”€â”€ patients.py                 # EHR patient charts
-â”‚   â”‚   â”‚   â””â”€â”€ audit.py                    # HIPAA-ready audit logging
-â”‚   â”‚   â”œâ”€â”€ core/                           # Config, security, dependencies
-â”‚   â”‚   â”œâ”€â”€ models/                         # TriageCase, User, Patient, Consultation, AuditLog
-â”‚   â”‚   â”œâ”€â”€ schemas/                        # Pydantic request/response models
-â”‚   â”‚   â”œâ”€â”€ services/                       # Anonymizer, RiskEngine, Speech, Translation, OCR, Gemini
-â”‚   â”‚   â””â”€â”€ main.py                         # FastAPI factory & synthetic seed data
-â”‚   â”œâ”€â”€ tests/                              # Automated Pytest suite (15 passing tests)
-â”‚   â”œâ”€â”€ requirements.txt
-â”‚   â””â”€â”€ Dockerfile
-â”‚
-â”œâ”€â”€ docker-compose.yml
-â”œâ”€â”€ .env.example
-â”œâ”€â”€ README.md
-â”œâ”€â”€ FEATURES.md
-â”œâ”€â”€ INFRASTRUCTURE.md
-â”œâ”€â”€ SECURITY.md
-â”œâ”€â”€ TESTING.md
-â”œâ”€â”€ ROADMAP.md
-â”œâ”€â”€ ARCHITECTURE.md
-â”œâ”€â”€ API_SPECIFICATION.md
-â”œâ”€â”€ clinical-rules.md
-â”œâ”€â”€ deploy.md
-â”œâ”€â”€ CONTRIBUTING.md
-â””â”€â”€ CHANGELOG.md
+├── backend/
+│   ├── alembic/                         # Database schema migrations (Alembic async)
+│   ├── app/
+│   │   ├── api/v1/endpoints/
+│   │   │   ├── cases.py                 # Triage cases CRUD & queue
+│   │   │   ├── intake.py                # Speech, translation & OCR endpoints
+│   │   │   ├── review.py                # Review actions & referral generation
+│   │   │   ├── auth.py                  # Authentication & JWT
+│   │   │   ├── patients.py              # EHR patient charts & multi-identifiers
+│   │   │   ├── encounters.py            # Clinical encounters lifecycle & visits
+│   │   │   ├── clinical.py              # Observations/vitals, allergies, meds, notes, diagnoses, referrals, timeline
+│   │   │   ├── audit.py                 # HIPAA-ready audit logging
+│   │   │   ├── documents.py             # Object storage upload/download & metadata
+│   │   │   ├── facilities.py            # Multi-facility & tenant management
+│   │   │   ├── jobs.py                  # Background asynchronous task queue
+│   │   │   └── health.py                # Liveness & Readiness health probes
+│   │   ├── core/                        # Config, security, dependencies, Redis pool
+│   │   ├── models/                      # 18 Normalized Entities: Facility, User, Patient, PatientIdentifier,
+│   │   │                                # Encounter, ClinicalObservation, Allergy, Medication, Condition,
+│   │   │                                # Diagnosis, ClinicalNote, NoteAmendment, AIRun, Referral,
+│   │   │                                # TriageCase, Consultation, Document, BackgroundJob, AuditLog
+│   │   ├── schemas/                     # Pydantic request/response models & clinical schemas
+│   │   ├── services/                    # Anonymizer, RiskEngine, Speech, Translation, OCR, Gemini, Storage, TaskManager
+│   │   └── main.py                      # FastAPI factory, DB lifecycle & synthetic seed data
+│   ├── tests/                           # Automated Pytest suite (34 passing tests)
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── docs/                                # Clinical architecture & phase reports
+│   ├── DATABASE_ARCHITECTURE.md         # Comprehensive ER diagram, schemas, lifecycles, and indexes
+│   ├── PHASE_2_COMPLETION_REPORT.md     # Phase 2 verification report & GO decision
+│   ├── PHASE_2_INSPECTION_REPORT.md     # Phase 2 baseline freeze and re-inspection matrix
+│   ├── PHASE_1_COMPLETION_REPORT.md     # Phase 1 verification report & GO decision
+│   ├── PHASE_1_FOUNDATION.md            # Architecture, models, security & storage specs
+│   └── PHASE_1_INSPECTION_REPORT.md     # Baseline freeze & re-inspection matrix for Phase 1
+│
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── FEATURES.md
+├── INFRASTRUCTURE.md
+├── SECURITY.md
+├── TESTING.md
+├── ROADMAP.md
+├── ARCHITECTURE.md
+├── API_SPECIFICATION.md
+├── clinical-rules.md
+├── deploy.md
+├── CONTRIBUTING.md
+└── CHANGELOG.md
 ```
 
 ---
@@ -183,7 +207,25 @@ docker compose up --build
 Access the services:
 * **Frontend Web App**: [http://localhost:3000](http://localhost:3000)
 * **Backend API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Backend Health**: [http://localhost:8000/health](http://localhost:8000/health)
+* **Backend Root Health**: [http://localhost:8000/health](http://localhost:8000/health)
+* **Process Liveness Probe**: [http://localhost:8000/api/v1/health/live](http://localhost:8000/api/v1/health/live)
+* **System Readiness Probe**: [http://localhost:8000/api/v1/health/ready](http://localhost:8000/api/v1/health/ready) *(validates PostgreSQL query + Redis ping)*
+
+---
+
+### Database Migrations (Alembic Async)
+
+Apply all database schema migrations to head revision:
+
+```powershell
+docker compose exec backend alembic upgrade head
+```
+
+Verify current active migration revision:
+
+```powershell
+docker compose exec backend alembic current
+```
 
 ---
 
@@ -207,15 +249,27 @@ npm run dev
 
 ---
 
-## ðŸ§ª Running Automated Tests
+## 🧪 Running Automated Tests
 
-Run the complete 15-test automated backend test suite:
+### Backend Pytest Suite (34 Tests — 100% Pass Rate)
+
+Run the full automated test suite inside the container:
 
 ```powershell
 docker compose exec backend pytest -v
 ```
 
-*Tests cover: Anonymization, Aadhaar redaction, Risk engine breathing/cardiovascular rules, Routine presentations, Non-diagnostic triage note synthesis, Consultation lifecycle, EHR patient CRUD, and Authentication.*
+*Tests cover:*
+* **Phase 2 Clinical Architecture (11 tests):** Clinical encounters lifecycle, discrete observations/vitals & LOINC verification, allergies & intolerances, medication regimens, diagnoses with AI attribution & clinician verification, clinical notes immutability & amendment audit tracking, referral management, multi-tenancy cross-facility isolation, patient multi-system identifiers & auto-MRN, longitudinal patient timeline aggregation, and synthetic scale benchmark (1,000+ observations < 5ms).
+* **Phase 1 Foundation & Security (23 tests):** Anonymization, Aadhaar redaction, Risk engine breathing/cardiovascular rules, Routine presentations, Non-diagnostic triage note synthesis, Consultation lifecycle, EHR patient CRUD, Authentication, IDOR cross-patient isolation (OWASP API1:2023), Health liveness & readiness (PostgreSQL + Redis ping), Multi-facility scoping, Object storage lifecycle & MIME/traversal validation, and Asynchronous background task queues.
+
+### Frontend TypeScript & Build Verification
+
+```powershell
+cd frontend
+npx tsc --noEmit
+npm run build
+```
 
 ---
 

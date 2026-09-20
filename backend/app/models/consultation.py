@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 import enum
 from typing import Optional
-from sqlalchemy import String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy import String, Text, DateTime, ForeignKey, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -23,16 +23,23 @@ class TriageLevel(str, enum.Enum):
 
 
 class Consultation(Base):
+    """Clinical consultation appointment and structured clinical assessment."""
     __tablename__ = "consultations"
 
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     patient_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36), ForeignKey("patients.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     doctor_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    facility_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("facilities.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    encounter_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("encounters.id", ondelete="SET NULL"), nullable=True, index=True
     )
     
     scheduled_at: Mapped[datetime] = mapped_column(
@@ -70,3 +77,9 @@ class Consultation(Base):
     # Relationships
     patient = relationship("Patient", back_populates="consultations")
     doctor = relationship("User", back_populates="consultations_as_doctor")
+    facility = relationship("Facility")
+    encounter = relationship("Encounter")
+
+    __table_args__ = (
+        Index("ix_consultations_patient_created", "patient_id", "created_at"),
+    )

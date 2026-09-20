@@ -16,6 +16,7 @@ from app.models.user import User, UserRole
 from app.models.patient import Patient
 from app.models.consultation import Consultation, ConsultationStatus, TriageLevel
 from app.models.case import TriageCase
+from app.models.facility import Facility
 
 logger = logging.getLogger("clinova")
 
@@ -295,18 +296,45 @@ async def seed_initial_data():
             await db.commit()
             logger.info("6 synthetic public health triage cases seeded successfully.")
 
+        # Check if facilities exist
+        fac_check = await db.execute(select(Facility).limit(1))
+        if fac_check.scalar_one_or_none() is None:
+            fac1 = Facility(
+                facility_code="FAC-DISTRICT-01",
+                name="Government District Hospital",
+                facility_type="District Hospital",
+                address="Medical Enclave, Unit 4, Bhubaneswar, Odisha",
+                contact_phone="+91 (0674) 230-1999",
+                contact_email="casualty@clinova.ai",
+                is_active=True,
+            )
+            fac2 = Facility(
+                facility_code="FAC-PHC-RURAL-02",
+                name="Community Primary Health Center (PHC)",
+                facility_type="Primary Health Center",
+                address="Rural Health Post, Khordha Block",
+                contact_phone="+91 (0674) 230-1988",
+                contact_email="phc.khordha@clinova.ai",
+                is_active=True,
+            )
+            db.add_all([fac1, fac2])
+            await db.commit()
+            logger.info("Default facilities seeded.")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Lifespan manager to ensure database tables and initial seeds exist."""
+    """Lifespan manager to ensure initial seed data and graceful resource teardown."""
     try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
         await seed_initial_data()
     except Exception as e:
         logger.error(f"Error during database initialization/seeding: {e}", exc_info=True)
 
     yield
+
+    # Clean shutdown of background resources
+    from app.core.redis import close_redis_client
+    await close_redis_client()
 
 
 app = FastAPI(
