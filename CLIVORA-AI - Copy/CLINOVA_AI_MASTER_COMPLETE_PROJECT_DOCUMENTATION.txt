@@ -1,0 +1,1182 @@
+================================================================================
+CLINOVA AI — COMPLETE MASTER PROJECT ARCHITECTURE & CODEBASE DOCUMENTATION
+================================================================================
+Document Version   : 1.0.0 (Master Release)
+System Name        : Clinova AI (formerly Clivora AI)
+Tagline            : Multimodal Clinical Triage & Decision-Support System
+Target Deployment  : Primary Health Centers (PHCs), District Hospitals, 
+                     Casualty Triage, Tele-medicine Hubs, Low-Resource Clinics
+Last Updated       : September 2026
+Documentation Type : Comprehensive Technical, Clinical, Architectural, UI/UX,
+                     Security, Testing, and Workflow Manual
+================================================================================
+
+
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1.  PROJECT VISION, CLINICAL PURPOSE & BRANDING EVOLUTION
+    1.1 The Healthcare Challenge Clinova AI Solves
+    1.2 Core Clinical Philosophy & Non-Diagnostic Decision Support
+    1.3 Human-in-the-Loop (HITL) Medical Mandate
+    1.4 Branding Unification: Clivora AI to Clinova AI Migration
+    1.5 Target User Roles & Clinical Environments
+
+2.  SYSTEM ARCHITECTURE & INFRASTRUCTURE TOPOLOGY
+    2.1 High-Level Architecture Diagram
+    2.2 Microservices & Docker Orchestration
+    2.3 Frontend Stack (Next.js 14, React 18, TypeScript, Tailwind CSS)
+    2.4 Backend Stack (FastAPI, Python 3.12, Pydantic v2, SQLAlchemy 2.0 Async)
+    2.5 Data Persistence Layer (PostgreSQL 16 Relational Engine)
+    2.6 Caching, Pub/Sub & Ephemeral Storage (Redis 7)
+    2.7 Networking, Reverse Proxy, Ports & CORS Security Policies
+    2.8 Environment Configuration & Secret Management
+
+3.  FRONTEND WEB APPLICATION: EVERY PAGE, ROUTE, MODAL & COMPONENT
+    3.1 Global Theme, Layout & Navigation Architecture
+    3.2 The Master Landing Page ("/") — Comprehensive Section Breakdown
+        3.2.1 Global Header & Navigation Bar
+        3.2.2 Hero Section & Instant Triage Actions
+        3.2.3 Clinical Trust, Compliance & Statistical Badges
+        3.2.4 "Why Clinova AI" — Healthcare Problem Framing
+        3.2.5 "How It Works" — 4-Stage Clinical Pipeline
+        3.2.6 Core Multimodal Features Showcase
+        3.2.7 "Who Is Clinova AI For?" — Persona Cards
+        3.2.8 AI + Human-in-the-Loop Safeguards Section
+        3.2.9 Patient Privacy, Data Sovereignty & PII Scrubbing
+        3.2.10 Call-To-Action (CTA) & Emergency Casualty Notice
+        3.2.11 Healthcare Enterprise Footer
+    3.3 Authentication Flow ("/login") & 1-Click Role Switcher
+    3.4 User Registration Flow ("/register")
+    3.5 Role Routing & Onboarding Portal ("/get-started")
+    3.6 Multimodal Patient Intake Portal ("/intake")
+        3.6.1 Patient Demographics & Consent Collection
+        3.6.2 Voice Audio Recording & Regional Speech-to-Text
+        3.6.3 Pathology Report Upload & OCR Parameter Extraction
+        3.6.4 Clinical Vitals Entry & Physical Observation Recording
+    3.7 Unified Role-Adaptive Clinical Dashboard ("/dashboard")
+        3.7.1 Patient Dashboard View
+        3.7.2 Staff / Triage Nurse Dashboard View
+        3.7.3 Attending Doctor Clinical Dashboard View
+        3.7.4 Facility Administrator Dashboard View
+    3.8 Patient Directory & Longitudinal Health Records ("/patients" & "/patients/[id]")
+    3.9 Clinical Consultations & Tele-Triage Management ("/consultations")
+    3.10 Clinician Case Review Queue ("/review")
+    3.11 Doctor's One-Screen Clinical Workspace ("/review/case/[caseId]")
+    3.12 Medical Transfer & Referral Document Generator ("/review/case/[caseId]/referral")
+    3.13 HIPAA & ABDM Compliant System Audit Log ("/audit")
+    3.14 Interactive Clinical Simulation Playground ("/demo")
+    3.15 Rapid Emergency Triage Screen ("/triage")
+
+4.  ADAPTIVE LOW-BANDWIDTH & REAL-TIME NETWORK RESILIENCE ENGINE
+    4.1 Problem Statement: Healthcare Delivery in Low-Connectivity Regions
+    4.2 Network State Machine (Good, Normal, Slow, Offline)
+    4.3 Dynamic Network Monitoring & RTT Telemetry
+    4.4 Automatic UI/UX Adaptation & Degradation Strategies
+    4.5 Offline Data Ingestion & Background Sync Queue (IndexedDB / LocalStorage)
+    4.6 Manual Low-Bandwidth Override Control
+
+5.  ARTIFICIAL INTELLIGENCE & CLINICAL REASONING ENGINE
+    5.1 Large Language Model Integration (Google Gemini 1.5 Pro / Flash)
+    5.2 Prompt Engineering & Clinical Formatting Guardrails
+    5.3 Automated SOAP Note Generation (Subjective, Objective, Assessment, Plan)
+    5.4 Pathology & Lab Report OCR Engine (Tesseract / Computer Vision)
+    5.5 Regional Speech-to-Text Pipeline (English, Hindi, Odia)
+    5.6 Automated PII Anonymization Engine (Indian Aadhaar, Phone, Email Stripping)
+
+6.  DETERMINISTIC CLINICAL RULE ENGINE & RED-FLAG TRIAGE
+    6.1 Why Machine Learning Alone Is Insufficient in Emergency Triage
+    6.2 Rule R01: Acute Coronary Syndrome & Ischemic Chest Pain
+    6.3 Rule R02: Severe Respiratory Distress & SpO2 Hypoxemia
+    6.4 Rule R03: Acute Stroke / Neurological Deficit (FAST Protocol)
+    6.5 Rule R04: Severe Pediatric Dehydration & Lethargy
+    6.6 Rule R05: Severe Sepsis Warning & Hemodynamic Instability
+    6.7 Rule R06: Routine & Non-Emergent Symptom Routing
+    6.8 Standard 5-Tier Emergency Severity Index (ESI) Mapping
+
+7.  BACKEND DATABASE SCHEMAS & DATA MODELS
+    7.1 User Model (`users`)
+    7.2 Patient Model (`patients`)
+    7.3 Consultation Model (`consultations`)
+    7.4 Triage Case Model (`triage_cases`)
+    7.5 Audit Log Model (`audit_logs`)
+    7.6 Data Relationships, Foreign Keys & Cascading Policies
+
+8.  REST API SPECIFICATION & BACKEND ENDPOINTS
+    8.1 Authentication & User Management Endpoints (`/api/v1/auth`)
+    8.2 Patient Directory Endpoints (`/api/v1/patients`)
+    8.3 Triage & Intake Case Endpoints (`/api/v1/cases`)
+    8.4 Clinical Consultation Endpoints (`/api/v1/consultations`)
+    8.5 System Health, Diagnostics & Telemetry (`/api/v1/health`)
+    8.6 Audit Logging & Security Trail Endpoints
+
+9.  SECURITY, PRIVACY, COMPLIANCE & GOVERNANCE
+    9.1 Role-Based Access Control (RBAC) Architecture
+    9.2 Cryptographic Token Authentication (JWT HS256)
+    9.3 Password Hashing & Salt Standards (Bcrypt)
+    9.4 Immutable Audit Trails & Forensic Event Logging
+    9.5 Non-Diagnostic Legal Framing & Medical Disclaimers
+    9.6 HIPAA & Ayushman Bharat Digital Mission (ABDM) Preparedness
+
+10. VERIFICATION, TESTING & QUALITY ASSURANCE
+    10.1 Automated Pytest Suite Architecture & 17 Unit/Integration Tests
+    10.2 Frontend TypeScript Type-Checking (`tsc --noEmit`)
+    10.3 Cross-Role Authentication & Access Control Verification
+    10.4 Container Health Check Matrix
+
+11. OPERATIONAL PLAYBOOK & SERVICE EXECUTION GUIDE
+    11.1 Prerequisites & Development Environment Setup
+    11.2 Single-Command Docker Deployment (`docker compose up -d`)
+    11.3 Database Seeding & Default Clinical Demo Credentials
+    11.4 Troubleshooting Common Deployment Anomalies
+    11.5 Complete Project File Tree
+
+================================================================================
+
+
+================================================================================
+SECTION 1: PROJECT VISION, CLINICAL PURPOSE & BRANDING EVOLUTION
+================================================================================
+
+1.1 The Healthcare Challenge Clinova AI Solves
+Across primary healthcare centers, public district hospitals, emergency casualty
+departments, and rural community clinics worldwide, clinical teams face severe
+structural challenges:
+1. Overwhelming Patient Volumes: Emergency departments and outpatient clinics
+   experience severe overcrowding, leading to critical delays in identifying
+   time-sensitive emergencies.
+2. Clinical Burnout & Documentation Burden: Clinicians spend up to 40% of their
+   working shifts entering medical notes, vitals, and structured documentation
+   instead of examining patients.
+3. Rural Specialist Scarcity: Remote health centers frequently operate without
+   on-site senior specialists or cardiologists, forcing junior staff or nursing
+   officers to make complex triage determinations with limited support.
+4. Multimodal & Multi-Lingual Barriers: Patients present symptoms verbally in
+   regional languages, carry physical paper pathology reports (such as Complete
+   Blood Count laboratory printouts), and describe symptoms with varying levels
+   of health literacy.
+
+Clinova AI was conceived and built specifically to resolve these bottlenecks by
+providing a unified, multimodal, role-separated clinical triage and documentation
+platform that automates intake, standardizes clinical summaries, highlights red
+flags deterministically, and prepares ready-to-sign SOAP notes for doctors.
+
+1.2 Core Clinical Philosophy & Non-Diagnostic Decision Support
+A foundational principle embedded in every layer of Clinova AI is:
+"CLINOVA AI NEVER DIAGNOSES PATIENTS."
+
+In medical informatics, autonomous AI diagnostic claims create catastrophic
+liability, risk algorithmic hallucination, and violate healthcare regulations.
+Instead, Clinova AI operates strictly as a Clinical Decision Support (CDS) tool.
+- It normalizes messy patient descriptions into medical terminology.
+- It extracts structured laboratory parameters from uploaded photos or scans.
+- It flags physiological red flags (e.g., tachycardia, hypoxemia, hypotension).
+- It synthesizes structured SOAP (Subjective, Objective, Assessment, Plan) drafts.
+- It presents everything to a human physician on a single screen for review.
+The attending physician remains the sole decision-maker who approves, edits, or
+overrides any triage category or clinical recommendation.
+
+1.3 Human-in-the-Loop (HITL) Medical Mandate
+The platform implements an enforced 4-step Human-in-the-Loop workflow:
+1. Patient or Front-Desk Staff initiates intake (voice, text, documents, vitals).
+2. Clinova AI analyzes multimodal inputs, anonymizes personal data, evaluates
+   deterministic safety rules, and drafts a clinical brief.
+3. Triage Nurse / Staff reviews baseline vitals, confirms intake completeness,
+   and routes the patient to an attending doctor or specific clinical specialty.
+4. Licensed Physician reviews the patient chart, verified vitals, OCR data,
+   and synthesized draft, then applies digital sign-off, records the medical plan,
+   and issues a formal referral note if secondary escalation is required.
+
+1.4 Branding Unification: Clivora AI to Clinova AI Migration
+Originally titled "Clivora AI" in early exploratory prototypes, the platform
+underwent a comprehensive audit and rebranding migration to "Clinova AI".
+- All user-facing interfaces, browser `<title>` tags, headers, footers, demo
+  cards, and email domains were unified under "Clinova AI" (e.g., doctor@clinova.ai).
+- Stray experimental wording (such as "Before AI use only continue") was audited
+  and replaced with clear, transparent clinical explanations.
+- Underlying database names and technical service containers maintained backward
+  compatibility to guarantee zero data loss and avoid breaking database volumes.
+
+1.5 Target User Roles & Clinical Environments
+Clinova AI provides specialized, tailored user experiences for four key personas:
+1. Patient / Family Member: Accessible intake, voice-first interaction, regional
+   language support, real-time case tracking, and emergency facility numbers.
+2. Triage Staff / Nurse: Rapid patient queue, front-desk vitals capture modal,
+   acuity classification, room assignment, and doctor routing.
+3. Attending Physician / Doctor: One-Screen Review Workspace, side-by-side
+   intake narrative and vitals, AI SOAP note editor, one-click case sign-off,
+   and clinical referral note export.
+4. Facility Administrator / CMO: Hospital-wide telemetry, user account access
+   controls, AI engine health monitoring, and tamper-evident audit logging.
+
+
+================================================================================
+SECTION 2: SYSTEM ARCHITECTURE & INFRASTRUCTURE TOPOLOGY
+================================================================================
+
+2.1 High-Level Architecture Diagram
+```
++-----------------------------------------------------------------------------+
+|                            USER BROWSERS & CLIENTS                          |
+|             (Desktop Workstations, Tablets, Mobile Triage Devices)          |
++-------------------------------------+---------------------------------------+
+                                      |
+                                      | HTTP/HTTPS (Port 3000)
+                                      v
++-----------------------------------------------------------------------------+
+|                       FRONTEND CONTAINER: clinova-frontend                  |
+|  - Next.js 14 (App Router)        - React 18 & TypeScript                  |
+|  - Tailwind CSS Styling          - Adaptive Low-Bandwidth Network Engine   |
+|  - Client-side Speech Audio API   - Role-Based Dynamic Route Protection     |
++-------------------------------------+---------------------------------------+
+                                      |
+                                      | REST API / JSON (Port 8000)
+                                      | CORS Origins: localhost:3000
+                                      v
++-----------------------------------------------------------------------------+
+|                       BACKEND CONTAINER: clinova-backend                    |
+|  - FastAPI (Python 3.12)          - Uvicorn Asynchronous Server             |
+|  - Pydantic v2 Validation         - SQLAlchemy 2.0 Async ORM                |
+|  - JWT HS256 Token Auth           - Bcrypt Password Hashing                 |
+|  - Deterministic Rule Engine      - PII Anonymizer Service                  |
+|  - Gemini 1.5 Pro / Flash Client  - Tesseract OCR & Document Parser         |
+|  - Clinical Audit Logger          - Referral PDF Generator                  |
++-------------------+-------------------------------------+-------------------+
+                    |                                     |
+    PostgreSQL Wire | (Port 5432)             Redis Wire  | (Port 6379)
+                    v                                     v
++-----------------------------------+ +---------------------------------------+
+|  DATABASE: clinova-db             | |  CACHE & QUEUE: clinova-redis         |
+|  - PostgreSQL 16 Alpine           | |  - Redis 7 Alpine                     |
+|  - Asyncpg Connection Pooling     | |  - Rate Limiting State                |
+|  - Relational Schema & Indexes    | |  - Ephemeral Session Caching          |
+|  - Persistent Storage Volume      | |  - Low-Bandwidth Synchronization      |
++-----------------------------------+ +---------------------------------------+
+```
+
+2.2 Microservices & Docker Orchestration
+The system is managed via Docker Compose (`docker-compose.yml`) containing 4
+tightly integrated services communicating over a dedicated internal network:
+1. `clinova-frontend`: Builds from `./frontend/Dockerfile`, exposes port 3000.
+2. `clinova-backend`: Builds from `./backend/Dockerfile`, exposes port 8000.
+3. `clinova-db`: Uses official image `postgres:16-alpine`, exposes port 5432.
+4. `clinova-redis`: Uses official image `redis:7-alpine`, exposes port 6379.
+
+2.3 Frontend Stack
+- Framework: Next.js 14.2.35 with modern App Router (`/src/app`).
+- UI Library: React 18 with React Server Components (RSC) and Client Components.
+- Language: TypeScript with strict mode enabled (`tsc --noEmit` verified).
+- Styling: Tailwind CSS with custom clinical color palettes (Medical Cyan, Slate,
+  Emergency Red, Priority Amber, Routine Green).
+- Icons: Lucide React icons for high-contrast accessibility.
+- State Management: React Hooks (`useState`, `useEffect`, `useContext`) combined
+  with LocalStorage persistence for user sessions and network preferences.
+
+2.4 Backend Stack
+- Framework: FastAPI (Python 3.12) leveraging Starlette ASGI architecture.
+- ORM: SQLAlchemy 2.0 with asynchronous engine (`postgresql+asyncpg`).
+- Data Validation: Pydantic v2 schemas enforcing strict request/response shapes.
+- Authentication: `python-jose` for JWT encoding/decoding, `passlib[bcrypt]` for
+  secure multi-round salted password hashing.
+- AI Integration: Official Google GenAI SDK (`google-genai`) interfacing with
+  Gemini 1.5 Pro and Gemini 1.5 Flash models with fallback rule simulation.
+- PDF & OCR Utilities: `pytesseract`, `Pillow`, `PyPDF2`, `reportlab`.
+
+2.5 Data Persistence Layer (PostgreSQL 16)
+- Database Name: `clinova`
+- User: `postgres`
+- Port: `5432`
+- Schema Entities: Users, Patients, Consultations, Triage Cases, Audit Logs.
+- Features: Asynchronous connection pooling, automatic foreign key integrity,
+  timestamp indexing, and JSONB storage for dynamic clinical vitals and OCR data.
+
+2.6 Caching & Message Queue (Redis 7)
+- Service Name: `clinova-redis`
+- Port: `6379`
+- Purpose: Ephemeral token blacklist, API rate limiting, network status caching,
+  and fast queue buffering for pending offline sync cases.
+
+2.7 Networking, Ports & CORS Policies
+- Frontend Origin: `http://localhost:3000` (and `http://127.0.0.1:3000`).
+- Backend API: `http://localhost:8000` with API prefix `/api/v1`.
+- CORS Configuration: Explicitly allows GET, POST, PUT, PATCH, DELETE, OPTIONS,
+  HEAD from `http://localhost:3000` with preflight credentials validation.
+
+2.8 Environment Configuration & Secrets Management
+- Root `.env` and `backend/.env.example` configure:
+  `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`,
+  `GEMINI_API_KEY`, `ENVIRONMENT`, `CORS_ORIGINS`.
+- Frontend environment `frontend/.env.local` configures:
+  `NEXT_PUBLIC_API_URL=http://localhost:8000`.
+
+
+================================================================================
+SECTION 3: FRONTEND WEB APPLICATION: EVERY PAGE, ROUTE, MODAL & COMPONENT
+================================================================================
+
+3.1 Global Theme, Layout & Navigation Architecture
+The frontend features a unified responsive layout wrapped in `src/app/layout.tsx`.
+- Font: Inter typography for optimal clinical legibility across all screen sizes.
+- Network Banner: Top-level sticky status indicator that surfaces network
+  degradation (Normal, Slow, Offline) and offers one-click Low Bandwidth toggle.
+- Navbar: Fixed at top with blur backdrop, displaying the Clinova AI clinical
+  caduceus badge, primary navigation anchors, Low-Bandwidth Mode switch, and
+  contextual Action buttons ("Get Started" and "Sign In").
+
+3.2 The Master Landing Page ("/")
+The landing page has been engineered as a high-trust, health-tech presentation
+that immediately answers every question a visiting clinician, hospital executive,
+or patient might have. It contains 11 dedicated sections:
+
+3.2.1 Global Header & Navigation Bar
+- Brand Identity: "Clinova AI" logo with medical cyan cross icon.
+- Navigation Anchors: "Why Clinova", "How It Works", "Features", "Who It's For",
+  "Clinical Safety", "Connectivity".
+- Interactive Low-Bandwidth Toggle: Visual pill switch allowing users to test
+  or operate in reduced-data mode.
+- Auth CTA: Direct button to `/login` with clean role-switching indicator.
+
+3.2.2 Hero Section & Instant Triage Actions
+- Headline: "Intelligent Multimodal Clinical Triage for High-Pressure Healthcare".
+- Subheadline: "Accelerate emergency and outpatient intake with AI-assisted
+  symptom normalization, pathology OCR, and verified physician decision workflows.
+  Engineered for clinics, district hospitals, and low-connectivity environments."
+- Primary CTAs:
+  - "Launch Triage Intake" -> Routes directly to `/intake`.
+  - "Explore Clinician Queue" -> Routes directly to `/review`.
+  - "Interactive Demo" -> Routes to `/demo` simulation.
+- Key Hero Visual: An interactive live preview mockup displaying an emergency
+  patient card with SpO2 88%, acute chest pain red flag, and doctor sign-off.
+
+3.2.3 Clinical Trust, Compliance & Statistical Badges
+- 100% Doctor Supervised (Strict Human-in-the-Loop workflow).
+- Zero Hallucination Safeguards (Deterministic clinical safety rules R01-R06).
+- Sub-Second Triage Response (Edge-optimized rule processing).
+- Regional Dialect Support (Odia, Hindi, English speech recognition).
+- HIPAA & ABDM Compliant Architecture (End-to-end cryptographic audit trails).
+
+3.2.4 "Why Clinova AI" — Healthcare Problem Framing
+Highlights the 4 primary bottlenecks in contemporary healthcare:
+- Bottleneck 1: Diagnostic Latency & Waiting Delays.
+- Bottleneck 2: Nursing & Clinician Administrative Burnout.
+- Bottleneck 3: Critical Red-Flag Detection Gaps during triage spikes.
+- Bottleneck 4: Network Fragility in Rural and Community Primary Health Centers.
+
+3.2.5 "How It Works" — 4-Stage Clinical Pipeline
+Presents a clear visual step-by-step diagram:
+- Step 1: Multimodal Patient Intake (Voice audio in regional dialect, typed
+  narrative, mobile photo of paper blood report, or vital signs).
+- Step 2: Red Flag Extraction & Rule Engine (Automated PII anonymization,
+  instant evaluation against deterministic rules R01 to R06).
+- Step 3: Clinical Summary & SOAP Note Drafting (Gemini AI synthesizes
+  structured Subjective, Objective, Assessment, Plan documentation).
+- Step 4: Human Doctor Review, Approval & Referral (Attending physician reviews,
+  edits, digitally signs off, and exports transfer documentation).
+
+3.2.6 Core Multimodal Features Showcase
+Interactive grid detailing the 6 core pillars of the platform:
+- Feature 1: Regional Voice Intake (Speech-to-Text in Odia, Hindi, English).
+- Feature 2: Pathology & Document OCR (Instant CBC extraction: WBC, Platelets, Hb).
+- Feature 3: Deterministic Rule Safety Net (Bypasses AI for life-threatening flags).
+- Feature 4: Automated Clinical SOAP Notes (Structured clinician documentation).
+- Feature 5: Adaptive Low-Bandwidth Mode (Works seamlessly under 2G / Slow 3G).
+- Feature 6: Transfer Referral Generator (Standardized inter-hospital PDF briefs).
+
+3.2.7 "Who Is Clinova AI For?" — Persona Cards
+Comprehensive cards detailing role-tailored value:
+- For Patients & Families: Clear communication in native tongue, dignity,
+  reduced waiting confusion, transparent status tracking.
+- For Triage Nurses & Staff: Guided vitals recording, automatic severity
+  ranking, room assignment, clear escalation pathways.
+- For Attending Physicians: All critical context on a single screen, elimination
+  of repetitive charting, complete control over medical sign-off.
+- For Facility Administrators & CMOs: High throughput, real-time audit logs,
+  data security compliance, reduced malpractice liability.
+
+3.2.8 AI + Human-in-the-Loop Safeguards Section
+Deep dive into clinical safety architecture:
+- Explicit disclaimer that Clinova AI is an assistive decision-support platform.
+- Explanation of physician override capability: Any doctor can modify triage
+  level, discard AI recommendations, and input direct clinical rationale.
+- Forensic accountability: Every interaction is permanently logged with user ID,
+  timestamp, IP address, and payload diff.
+
+3.2.9 Patient Privacy, Data Sovereignty & PII Scrubbing
+- Zero Patient Data Selling policy.
+- Automatic Pre-AI Anonymization: Phone numbers, Indian 12-digit Aadhaar IDs,
+  and personal emails are stripped before LLM analysis.
+- Encrypted storage at rest (PostgreSQL) and in transit (TLS/HTTPS).
+
+3.2.10 Call-To-Action (CTA) & Emergency Casualty Notice
+- High-contrast banner inviting healthcare facilities to deploy Clinova AI.
+- Crucial Clinical Warning: Emergency Casualty Desk direct phone line (+91 0674 230-1999)
+  and national emergency helplines (112 / 108) with instructions not to use the
+  web portal for unattended acute cardiac arrest or active resuscitation.
+
+3.2.11 Healthcare Enterprise Footer
+- Comprehensive sitemap, legal terms, clinical disclaimer, copyright notice,
+  and quick status indicator of all backend microservices.
+
+3.3 Authentication Flow ("/login") & 1-Click Role Switcher
+Located at `src/app/login/page.tsx`:
+- Clean email and password input fields with client-side validation.
+- Interactive 1-Click Demo Switcher: Clinicians and auditors can test the platform
+  without typing by clicking one of four role pills:
+  1. Doctor Pill: Fills `doctor@clinova.ai` / `ClinovaDoctor2026!` (Dr. Sarah Chen).
+  2. Patient Pill: Fills `patient@clinova.ai` / `ClinovaPatient2026!` (James Miller).
+  3. Staff Pill: Fills `staff@clinova.ai` / `ClinovaStaff2026!` (Nurse Sunita Patel).
+  4. Admin Pill: Fills `admin@clinova.ai` / `ClinovaAdmin2026!` (Clinical Administrator).
+- Submits to `POST /api/v1/auth/login`, stores JWT access token in `localStorage`,
+  and automatically routes the user to their designated dashboard view.
+
+3.4 User Registration Flow ("/register")
+Located at `src/app/register/page.tsx`:
+- New user account creation with email, full name, secure password, and role.
+- Includes mandatory checkbox for healthcare data processing consent.
+- Direct audit event generation (`USER_REGISTER`) upon database commit.
+
+3.5 Role Routing & Onboarding Portal ("/get-started")
+Located at `src/app/get-started/page.tsx`:
+- Acts as a clear entry clearinghouse explaining what each portal provides:
+  - "I am a Patient seeking care" -> Launches `/intake`.
+  - "I am a Triage Nurse / Staff Member" -> Launches `/dashboard` (Staff view).
+  - "I am an Attending Doctor" -> Launches `/review`.
+  - "I am a System Administrator" -> Launches `/audit`.
+
+3.6 Multimodal Patient Intake Portal ("/intake")
+Located at `src/app/intake/page.tsx`:
+The core data collection gateway for incoming patients, structured in 4 steps:
+3.6.1 Step 1: Patient Demographics & Consent
+- Collects Patient Name, Approximate Age, Gender, Blood Group, and Phone.
+- Informed Consent Checkbox acknowledging AI decision-support assistance.
+3.6.2 Step 2: Multimodal Symptom Capture
+- Text Box: Detailed free-form chief complaint description.
+- Voice Recording Component: HTML5 MediaRecorder audio capture with audio wave
+  visualization. Language toggle for English, Hindi, or Odia. Sends audio to
+  speech engine to generate real-time transcript.
+- Document / Pathology OCR Upload: Allows dragging and dropping PDF or image
+  files of laboratory reports (e.g., CBC blood test). Extracts hemoglobin, WBC,
+  platelets, and flags abnormal reference ranges.
+3.6.3 Step 3: Clinical Vitals Entry
+- Numerical inputs for Blood Pressure (systolic/diastolic, e.g., 120/80),
+  Heart Rate (bpm), Oxygen Saturation (SpO2 %), Temperature (°C/°F), and
+  Respiratory Rate.
+3.6.4 Step 4: Submission & Real-Time Case Tracker
+- Submits structured case payload to `POST /api/v1/cases/submit`.
+- Returns synthetic case ID (e.g., `CLN-CASE-84920`) and activates a live
+  timeline tracker showing progress from "Awaiting Review" to "Doctor Examining"
+  to "Case Approved".
+
+3.7 Unified Role-Adaptive Clinical Dashboard ("/dashboard")
+Located at `src/app/dashboard/page.tsx`:
+Dynamically evaluates user role from authentication context and renders:
+3.7.1 Patient View
+- Patient Profile card with Medical Record Number (MRN: `CLN-2026-10482`), blood
+  group, documented penicillin allergies, and maintenance medications.
+- Active Triage Case Status tracker with estimated waiting times.
+- History of previous consultations and download links for referral documents.
+3.7.2 Staff / Triage Nurse View
+- Triage Queue Table: Displays incoming walk-in patients ranked by arrival time.
+- Intake Verification Modal: Allows nurse to record verified physical vitals,
+  select attending physician (`Dr. Sarah Chen, MD`), assign clinical department
+  (`Emergency Triage`, `Cardiology`, `General Medicine`), and transition case
+  status to `ready_for_doctor`.
+3.7.3 Doctor Clinical View
+- Assigned Clinical Queue showing patients routed to this specific physician.
+- Acuity indicators (`URGENT REVIEW`, `PRIORITY`, `ROUTINE`).
+- Direct action link to open the One-Screen Case Review Workspace.
+3.7.4 Facility Administrator View
+- Metric cards: Total Active Users, Cases Processed Today, Emergency Escalations.
+- System Telemetry indicators for PostgreSQL, Redis, Gemini AI, and OCR engine.
+- Quick link to HIPAA Audit Stream.
+
+3.8 Patient Directory & Longitudinal Health Records ("/patients" & "/patients/[id]")
+Located at `src/app/patients/page.tsx` and `src/app/patients/[id]/page.tsx`:
+- Full directory of 13 registered facility patients with instant search by name,
+  MRN, or contact phone.
+- Detailed Patient Profile view consolidating complete clinical history, chronic
+  conditions (e.g., Hypertension, Mild Asthma), past consultations, and
+  prescribed medications.
+
+3.9 Clinical Consultations & Tele-Triage Management ("/consultations")
+Located at `src/app/consultations/page.tsx`:
+- List of scheduled, in-progress, and completed consultations across the clinic.
+- Displays chief complaint, assigned doctor, consultation status, and triage level.
+- Full modal view to inspect the final signed clinical notes and treatment plans.
+
+3.10 Clinician Case Review Queue ("/review")
+Located at `src/app/review/page.tsx`:
+- High-density clinical queue designed for fast-paced emergency desks.
+- Filterable by Acuity (Emergency, Priority, Routine) and Status (Awaiting Review,
+  Ready for Doctor, In Review, Approved).
+- Displays patient age, gender, arrival duration, top symptoms, and rule-based
+  red-flag alert tags.
+
+3.11 Doctor's One-Screen Clinical Workspace ("/review/case/[caseId]")
+Located at `src/app/review/case/[caseId]/page.tsx`:
+The signature physician workspace that aggregates all clinical intelligence onto
+one unified screen:
+- Left Column (Patient Ground Truth):
+  - Demographic summary, visit type, and time elapsed since arrival.
+  - Original Patient Narrative with provenance badge (Voice Transcript vs. Typed).
+  - Verified Clinical Vitals recorded by nursing staff (with abnormal color coding).
+  - Pathology Report OCR values (e.g., Hb 8.2 g/dL - LOW, Platelets 85k - LOW).
+- Center Column (Clinical Intelligence & AI Synthesis):
+  - Deterministic Risk Triggers (e.g., "TRIAGE-R01: Acute Chest Pain Protocol").
+  - Synthesized Clinical Brief formatted in SOAP structure:
+    - Subjective: Normalized patient complaint and timeline.
+    - Objective: Correlated vitals and lab findings.
+    - Assessment: Possible clinical considerations (non-diagnostic).
+    - Plan: Recommended bedside actions, continuous monitoring, or lab orders.
+  - Mandatory non-diagnostic clinical disclaimer.
+- Right Column (Physician Action Panel):
+  - Assessment & Clinical Notes input field (editable by physician).
+  - Triage Acuity Level Selector (Level 1 Resuscitation to Level 5 Non-Urgent).
+  - "Approve & Sign Case" button (signs case, logs audit event, updates status).
+  - "Escalate & Generate Referral" button (routes to inter-hospital transfer).
+
+3.12 Medical Transfer & Referral Document Generator ("/review/case/[caseId]/referral")
+Located at `src/app/review/case/[caseId]/referral/page.tsx`:
+- Generates a standardized, printable inter-hospital clinical transfer summary.
+- Includes referring hospital name, attending physician credentials, receiving
+  facility, reason for referral, patient baseline vitals, and administered meds.
+- One-click "Print / Save as PDF" button with print-optimized CSS stylesheets.
+
+3.13 HIPAA & ABDM Compliant System Audit Log ("/audit")
+Located at `src/app/audit/page.tsx`:
+- Searchable, filterable ledger of all security and clinical events in the system.
+- Displays 334+ immutable audit records with columns:
+  - Timestamp (UTC ISO standard).
+  - Action Code (`LOGIN_SUCCESS`, `CASE_SUBMIT`, `VITALS_RECORDED`, `CASE_APPROVED`).
+  - Actor Email & Role.
+  - Resource Type & ID.
+  - IP Address & User Agent.
+  - Forensic Change Details.
+
+3.14 Interactive Clinical Simulation Playground ("/demo")
+Located at `src/app/demo/page.tsx`:
+- Educational and testing tool loaded with 4 pre-configured clinical archetypes:
+  1. Acute Coronary Syndrome (62yo male, radiating substernal pain, diaphoresis).
+  2. Pediatric Asthma Crisis (6yo female, wheezing, SpO2 89%, retraction).
+  3. Sepsis Presentation (74yo male, fever 39.4°C, hypotension, altered sensorium).
+  4. Routine Outpatient Rash (28yo female, localized dermatitis, normal vitals).
+- Allows instant simulation of AI synthesis, red-flag rule evaluation, and triage
+  category assignment in under 500 milliseconds.
+
+3.15 Rapid Emergency Triage Screen ("/triage")
+Located at `src/app/triage/page.tsx`:
+- Ultra-high-speed intake interface designed for mass-casualty or high-volume
+  front desks where time is limited to under 30 seconds per patient.
+
+
+================================================================================
+SECTION 4: ADAPTIVE LOW-BANDWIDTH & REAL-TIME NETWORK RESILIENCE ENGINE
+================================================================================
+
+4.1 Problem Statement: Healthcare Delivery in Low-Connectivity Regions
+Community clinics, rural primary healthcare sub-centers, and disaster response
+camps frequently operate with unstable mobile data (2G / erratic 3G), high packet
+loss, or complete internet outages. A healthcare web application that crashes or
+hangs indefinitely on a blank loading spinner when a cell tower drops is unusable.
+
+4.2 Network State Machine
+Clinova AI implements an automated 4-tier network state machine:
+1. `GOOD` (Effective type 4G / broadband, latency < 100ms, downlink > 5 Mbps):
+   - Full graphical fidelity, rich SVG animations, instant uncompressed asset
+     loading, high-resolution document previews.
+2. `NORMAL` (Standard 3G / 4G, latency 100-300ms, downlink 1.5 - 5 Mbps):
+   - Standard balanced UI, lazy loading enabled, optimized webp image delivery.
+3. `SLOW` (2G / High-latency satellite / congested 3G, latency > 300ms, downlink < 1.5 Mbps):
+   - Automatic Low-Bandwidth Mode activates:
+   - Disables heavy background gradients, decorative blurs, and animations.
+   - Converts image previews to pure textual summaries.
+   - Compresses JSON request payloads.
+   - Increases API retry timeout budgets with exponential backoff.
+   - Displays persistent banner: "Low-Bandwidth Mode Active — High Reliability".
+4. `OFFLINE` (Zero connectivity detected):
+   - Offline Mode activates:
+   - Intercepts intake form submissions and stores them locally in browser
+     LocalStorage / IndexedDB with cryptographic UUIDs.
+   - Surfaces local queuing confirmation: "Intake Saved Locally. Auto-sync will
+     trigger when connection restores."
+   - Disables remote network calls and serves cached patient directories.
+
+4.3 Dynamic Network Monitoring & RTT Telemetry
+- Implemented in `frontend/src/components/NetworkStatusIndicator.tsx` and custom
+  React hooks.
+- Continuously listens to `navigator.connection` change events (`change`, `online`,
+  `offline`).
+- Executes periodic lightweight micro-pings (`HEAD /api/v1/health`) every 15
+  seconds to measure true round-trip time (RTT) and jitter rather than relying
+  solely on synthetic browser flags.
+
+4.4 Automatic UI/UX Adaptation & Degradation Strategies
+- In Slow/Offline mode, document uploads convert from full-file multipart streaming
+  to compressed chunks or local file handles.
+- Audio recording disables cloud-based heavy neural transcription and falls back
+  to local browser speech recognition primitives (`webkitSpeechRecognition`).
+
+4.5 Offline Data Ingestion & Background Sync Queue
+- When connectivity transitions from `OFFLINE` -> `SLOW` or `GOOD`:
+  1. The network engine fires an automatic `sync` event.
+  2. It iterates through the offline storage queue.
+  3. Sequentially posts pending cases to `POST /api/v1/cases/submit`.
+  4. Displays a non-intrusive toast notification: "3 offline cases synchronized
+     with hospital server."
+
+4.6 Manual Low-Bandwidth Override Control
+- Recognizing that healthcare staff know their local conditions best, a manual
+  toggle switch is placed prominently in the global navigation bar.
+- Clinicians can force Low-Bandwidth Mode on at any time, instantly stripping
+  decorative overhead and maximizing responsiveness on low-spec hospital hardware.
+
+
+================================================================================
+SECTION 5: ARTIFICIAL INTELLIGENCE & CLINICAL REASONING ENGINE
+================================================================================
+
+5.1 Large Language Model Integration
+- Integrated with Google Gemini 1.5 Pro and Gemini 1.5 Flash via the official
+  asynchronous client (`backend/app/services/ai.py`).
+- Fallback Resilience: If the external API key is absent, rate-limited, or
+  network connectivity is severed, the backend automatically transitions to an
+  internal heuristic clinical NLP synthesizer without throwing runtime 500 errors.
+
+5.2 Prompt Engineering & Clinical Formatting Guardrails
+The system prompt enforces strict clinical persona parameters:
+- Persona: Board-Certified Emergency Medicine Clinical Documentation Specialist.
+- Tone: Objective, precise, concise, and non-presumptive.
+- Constraints:
+  - "NEVER provide a definitive medical diagnosis."
+  - "Always format assessments as non-diagnostic considerations for the doctor."
+  - "Highlight any abnormal vitals or lab values in bold."
+  - "Structure output using standard SOAP headings."
+
+5.3 Automated SOAP Note Generation
+The AI engine parses messy, unstructured multimodal inputs and transforms them
+into a standardized clinical note:
+- Subjective (S): Chief complaint, onset, character, severity, radiation,
+  associated symptoms, aggravating/relieving factors, relevant medical history.
+- Objective (O): Physical vitals (BP, HR, SpO2, Temp, RR) with reference flags,
+  plus extracted laboratory parameters (Hb, Platelets, WBC).
+- Assessment (A): Acuity categorization (Resuscitation, Emergent, Urgent, Routine),
+  differential considerations for physician evaluation, and identified red flags.
+- Plan (P): Immediate bedside nursing recommendations, suggested diagnostic
+  workup (e.g., 12-lead ECG, Troponin I, Chest X-ray), monitoring frequency.
+
+5.4 Pathology & Lab Report OCR Engine
+- Located in `backend/app/services/ocr.py`.
+- Utilizes `pytesseract` optical character recognition paired with clinical
+  regular expression parsers to extract critical blood panel parameters:
+  - Hemoglobin (Hb): Flags values < 10 g/dL (Moderate Anemia), < 7 g/dL (Severe).
+  - White Blood Cell Count (WBC): Flags values > 11,000 /µL (Leukocytosis/Infection).
+  - Platelet Count: Flags values < 100,000 /µL (Thrombocytopenia/Bleeding risk).
+  - Random Blood Sugar (RBS): Flags values > 200 mg/dL or < 70 mg/dL.
+- Extracted values include bounding confidence scores and are displayed
+  side-by-side with original scanned documents for instant clinician verification.
+
+5.5 Regional Speech-to-Text Pipeline
+- Supports real-time speech input in Odia, Hindi, and Indian English.
+- Normalizes colloquial and vernacular descriptions into standard medical terms
+  (e.g., mapping Odia phrases for "chhati re jantrana" directly to "retrosternal
+  chest pain/tightness").
+
+5.6 Automated PII Anonymization Engine
+- Located in `backend/app/services/anonymizer.py`.
+- Prior to transmitting patient narratives to any third-party cloud LLM, the
+  anonymizer executes deterministic regex scrubbing:
+  - Phone Numbers: Replaced with `[PHONE_REDACTED]`.
+  - Email Addresses: Replaced with `[EMAIL_REDACTED]`.
+  - Indian Aadhaar Numbers (12 digits, XXXX-XXXX-XXXX): Replaced with `[AADHAAR_REDACTED]`.
+  - Direct Residential Addresses: Redacted to protect patient privacy.
+
+
+================================================================================
+SECTION 6: DETERMINISTIC CLINICAL RULE ENGINE & RED-FLAG TRIAGE
+================================================================================
+
+6.1 Why Machine Learning Alone Is Insufficient in Emergency Triage
+Large Language Models are probabilistic by nature; they can occasionally under-call
+an atypical presentation or hallucinate reassuring commentary. In emergency triage,
+a failure to identify an acute myocardial infarction or impending airway compromise
+is catastrophic.
+
+Therefore, Clinova AI implements a dual-layer safety architecture:
+Layer 1: Deterministic Rule Engine (Hardcoded, non-overridable safety rules).
+Layer 2: Generative AI Documentation Engine (Assists with synthesis and formatting).
+If a patient's presentation triggers any deterministic safety rule, the case is
+IMMEDIATELY classified as High Acuity (Urgent / Emergent), irrespective of any
+AI output.
+
+6.2 Rule R01: Acute Coronary Syndrome & Ischemic Chest Pain
+- Condition: Patient presents with acute chest pain, pressure, tightness, or
+  discomfort radiating to the left arm, shoulder, neck, or jaw, accompanied by
+  diaphoresis (cold sweating) or dyspnea.
+- Triggered Action:
+  - Forces Acuity: `URGENT REVIEW` / Level 1-2.
+  - Generates Alert Badge: `TRIAGE-R01: ACUTE CORONARY SYNDROME PROTOCOL`.
+  - Mandates immediate 12-lead ECG within 10 minutes of facility arrival.
+
+6.3 Rule R02: Severe Respiratory Distress & SpO2 Hypoxemia
+- Condition: Documented oxygen saturation SpO2 < 90% on room air, OR respiratory
+  rate > 30 breaths/min, OR severe audible wheezing with stridor/retractions.
+- Triggered Action:
+  - Forces Acuity: `RESUSCITATION / EMERGENT`.
+  - Generates Alert Badge: `TRIAGE-R02: ACUTE HYPOXEMIC RESPIRATORY FAILURE`.
+  - Mandates supplemental oxygen delivery and immediate physician bedside call.
+
+6.4 Rule R03: Acute Stroke / Neurological Deficit (FAST Protocol)
+- Condition: Sudden onset facial droop, unilateral arm weakness, slurred speech,
+  or acute altered mental status within a known symptom onset window.
+- Triggered Action:
+  - Forces Acuity: `EMERGENT / STROKE CODE`.
+  - Generates Alert Badge: `TRIAGE-R03: ACUTE ISCHEMIC STROKE PROTOCOL`.
+  - Initiates immediate non-contrast head CT requisition alert.
+
+6.5 Rule R04: Severe Pediatric Dehydration & Lethargy
+- Condition: Child (< 12 years) with history of severe vomiting/diarrhea presenting
+  with lethargy, sunken eyes, dry mucous membranes, or capillary refill > 3s.
+- Triggered Action:
+  - Forces Acuity: `URGENT PEDIATRIC ESCALATION`.
+  - Generates Alert Badge: `TRIAGE-R04: SEVERE PEDIATRIC DEHYDRATION ALERT`.
+
+6.6 Rule R05: Severe Sepsis Warning & Hemodynamic Instability
+- Condition: Suspected infection combined with two or more SIRS/qSOFA criteria:
+  Systolic BP < 90 mmHg, Heart Rate > 100 bpm, Respiratory Rate > 22, Temp > 38.3°C.
+- Triggered Action:
+  - Forces Acuity: `EMERGENT / SEPSIS PROTOCOL`.
+  - Generates Alert Badge: `TRIAGE-R05: HEMODYNAMIC INSTABILITY / SEPSIS ALERT`.
+
+6.7 Rule R06: Routine & Non-Emergent Symptom Routing
+- Condition: Patient presents with mild, localized, chronic symptoms (> 7 days)
+  with completely normal vital signs and no red flags (e.g., mild skin rash,
+  chronic joint ache, minor superficial abrasion).
+- Triggered Action:
+  - Assigns Acuity: `ROUTINE / NON-URGENT` (ESI Level 4-5).
+  - Routes to outpatient clinic queue, preventing emergency room bottlenecking.
+
+6.8 Standard 5-Tier Emergency Severity Index (ESI) Mapping
+Clinova AI standardizes all clinical assessments across international triage scales:
+- Level 1 (Resuscitation): Immediate life-saving intervention required.
+- Level 2 (Emergent): High risk, confused/lethargic, severe pain/distress.
+- Level 3 (Urgent): Stable vitals, but requires 2 or more diagnostic resources.
+- Level 4 (Less Urgent): Stable, requires 1 simple diagnostic test or prescription.
+- Level 5 (Non-Urgent): Stable, routine consultation or dressing change.
+
+
+================================================================================
+SECTION 7: BACKEND DATABASE SCHEMAS & DATA MODELS
+================================================================================
+
+All database models inherit from SQLAlchemy `Base` in `backend/app/db/base.py`
+and are mapped to PostgreSQL 16:
+
+7.1 User Model (`users`)
+- File: `backend/app/models/user.py`
+- Table Name: `users`
+- Attributes:
+  - `id`: String (UUID primary key)
+  - `email`: String (Unique, Indexed, max length 255)
+  - `hashed_password`: String (Bcrypt multi-round hash)
+  - `full_name`: String (User display name)
+  - `role`: Enum `UserRole` (`DOCTOR`, `PATIENT`, `NURSE`, `ADMIN`)
+  - `is_active`: Boolean (Default True, toggled by admin)
+  - `created_at`: DateTime with timezone (UTC)
+  - `updated_at`: DateTime with timezone (UTC)
+
+7.2 Patient Model (`patients`)
+- File: `backend/app/models/patient.py`
+- Table Name: `patients`
+- Attributes:
+  - `id`: String (UUID primary key)
+  - `mrn`: String (Unique Medical Record Number, e.g., `CLN-2026-10482`)
+  - `first_name`: String
+  - `last_name`: String
+  - `date_of_birth`: String (YYYY-MM-DD)
+  - `gender`: String
+  - `blood_group`: String (e.g., `O+`, `A-`)
+  - `phone`: String
+  - `email`: String
+  - `emergency_contact`: String (Name, relation, phone)
+  - `allergies`: Text (Documented allergies and reactions)
+  - `current_medications`: Text (Maintenance pharmacotherapy)
+  - `medical_history`: Text (Documented chronic diseases and surgeries)
+  - `created_at` / `updated_at`: DateTime (UTC)
+
+7.3 Consultation Model (`consultations`)
+- File: `backend/app/models/consultation.py`
+- Table Name: `consultations`
+- Attributes:
+  - `id`: String (UUID primary key)
+  - `patient_id`: String (Foreign Key -> `patients.id`)
+  - `doctor_id`: String (Foreign Key -> `users.id`, nullable)
+  - `scheduled_at`: DateTime
+  - `status`: Enum `ConsultationStatus` (`SCHEDULED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`)
+  - `chief_complaint`: Text
+  - `vitals`: JSONB (Structured physiological readings)
+  - `soap_note`: JSONB (Synthesized SOAP clinical brief)
+  - `doctor_notes`: Text (Direct physician entries)
+  - `triage_level`: Enum `TriageLevel` (`RESUSCITATION`, `EMERGENT`, `URGENT`, `LESS_URGENT`, `NON_URGENT`)
+  - `created_at` / `updated_at`: DateTime (UTC)
+
+7.4 Triage Case Model (`triage_cases`)
+- File: `backend/app/models/case.py`
+- Table Name: `triage_cases`
+- Attributes:
+  - `id`: String (UUID primary key)
+  - `synthetic_case_id`: String (Unique display identifier, e.g., `CLN-CASE-84920`)
+  - `language`: String (Intake dialect: `en`, `hi`, `or`)
+  - `facility_type`: String (`PHC`, `DISTRICT_HOSPITAL`, `CASUALTY`)
+  - `visit_type`: String (`WALK_IN`, `AMBULANCE`, `ONLINE_INTAKE`)
+  - `status`: String (`awaiting_review`, `ready_for_doctor`, `in_review`, `approved`, `referred`)
+  - `queue_category`: String (`URGENT REVIEW`, `PRIORITY`, `ROUTINE`)
+  - `consent_status`: Boolean
+  - `patient_id`: String (Foreign Key -> `users.id` / `patients.id`)
+  - `approximate_age`: Integer
+  - `gender`: String
+  - `vitals`: JSONB (BP, HR, SpO2, Temp, RR)
+  - `intake_verified`: Boolean (Signed off by triage nurse)
+  - `assigned_doctor_id`: String (Nullable)
+  - `assigned_doctor_name`: String (Nullable)
+  - `assigned_department`: String (Nullable)
+  - `raw_symptoms`: Text (Original patient verbatim description)
+  - `normalized_symptoms`: Text (Clinically standardized wording)
+  - `speech_transcript`: Text (Audio speech-to-text output)
+  - `report_ocr_data`: JSONB (Extracted pathology values)
+  - `triage_summary`: Text (AI generated draft)
+  - `risk_signals`: JSONB (Array of triggered rules R01-R06)
+  - `timeline_events`: JSONB (Array of milestone timestamp objects)
+  - `reviewer_notes`: Text (Attending physician comments)
+  - `reviewer_id` / `reviewer_name`: String (Physician credentials)
+  - `reviewed_at` / `approved_at`: DateTime
+  - `referral_note`: Text (Formal transfer document)
+
+7.5 Audit Log Model (`audit_logs`)
+- File: `backend/app/models/audit.py`
+- Table Name: `audit_logs`
+- Attributes:
+  - `id`: String (UUID primary key)
+  - `user_id`: String (Actor UUID, nullable for anonymous intake)
+  - `user_email`: String (Actor email address)
+  - `action`: String (Standardized action identifier)
+  - `resource_type`: String (`USER`, `CASE`, `PATIENT`, `CONSULTATION`)
+  - `resource_id`: String (Target record identifier)
+  - `ip_address`: String (Client IPv4/IPv6 address)
+  - `user_agent`: String (Client browser and OS telemetry)
+  - `details`: Text (Human and machine-readable audit narrative)
+  - `timestamp`: DateTime with timezone (UTC)
+
+
+================================================================================
+SECTION 8: REST API SPECIFICATION & BACKEND ENDPOINTS
+================================================================================
+
+All backend endpoints are routed through the `/api/v1` prefix:
+
+8.1 Authentication & User Endpoints (`/api/v1/auth`)
+- `POST /api/v1/auth/login`
+  - Accepts JSON: `{ "email": "doctor@clinova.ai", "password": "..." }`
+  - Returns: `{ "access_token": "...", "token_type": "bearer", "user": { ... } }`
+- `POST /api/v1/auth/register`
+  - Accepts UserCreate schema, creates new user, logs audit record.
+- `GET /api/v1/auth/me`
+  - Requires Bearer token in `Authorization` header.
+  - Returns authenticated user profile and permissions.
+- `GET /api/v1/auth/users` (Admin Only)
+  - Returns full list of registered facility users.
+- `PUT /api/v1/auth/users/{user_id}/status` (Admin Only)
+  - Activates or deactivates user accounts.
+
+8.2 Patient Directory Endpoints (`/api/v1/patients`)
+- `GET /api/v1/patients` (Clinicians Only)
+  - Query parameters: `q` (search name/MRN), `skip`, `limit`.
+  - Returns: `{ "total": 13, "items": [ ... ] }`
+- `POST /api/v1/patients`
+  - Registers a new patient record and auto-generates Medical Record Number.
+- `GET /api/v1/patients/{patient_id}`
+  - Retrieves comprehensive patient medical history, allergies, and medications.
+- `PUT /api/v1/patients/{patient_id}`
+  - Updates patient demographics or contact data.
+
+8.3 Triage & Intake Case Endpoints (`/api/v1/cases`)
+- `POST /api/v1/cases/submit`
+  - Public / Patient endpoint for submitting intake forms.
+  - Executes PII anonymization, evaluates safety rules, drafts AI brief.
+- `GET /api/v1/cases`
+  - Role-filtered: Patients receive only their own cases; Doctors/Staff receive
+    facility clinical queue.
+- `GET /api/v1/cases/{case_id}`
+  - Returns complete case payload for the One-Screen Review Workspace.
+- `PATCH /api/v1/cases/{case_id}/verify` (Staff Only)
+  - Records verified vitals, assigns doctor and department, sets status to `ready_for_doctor`.
+- `PATCH /api/v1/cases/{case_id}/review` (Doctors Only)
+  - Records assessment notes, modifies triage level, signs off case (`approved`).
+- `POST /api/v1/cases/{case_id}/referral` (Doctors Only)
+  - Generates inter-hospital transfer referral document.
+
+8.4 Clinical Consultation Endpoints (`/api/v1/consultations`)
+- `GET /api/v1/consultations`
+  - Retrieves scheduled and historical consultations with pagination.
+- `POST /api/v1/consultations`
+  - Creates a new consultation session.
+- `GET /api/v1/consultations/{consultation_id}`
+  - Retrieves specific consultation chart, SOAP notes, and treatment plan.
+
+8.5 System Health, Diagnostics & Telemetry (`/api/v1/health`)
+- `GET /api/v1/health`
+  - Returns:
+    ```json
+    {
+      "status": "healthy",
+      "app_name": "Clinova AI",
+      "environment": "development",
+      "version": "0.1.0",
+      "timestamp": "2026-09-20T06:07:56.812043Z"
+    }
+    ```
+- `GET /api/v1/health/ping` -> Returns lightweight "pong" for network RTT checks.
+
+8.6 Audit Logging Endpoints (`/api/v1/audit`)
+- `GET /api/v1/audit` (Admin & Compliance Officers Only)
+  - Returns chronological audit records with actor IDs, IP addresses, and actions.
+
+
+================================================================================
+SECTION 9: SECURITY, PRIVACY, COMPLIANCE & GOVERNANCE
+================================================================================
+
+9.1 Role-Based Access Control (RBAC) Architecture
+RBAC is enforced on the server side using FastAPI dependency injection (`require_roles`):
+- `PATIENT`: Can submit intakes, view own profile, and inspect own triage status.
+  Blocked from seeing other patients or hospital queues.
+- `NURSE / STAFF`: Can view triage queue, record physical vitals, assign doctors,
+  and verify intake. Blocked from signing final medical assessments.
+- `DOCTOR`: Full clinical authority. Can review charts, edit SOAP notes, modify
+  triage acuity, digitally sign cases, and generate referral transfer notes.
+- `ADMIN`: Full operational authority. Can manage user accounts, inspect system
+  telemetry, and view unredacted forensic audit logs.
+
+9.2 Cryptographic Token Authentication
+- Uses JSON Web Tokens (JWT) signed with HMAC-SHA256 (`HS256`).
+- Standard expiration budget configured via `ACCESS_TOKEN_EXPIRE_MINUTES`.
+- Token payload encapsulates `sub` (User UUID) and `role` (`doctor`, `nurse`, etc.).
+
+9.3 Password Hashing Standards
+- Implements Bcrypt cryptographic hashing with randomized per-user salts.
+- Plaintext passwords are never stored, never logged in audit files, and never
+  transmitted in backend response payloads.
+
+9.4 Immutable Audit Trails & Forensic Event Logging
+- Every state-altering action in Clinova AI triggers an automated call to
+  `AuditService.log_event`.
+- Audit records are stored in a dedicated database table (`audit_logs`) and cannot
+  be edited or deleted through application endpoints.
+
+9.5 Non-Diagnostic Legal Framing
+- Disclaimers are embedded in the code, database responses, UI landing page,
+  intake portal, and referral notes.
+- Explicitly declares compliance with medical device software regulations by
+  positioning the system solely as administrative and triage decision support.
+
+9.6 HIPAA & Ayushman Bharat Digital Mission (ABDM) Alignment
+- Ready for integration with ABDM (Ayushman Bharat Health Account - ABHA ID) and
+  M1/M2/M3 health data standards.
+- Designed with strict data isolation, encryption at rest, and audit accountability.
+
+
+================================================================================
+SECTION 10: VERIFICATION, TESTING & QUALITY ASSURANCE
+================================================================================
+
+10.1 Automated Pytest Suite
+The backend contains a rigorous test suite (`backend/tests/`) running via pytest:
+- Command: `docker exec clinova-backend pytest -v`
+- Result: 17 out of 17 tests passing (100% pass rate).
+- Test Breakdown:
+  1. `test_ai.py::test_ai_triage_clinical_decision_support` -> PASSED
+  2. `test_ai.py::test_ai_soap_synthesis` -> PASSED
+  3. `test_audit.py::test_audit_logging_trail` -> PASSED
+  4. `test_auth.py::test_auth_flow` -> PASSED
+  5. `test_auth.py::test_login_invalid_credentials` -> PASSED
+  6. `test_consultations.py::test_consultation_lifecycle` -> PASSED
+  7. `test_health.py::test_root_endpoint` -> PASSED
+  8. `test_health.py::test_health_check_endpoint` -> PASSED
+  9. `test_health.py::test_ping_endpoint` -> PASSED
+  10. `test_patients.py::test_patient_crud_flow` -> PASSED
+  11. `test_risk_engine.py::test_anonymizer_phone_and_email` -> PASSED
+  12. `test_risk_engine.py::test_anonymizer_aadhaar` -> PASSED
+  13. `test_risk_engine.py::test_risk_engine_breathing_urgency` -> PASSED
+  14. `test_risk_engine.py::test_risk_engine_chest_pain_urgency` -> PASSED
+  15. `test_risk_engine.py::test_risk_engine_routine_presentation` -> PASSED
+  16. `test_risk_engine.py::test_non_diagnostic_triage_note_structure` -> PASSED
+  17. `test_role_workflows.py::test_full_role_workflow_and_rbac` -> PASSED
+
+10.2 Frontend TypeScript Compilation
+- Command: `npx tsc --noEmit` inside `./frontend`
+- Result: 0 errors, 0 warnings. Complete type safety guaranteed across all components.
+
+10.3 Cross-Role Authentication Verification
+All 4 demo personas have been verified via direct HTTP API requests:
+- Doctor: `doctor@clinova.ai` -> Status 200 OK -> Dr. Sarah Chen, MD
+- Patient: `patient@clinova.ai` -> Status 200 OK -> James Miller
+- Staff: `staff@clinova.ai` -> Status 200 OK -> Nurse Sunita Patel, RN
+- Admin: `admin@clinova.ai` -> Status 200 OK -> Clinical Administrator
+
+10.4 Container Health Check Matrix
+- `clinova-frontend`: Running on port 3000 (HTTP 200 OK).
+- `clinova-backend`: Running on port 8000 (HTTP 200 OK).
+- `clinova-db`: Connected on port 5432 (PostgreSQL 16).
+- `clinova-redis`: Connected on port 6379 (Redis 7 PONG).
+
+
+================================================================================
+SECTION 11: OPERATIONAL PLAYBOOK & SERVICE EXECUTION GUIDE
+================================================================================
+
+11.1 Prerequisites
+- Docker & Docker Compose (v2 or higher)
+- Node.js (v18+) & npm
+- Python (v3.11 or v3.12)
+- Git
+
+11.2 Single-Command Docker Deployment
+To launch the complete application stack:
+```powershell
+docker compose up -d
+```
+To verify container execution status:
+```powershell
+docker compose ps
+```
+
+11.3 Database Seeding & Default Clinical Demo Credentials
+The backend automatically executes initial database seeding on first startup
+(`backend/app/main.py` -> `seed_initial_data()`):
+- Doctor Account:
+  - Email: `doctor@clinova.ai`
+  - Password: `ClinovaDoctor2026!`
+  - Role: `DOCTOR`
+- Patient Account:
+  - Email: `patient@clinova.ai`
+  - Password: `ClinovaPatient2026!`
+  - Role: `PATIENT`
+- Staff Account:
+  - Email: `staff@clinova.ai`
+  - Password: `ClinovaStaff2026!`
+  - Role: `NURSE`
+- Admin Account:
+  - Email: `admin@clinova.ai`
+  - Password: `ClinovaAdmin2026!`
+  - Role: `ADMIN`
+
+11.4 Troubleshooting Common Deployment Anomalies
+- Issue: Backend container fails to connect to PostgreSQL.
+  Resolution: Verify that `clinova-db` is in `healthy` status and that
+  `DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/clinova` uses
+  the internal Docker service name `db` rather than `localhost`.
+- Issue: CORS errors in browser DevTools.
+  Resolution: Ensure `CORS_ORIGINS` in `backend/.env` includes `http://localhost:3000`.
+
+11.5 Complete Project File Tree
+```text
+c:\Users\admin\CLIVORA-AI
+├── docker-compose.yml
+├── .env
+├── .env.example
+├── README.md
+├── ARCHITECTURE.md
+├── FEATURES.md
+├── SECURITY.md
+├── TESTING.md
+├── API_SPECIFICATION.md
+├── CLINOVA_AI_MASTER_COMPLETE_PROJECT_DOCUMENTATION.txt
+│
+├── backend/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── pytest.ini
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       ├── api.py
+│   │   │       └── endpoints/
+│   │   │           ├── auth.py
+│   │   │           ├── cases.py
+│   │   │           ├── consultations.py
+│   │   │           ├── patients.py
+│   │   │           └── health.py
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── deps.py
+│   │   │   └── security.py
+│   │   ├── db/
+│   │   │   ├── base.py
+│   │   │   └── session.py
+│   │   ├── models/
+│   │   │   ├── user.py
+│   │   │   ├── patient.py
+│   │   │   ├── consultation.py
+│   │   │   ├── case.py
+│   │   │   └── audit.py
+│   │   ├── schemas/
+│   │   │   ├── user.py
+│   │   │   ├── patient.py
+│   │   │   ├── consultation.py
+│   │   │   └── case.py
+│   │   └── services/
+│   │       ├── ai.py
+│   │       ├── anonymizer.py
+│   │       ├── audit.py
+│   │       ├── ocr.py
+│   │       └── risk_engine.py
+│   └── tests/
+│       ├── test_ai.py
+│       ├── test_audit.py
+│       ├── test_auth.py
+│       ├── test_consultations.py
+│       ├── test_health.py
+│       ├── test_patients.py
+│       ├── test_risk_engine.py
+│       └── test_role_workflows.py
+│
+└── frontend/
+    ├── Dockerfile
+    ├── package.json
+    ├── tsconfig.json
+    ├── tailwind.config.js
+    ├── next.config.js
+    └── src/
+        ├── app/
+        │   ├── layout.tsx
+        │   ├── page.tsx
+        │   ├── login/page.tsx
+        │   ├── register/page.tsx
+        │   ├── get-started/page.tsx
+        │   ├── intake/page.tsx
+        │   ├── dashboard/page.tsx
+        │   ├── patients/
+        │   │   ├── page.tsx
+        │   │   └── [id]/page.tsx
+        │   ├── consultations/page.tsx
+        │   ├── review/
+        │   │   ├── page.tsx
+        │   │   └── case/[caseId]/
+        │   │       ├── page.tsx
+        │   │       └── referral/page.tsx
+        │   ├── audit/page.tsx
+        │   ├── demo/page.tsx
+        │   └── triage/page.tsx
+        ├── components/
+        │   ├── Navbar.tsx
+        │   ├── Footer.tsx
+        │   ├── NetworkStatusIndicator.tsx
+        │   ├── VitalsModal.tsx
+        │   └── VoiceRecorder.tsx
+        └── lib/
+            ├── api.ts
+            └── utils.ts
+```
+
+================================================================================
+END OF MASTER DOCUMENTATION
+================================================================================
