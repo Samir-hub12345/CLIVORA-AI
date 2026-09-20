@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Plus, User, AlertCircle, X, Check, Activity } from "lucide-react";
+import { Search, Plus, User, AlertCircle, X, Check, Activity, WifiOff } from "lucide-react";
 import { api } from "@/lib/api";
+import { useConnectivity } from "@/lib/connectivity";
+import { useAdaptivePolling } from "@/lib/use-adaptive-polling";
 import { Header } from "@/components/common/header";
 import { Footer } from "@/components/common/footer";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Patient } from "@/types";
 
 export default function PatientsPage() {
+  const { state: networkState, isLowBandwidthActive } = useConnectivity();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,10 +33,6 @@ export default function PatientsPage() {
     medical_history: "",
   });
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
   const fetchPatients = async (query = "") => {
     setLoading(true);
     const res = await api.getPatients(query);
@@ -43,6 +42,12 @@ export default function PatientsPage() {
     setLoading(false);
   };
 
+  useAdaptivePolling(() => fetchPatients(search), {
+    baseIntervalMs: 25000,
+    enabled: !modalOpen,
+    immediate: true,
+  });
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchPatients(search);
@@ -50,6 +55,10 @@ export default function PatientsPage() {
 
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (networkState === "OFFLINE") {
+      alert("You are currently offline. Patient registration requires an active network connection.");
+      return;
+    }
     setSubmitting(true);
     const res = await api.createPatient(formData);
     setSubmitting(false);
@@ -84,12 +93,29 @@ export default function PatientsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button onClick={() => setModalOpen(true)} className="gap-2">
+            <Button
+              onClick={() => setModalOpen(true)}
+              disabled={networkState === "OFFLINE"}
+              className="gap-2 disabled:opacity-50"
+            >
               <Plus className="w-4 h-4" />
-              Register Patient
+              {networkState === "OFFLINE" ? "Offline (Registration Paused)" : "Register Patient"}
             </Button>
           </div>
         </div>
+
+        {/* Connectivity Alerts */}
+        {networkState === "OFFLINE" ? (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
+            <WifiOff className="w-4 h-4 text-rose-600 flex-shrink-0" />
+            <span>Offline: Showing locally loaded patient directory. New registrations require an active connection.</span>
+          </div>
+        ) : isLowBandwidthActive ? (
+          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-center justify-between">
+            <span className="font-semibold">Adaptive Low-Bandwidth Mode active: patient search debounced &amp; optimized.</span>
+            <span className="text-[10px] bg-amber-200/80 font-bold px-1.5 py-0.5 rounded uppercase">Data Saver</span>
+          </div>
+        ) : null}
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="flex gap-2">

@@ -1,13 +1,13 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Text, DateTime, ForeignKey
+from sqlalchemy import String, Text, DateTime, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class AuditLog(Base):
-    """Immutable audit trail for HIPAA-ready accountability and Protected Health Information (PHI) access tracking."""
+    """Immutable audit trail for HIPAA-ready accountability, facility scoping, and PHI access tracking."""
     __tablename__ = "audit_logs"
 
     id: Mapped[str] = mapped_column(
@@ -15,6 +15,9 @@ class AuditLog(Base):
     )
     user_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    facility_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("facilities.id", ondelete="SET NULL"), nullable=True, index=True
     )
     user_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -29,3 +32,9 @@ class AuditLog(Base):
 
     # Relationships
     user = relationship("User", back_populates="audit_logs")
+    facility = relationship("Facility")
+
+    __table_args__ = (
+        Index("ix_audit_logs_facility_timestamp", "facility_id", "timestamp"),
+        Index("ix_audit_logs_resource_timestamp", "resource_type", "resource_id", "timestamp"),
+    )

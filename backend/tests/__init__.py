@@ -1,1 +1,1 @@
-"""Test suite package for Clinova AI backend."""
+"""Test suite package for CLINOVA AI backend."""

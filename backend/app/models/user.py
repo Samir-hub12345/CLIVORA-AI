@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 import enum
-from sqlalchemy import String, Boolean, DateTime, Enum
+from typing import Optional
+from sqlalchemy import String, Boolean, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -27,6 +28,9 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole), default=UserRole.PATIENT, nullable=False
     )
+    facility_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("facilities.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
@@ -38,11 +42,12 @@ class User(Base):
     )
 
     # Relationships
+    facility = relationship("Facility", back_populates="users")
     consultations_as_doctor = relationship(
         "Consultation",
         foreign_keys="Consultation.doctor_id",
         back_populates="doctor",
-        cascade="all, delete-orphan",
+        cascade="save-update, merge",
     )
     audit_logs = relationship(
         "AuditLog", back_populates="user", cascade="all, delete-orphan"

@@ -3,10 +3,13 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import String, Text, Boolean, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Text, Boolean, Integer, DateTime, ForeignKey, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class TriageCase(Base):
+    """Triage case intake record representing a patient presentation at a facility or camp."""
     __tablename__ = "triage_cases"
 
     id: Mapped[str] = mapped_column(
@@ -18,6 +21,12 @@ class TriageCase(Base):
     synthetic_case_id: Mapped[str] = mapped_column(
         String(64), unique=True, index=True, nullable=False
     )
+    facility_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("facilities.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    encounter_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("encounters.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     facility_type: Mapped[str] = mapped_column(
         String(100), default="Government Hospital", nullable=False
@@ -26,7 +35,7 @@ class TriageCase(Base):
         String(100), default="Outpatient", nullable=False
     )
     status: Mapped[str] = mapped_column(
-        String(50), default="awaiting_review", nullable=False
+        String(50), default="awaiting_review", nullable=False, index=True
     )
     queue_category: Mapped[str] = mapped_column(
         String(50), default="routine", nullable=False
@@ -34,10 +43,26 @@ class TriageCase(Base):
     queue_reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     consent_status: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    # Patient Context (Synthetic / Minimal)
+    # Patient Context
+    patient_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("patients.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     approximate_age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     gender: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     context_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    vitals: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON: bp, hr, spo2, temp, rr
+    intake_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Assignment & Department Routing
+    assigned_doctor_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
+    assigned_doctor_name: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )
+    assigned_department: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )
 
     # Multimodal Intake Inputs
     raw_symptoms: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -76,10 +101,21 @@ class TriageCase(Base):
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+    )
+
+    # Relationships
+    facility = relationship("Facility")
+    encounter = relationship("Encounter")
+    patient = relationship("Patient")
+
+    __table_args__ = (
+        Index("ix_triage_cases_status_created", "status", "created_at"),
+        Index("ix_triage_cases_facility_created", "facility_id", "created_at"),
     )

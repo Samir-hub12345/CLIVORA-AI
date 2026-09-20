@@ -27,6 +27,7 @@ import {
   Sparkles,
   HelpCircle,
   UserCheck,
+  Activity,
 } from "lucide-react";
 
 export default function CaseReviewDetailPage() {
@@ -224,6 +225,35 @@ export default function CaseReviewDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Section B0: Verified Triage Vitals & Routing */}
+        {caseData.vitals && (
+          <div className="p-4 bg-teal-50/70 border border-teal-200 rounded-2xl flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-2 font-bold text-teal-900">
+              <Activity className="w-4 h-4 text-teal-600" />
+              <span>Verified Clinical Vitals {caseData.intake_verified ? "(Staff Verified)" : "(Patient Reported)"}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-slate-700 font-medium">
+              {caseData.vitals.blood_pressure && (
+                <span>BP: <strong className="text-slate-900">{caseData.vitals.blood_pressure}</strong> mmHg</span>
+              )}
+              {caseData.vitals.heart_rate && (
+                <span>Heart Rate: <strong className="text-slate-900">{caseData.vitals.heart_rate}</strong> bpm</span>
+              )}
+              {caseData.vitals.oxygen_saturation && (
+                <span>SpO2: <strong className="text-slate-900">{caseData.vitals.oxygen_saturation}</strong>%</span>
+              )}
+              {caseData.vitals.temperature && (
+                <span>Temp: <strong className="text-slate-900">{caseData.vitals.temperature}</strong> °C</span>
+              )}
+              {caseData.assigned_department && (
+                <span className="px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-bold">
+                  Department: {caseData.assigned_department}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Section B: Patient Provided Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

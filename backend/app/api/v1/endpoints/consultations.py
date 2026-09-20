@@ -142,6 +142,14 @@ async def get_consultation(
         )
 
     check_encounter_access(current_user, consultation)
+    # Resource-level authorization (IDOR protection):
+    # Patient role can ONLY view their own consultation records
+    if current_user.role == UserRole.PATIENT:
+        if not consultation.patient or consultation.patient.email != current_user.email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to another patient's consultation records.",
+            )
 
     await AuditService.log_event(
         db=db,

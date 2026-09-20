@@ -1,12 +1,12 @@
 from datetime import timedelta
-from typing import Union, Optional
+from typing import Union, Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.deps import get_current_user, get_client_ip
+from app.core.deps import get_current_user, get_current_admin, get_client_ip
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.db.session import get_db
 from app.models.user import User, UserRole
@@ -148,3 +148,47 @@ async def read_current_user(
 ):
     """Retrieve profile of the currently authenticated user."""
     return current_user
+    return current_user
+
+
+@router.get("/users", response_model=List[UserResponse])
+async def list_facility_users(
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin only: Retrieve all registered facility user accounts."""
+    stmt = select(User).order_by(User.created_at.desc())
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+
+@router.put("/users/{user_id}/status", response_model=UserResponse)
+async def toggle_user_status(
+    user_id: str,
+    is_active: bool,
+    request: Request,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin only: Activate or deactivate a user account."""
+    stmt = select(User).where(User.id == user_id)
+    res = await db.execute(stmt)
+    target_user = res.scalar_one_or_none()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User account not found.")
+
+    target_user.is_active = is_active
+    await db.commit()
+    await db.refresh(target_user)
+
+    await AuditService.log_event(
+        db=db,
+        action="USER_STATUS_UPDATED",
+        resource_type="USER",
+        resource_id=target_user.id,
+        user=current_user,
+        ip_address=get_client_ip(request),
+        user_agent=request.headers.get("User-Agent"),
+        details=f"User {target_user.email} active status set to {is_active} by admin {current_user.email}",
+    )
+    return target_user
