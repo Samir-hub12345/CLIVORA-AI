@@ -17,13 +17,17 @@ from app.db.migrations import upgrade_ownership
 from app.core.security import create_access_token, get_password_hash
 from app.models.user import User, UserRole
 
-@pytest_asyncio.fixture
+import app.db.session as session_module
+
+@pytest_asyncio.fixture(autouse=True)
 async def database(tmp_path, monkeypatch):
     engine = create_async_engine("sqlite+aiosqlite:///" + str(tmp_path / "test.db"))
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(upgrade_ownership)
+    monkeypatch.setattr(session_module, "async_session_factory", sessions)
+    monkeypatch.setattr(session_module, "engine", engine)
     monkeypatch.setattr(main_module, "async_session_factory", sessions)
     monkeypatch.setattr(audit_module, "async_session_factory", sessions)
     await main_module.seed_initial_data()

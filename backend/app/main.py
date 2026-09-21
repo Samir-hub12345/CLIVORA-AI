@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from app.api.v1.api import api_router
 from app.core.config import settings
+from app.core.metrics import PrometheusMiddleware
 from app.core.security import get_password_hash
 from app.db.base import Base
 from app.db.migrations import upgrade_ownership
@@ -18,6 +19,7 @@ from app.models.patient import Patient
 from app.models.consultation import Consultation, ConsultationStatus, TriageLevel
 from app.models.case import TriageCase
 from app.models.facility import Facility
+from app.models.encounter import Encounter, EncounterType, EncounterStatus
 
 logger = logging.getLogger("clinova")
 
@@ -25,6 +27,37 @@ logger = logging.getLogger("clinova")
 async def seed_initial_data():
     """Seed initial clinical demo accounts, patients, and triage cases."""
     async with async_session_factory() as db:
+        # 0. Ensure default facilities exist
+        fac1 = (await db.execute(select(Facility).where(Facility.facility_code == "FAC-DISTRICT-01"))).scalar_one_or_none()
+        fac2 = (await db.execute(select(Facility).where(Facility.facility_code == "FAC-PHC-RURAL-02"))).scalar_one_or_none()
+        if not fac1:
+            fac1 = Facility(
+                id="a1fa1a80-0a86-40bb-8358-5c12a06e0fe5",
+                facility_code="FAC-DISTRICT-01",
+                name="Government District Hospital",
+                facility_type="District Hospital",
+                address="Medical Enclave, Unit 4, Bhubaneswar, Odisha",
+                contact_phone="+91 (0674) 230-1999",
+                contact_email="casualty@clinova.ai",
+                is_active=True,
+            )
+            db.add(fac1)
+        if not fac2:
+            fac2 = Facility(
+                id="b1fb2a91-0b97-41cc-8469-6d23a07e0fe6",
+                facility_code="FAC-PHC-RURAL-02",
+                name="Community Primary Health Center (PHC)",
+                facility_type="Primary Health Center",
+                address="Rural Health Post, Khordha Block",
+                contact_phone="+91 (0674) 230-1988",
+                contact_email="phc.khordha@clinova.ai",
+                is_active=True,
+            )
+            db.add(fac2)
+        await db.commit()
+        await db.refresh(fac1)
+        await db.refresh(fac2)
+
         # Check if users exist
         res = await db.execute(select(User).limit(1))
         if res.scalar_one_or_none() is None:
@@ -35,6 +68,7 @@ async def seed_initial_data():
                 hashed_password=get_password_hash("ClinovaDoctor2026!"),
                 full_name="Dr. Sarah Chen, MD",
                 role=UserRole.DOCTOR,
+                facility_id=fac1.id,
                 is_active=True,
             )
             patient_user = User(
@@ -49,6 +83,7 @@ async def seed_initial_data():
                 hashed_password=get_password_hash("ClinovaStaff2026!"),
                 full_name="Nurse Sunita Patel, RN",
                 role=UserRole.NURSE,
+                facility_id=fac1.id,
                 is_active=True,
             )
             admin = User(
@@ -72,6 +107,7 @@ async def seed_initial_data():
                 blood_group="O+",
                 phone="+1 (555) 234-5678",
                 email="patient@clinova.ai",
+                facility_id=fac1.id,
                 emergency_contact="Sarah Miller (Spouse): +1 (555) 234-5679",
                 allergies="Penicillin (Anaphylaxis)",
                 current_medications="Lisinopril 10mg daily, Atorvastatin 20mg daily",
@@ -86,6 +122,7 @@ async def seed_initial_data():
                 blood_group="A-",
                 phone="+1 (555) 876-5432",
                 email="elena.rostova@example.com",
+                facility_id=fac1.id,
                 emergency_contact="Dmitri Rostov (Brother): +1 (555) 876-5433",
                 allergies="Sulfa drugs (Rash)",
                 current_medications="Albuterol inhaler PRN",
@@ -100,6 +137,7 @@ async def seed_initial_data():
                 blood_group="B+",
                 phone="+1 (555) 432-1098",
                 email="marcus.vance@example.com",
+                facility_id=fac1.id,
                 emergency_contact="Patricia Vance: +1 (555) 432-1099",
                 allergies="None known",
                 current_medications="Metformin 500mg BID, Amlodipine 5mg",
@@ -124,8 +162,32 @@ async def seed_initial_data():
                 ai_generated_summary="Routine hypertensive follow-up with good medication compliance and stable physiological vitals.",
             )
             db.add(consultation)
+
+            # 4. Demo Encounter
+            encounter = Encounter(
+                patient_id=patient1.id,
+                attending_clinician_id=doctor.id,
+                facility_id=fac1.id,
+                encounter_type=EncounterType.OUTPATIENT,
+                status=EncounterStatus.COMPLETED,
+                reason_for_visit="Routine hypertension surveillance and metabolic review",
+                clinical_summary="Patient reports feeling well overall. Complies with daily Lisinopril and Atorvastatin.",
+                start_time=datetime.now(timezone.utc),
+                end_time=datetime.now(timezone.utc),
+            )
+            db.add(encounter)
+
             await db.commit()
-            logger.info("CLINOVA AI demo users and patients seeded successfully.")
+            logger.info("CLINOVA AI demo users, patients, and encounters seeded successfully.")
+        else:
+            # If users already exist, ensure doctor and nurse have facility_id populated
+            doc_user = (await db.execute(select(User).where(User.email == "doctor@clinova.ai"))).scalar_one_or_none()
+            if doc_user and not doc_user.facility_id:
+                doc_user.facility_id = fac1.id
+            nurse_user = (await db.execute(select(User).where(User.email == "staff@clinova.ai"))).scalar_one_or_none()
+            if nurse_user and not nurse_user.facility_id:
+                nurse_user.facility_id = fac1.id
+            await db.commit()
 
         # Only the well-known synthetic demo chart may be linked automatically.
         # Other legacy charts stay unlinked until an operator verifies ownership.
@@ -308,31 +370,6 @@ async def seed_initial_data():
             await db.commit()
             logger.info("6 synthetic public health triage cases seeded successfully.")
 
-        # Check if facilities exist
-        fac_check = await db.execute(select(Facility).limit(1))
-        if fac_check.scalar_one_or_none() is None:
-            fac1 = Facility(
-                facility_code="FAC-DISTRICT-01",
-                name="Government District Hospital",
-                facility_type="District Hospital",
-                address="Medical Enclave, Unit 4, Bhubaneswar, Odisha",
-                contact_phone="+91 (0674) 230-1999",
-                contact_email="casualty@clinova.ai",
-                is_active=True,
-            )
-            fac2 = Facility(
-                facility_code="FAC-PHC-RURAL-02",
-                name="Community Primary Health Center (PHC)",
-                facility_type="Primary Health Center",
-                address="Rural Health Post, Khordha Block",
-                contact_phone="+91 (0674) 230-1988",
-                contact_email="phc.khordha@clinova.ai",
-                is_active=True,
-            )
-            db.add_all([fac1, fac2])
-            await db.commit()
-            logger.info("Default facilities seeded.")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -343,7 +380,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await conn.run_sync(upgrade_ownership)
         if settings.DEMO_MODE and settings.ENVIRONMENT != "production":
             await seed_initial_data()
-        await seed_initial_data()
     except Exception as e:
         logger.error("Database initialization failed", exc_info=True)
         raise
@@ -364,6 +400,9 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
+
+# Enable Prometheus Request Telemetry
+app.add_middleware(PrometheusMiddleware)
 
 # Configure Cross-Origin Resource Sharing (CORS)
 if settings.CORS_ORIGINS:

@@ -5,7 +5,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy import select, delete, func
 
 from app.main import app
-from app.db.session import async_session_factory
+from app.db import session as session_module
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
 from app.models.facility import Facility
@@ -329,7 +329,7 @@ async def test_referral_management_lifecycle():
 async def test_multi_tenancy_cross_facility_isolation():
     """Verify strict facility scoping: Clinicians in Facility A cannot read/modify Facility B patients."""
     # Seed Doctor in Facility 2 (FAC-PHC-RURAL-02)
-    async with async_session_factory() as session:
+    async with session_module.async_session_factory() as session:
         stmt = select(User).where(User.email == "phc.doctor@clinova.ai")
         u = (await session.execute(stmt)).scalar_one_or_none()
         if not u:
@@ -432,7 +432,7 @@ async def test_patient_multi_identifiers_and_auto_mrn():
         mrn = patient_data["mrn"]
 
         # 2. Check patient_identifiers table directly to verify auto-created primary MRN
-        async with async_session_factory() as session:
+        async with session_module.async_session_factory() as session:
             stmt = select(PatientIdentifier).where(PatientIdentifier.patient_id == patient_id)
             res = await session.execute(stmt)
             identifiers = res.scalars().all()
@@ -476,7 +476,7 @@ async def test_longitudinal_patient_timeline():
 async def test_synthetic_scale_and_index_performance():
     """Verify database query performance with 1,000+ synthetic clinical records."""
     # 1. Bulk insert 1,000 synthetic observations for performance testing
-    async with async_session_factory() as session:
+    async with session_module.async_session_factory() as session:
         stmt = select(Patient).limit(1)
         p = (await session.execute(stmt)).scalar_one()
         target_patient_id = p.id
@@ -519,7 +519,7 @@ async def test_synthetic_scale_and_index_performance():
         assert latency_ms < 500.0, f"Query latency {latency_ms:.2f}ms exceeded 500ms budget"
 
     # 3. Clean up the synthetic test records
-    async with async_session_factory() as session:
+    async with session_module.async_session_factory() as session:
         del_stmt = delete(ClinicalObservation).where(
             ClinicalObservation.patient_id == target_patient_id,
             ClinicalObservation.source == ObservationSource.DEVICE_MEASURED,

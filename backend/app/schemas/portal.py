@@ -6,6 +6,7 @@ from app.models.consultation import ConsultationStatus
 class PatientCaseResponse(BaseModel):
     id: str
     synthetic_case_id: str
+    patient_id: str | None = None
     language: str
     facility_type: str
     visit_type: str

@@ -32,11 +32,11 @@ import {
   Check,
   X,
   HeartPulse,
+  Eye,
 } from "lucide-react";
 
 export default function Home() {
   const { user, isClinician } = useAuth();
-  const features = [
   // Key Features categorized
   const featureList = [
     {
@@ -228,19 +228,20 @@ export default function Home() {
             <Link
               href="/demo"
               className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all flex items-center gap-2"
-          {/* Primary Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            >
+              <Eye className="w-4 h-4 text-slate-500" />
+              <span>Interactive Demo</span>
+            </Link>
             <Link
               href="/get-started"
-              className="px-7 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2"
             >
               <span>Get Started</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
-
             <a
               href="#how-it-works"
-              className="px-7 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-xl text-sm shadow-xs transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-xl text-sm shadow-xs transition-all flex items-center gap-2"
             >
               <span>Learn How It Works</span>
               <ChevronRight className="w-4 h-4 text-slate-400" />

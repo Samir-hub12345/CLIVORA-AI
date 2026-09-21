@@ -8,10 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.case import TriageCase
-from app.core.deps import get_client_ip, get_current_doctor, get_current_clinician
-from app.models.user import User
 from app.models.user import User, UserRole
-from app.core.deps import get_client_ip, get_current_clinician, get_current_user_optional
+from app.core.deps import get_client_ip, get_current_clinician, get_current_doctor, get_current_user_optional
 from app.schemas.case import (
     CaseReviewActionRequest,
     CaseResponse,
@@ -32,7 +30,6 @@ async def perform_review_action(
     req: CaseReviewActionRequest,
     request: Request,
     current_user: User = Depends(get_current_doctor),
-    current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
     """Executes human-in-the-loop review action: approve, edit, reject, or escalate."""
@@ -46,11 +43,9 @@ async def perform_review_action(
 
     reviewer_name = current_user.full_name
     case.reviewer_id = current_user.id
+    case.reviewer_name = reviewer_name
     action = req.action.lower()
     now = datetime.now(timezone.utc)
-    reviewer_name = current_user.full_name
-    case.reviewer_id = current_user.id
-    case.reviewer_name = reviewer_name
 
     if action in ("approve", "edit", "escalate"):
         if req.edited_summary:
@@ -145,7 +140,6 @@ async def perform_review_action(
 async def get_referral_note(
     case_id: str,
     current_user: User = Depends(get_current_clinician),
-    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve structured referral note for export and printing."""
@@ -156,13 +150,6 @@ async def get_referral_note(
     case = (await db.execute(stmt)).scalar_one_or_none()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found.")
-
-    if current_user and current_user.role == UserRole.PATIENT:
-        if case.patient_id and case.patient_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied to referral note.",
-            )
 
     if not case.referral_note:
         # Generate default referral draft if not already generated

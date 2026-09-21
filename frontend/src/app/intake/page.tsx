@@ -10,8 +10,7 @@ import { VoiceRecorder } from "@/components/clinical/voice-recorder";
 import { ReportUploader } from "@/components/clinical/report-uploader";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { OCRField, CaseReceipt } from "@/types";
-import { OCRField, TriageCase } from "@/types";
+import { OCRField, CaseReceipt, TriageCase } from "@/types";
 import { useConnectivity } from "@/lib/connectivity";
 import {
   ShieldCheck,

@@ -21,6 +21,7 @@ router = APIRouter()
 def patient_case_response(case: TriageCase) -> PatientCaseResponse:
     return PatientCaseResponse(
         id=case.id, synthetic_case_id=case.synthetic_case_id,
+        patient_id=case.patient_id,
         language=case.language, facility_type=case.facility_type, visit_type=case.visit_type,
         status=case.status, raw_symptoms=case.raw_symptoms, report_filename=case.report_filename,
         summary=case.normalized_symptoms if case.status in ("approved", "referred") else None,

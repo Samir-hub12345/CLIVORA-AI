@@ -113,7 +113,6 @@ class CaseCreateRequest(BaseModel):
     consent_acknowledged: bool = False
     patient_id: Optional[str] = None
     vitals: Optional[Dict[str, Any]] = None
-    consent_acknowledged: bool = True
 
 
 class CaseAssignRequest(BaseModel):

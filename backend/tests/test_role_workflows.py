@@ -72,7 +72,7 @@ async def test_full_role_workflow_and_rbac():
         assert case_data["patient_id"] is not None
 
         # Patient lists their own cases
-        pat_cases = await ac.get("/api/v1/cases", headers=pat_headers)
+        pat_cases = await ac.get("/api/v1/portal/cases", headers=pat_headers)
         assert pat_cases.status_code == 200
         case_ids = [c["synthetic_case_id"] for c in pat_cases.json()]
         assert case_id in case_ids
