@@ -9,6 +9,7 @@ import React, {
   useRef,
 } from "react";
 import { registerNetworkReporters } from "@/lib/api";
+import { syncOfflineQueue } from "@/lib/offlineQueue";
 
 export type ConnectivityState = "GOOD" | "NORMAL" | "SLOW" | "OFFLINE";
 export type ConnectivityMode = "AUTOMATIC" | "NORMAL" | "LOW_BANDWIDTH";
@@ -265,6 +266,22 @@ export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({
           text: "Connection improved. Normal data behavior restored.",
           type: "success",
         });
+
+        if (from === "OFFLINE" && typeof window !== "undefined") {
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const token = localStorage.getItem("clinova_token");
+          syncOfflineQueue(apiBase, token)
+            .then((res) => {
+              if (res.syncedCount > 0) {
+                setToastMessage({
+                  id: Date.now() + 1,
+                  text: `Reconnected! Successfully synced ${res.syncedCount} queued action(s).`,
+                  type: "success",
+                });
+              }
+            })
+            .catch(() => {});
+        }
       }
     },
     []

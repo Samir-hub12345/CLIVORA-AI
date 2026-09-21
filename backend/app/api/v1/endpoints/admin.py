@@ -10,6 +10,7 @@ from app.models.case import TriageCase
 from app.models.audit import AuditLog
 from app.schemas.portal import AdminOverview
 from app.schemas.user import UserResponse
+from app.services.retention import RetentionService
 
 router = APIRouter(dependencies=[Depends(get_current_admin)])
 
@@ -27,3 +28,19 @@ async def overview(db: AsyncSession = Depends(get_db)):
 @router.get("/users", response_model=list[UserResponse])
 async def users(db: AsyncSession = Depends(get_db)):
     return (await db.execute(select(User).order_by(User.full_name))).scalars().all()
+
+
+@router.post("/retention/sweep")
+async def trigger_retention_sweep(
+    dry_run: bool = True,
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    """Executes a HIPAA-compliant data retention and disposal lifecycle sweep."""
+    report = await RetentionService.run_retention_sweep(
+        db=db,
+        dry_run=dry_run,
+        triggered_by_user_id=current_admin.id,
+        triggered_by_email=current_admin.email,
+    )
+    return report.to_dict()

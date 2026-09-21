@@ -1,21 +1,22 @@
 "use client";
+
+import React from "react";
 import { AuthProvider } from "@/lib/auth";
 import { RouteAccess } from "@/components/common/role-guard";
-export function Providers({ children }: { children: React.ReactNode }) {
-  return <AuthProvider><RouteAccess>{children}</RouteAccess></AuthProvider>;
-}
 import { ConnectivityProvider } from "@/lib/connectivity";
 import { NetworkToast } from "@/components/common/network-toast";
 import { DevNetworkDebug } from "@/components/common/dev-network-debug";
 
-export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConnectivityProvider>
       <AuthProvider>
-        {children}
+        <RouteAccess>
+          {children}
+        </RouteAccess>
         <NetworkToast />
         <DevNetworkDebug />
       </AuthProvider>
     </ConnectivityProvider>
   );
-};
+}

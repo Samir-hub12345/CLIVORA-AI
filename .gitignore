@@ -55,3 +55,6 @@ docker-compose.override.yml
 *.db-wal
 .pytest_cache/
 *.tsbuildinfo
+storage_data/
+scratch/
+backups/

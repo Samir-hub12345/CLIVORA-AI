@@ -1,18 +1,31 @@
 import random
 from datetime import datetime, timezone
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from typing import Optional, List
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, UploadFile, File
 from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import get_current_user, get_current_clinician, get_current_doctor, get_client_ip
+from app.core.deps import get_current_user, get_current_clinician, get_current_doctor, require_roles, get_client_ip
 from app.db.session import get_db
 from app.models.patient import Patient
 from app.models.identifier import PatientIdentifier, IdentifierType
+from app.models.facility import Facility
 from app.models.user import User, UserRole
 from app.schemas.patient import PatientCreate, PatientUpdate, PatientResponse, PatientListResponse
 from app.services.audit import AuditService
+from app.services.import_pipeline import (
+    PatientImportService,
+    ImportPreviewResult,
+    ImportExecutionResult,
+    ParsedPatientRecord,
+)
+from app.services.deduplication import (
+    DeduplicationService,
+    DuplicateMatchPair,
+    MergeRequest,
+    MergeResult,
+)
 
 router = APIRouter()
 
@@ -185,7 +198,7 @@ async def get_my_patient_profile(
 async def get_patient_profile(
     patient_id: str,
     request: Request,
-    current_user: User = Depends(get_current_clinician),
+    current_user: User = Depends(require_roles([UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve full clinical patient chart and past medical history."""
@@ -319,3 +332,72 @@ async def delete_patient(
     )
 
     return None
+
+
+# ==================== BULK IMPORT & DEDUPLICATION ====================
+
+@router.post("/import/preview", response_model=ImportPreviewResult)
+async def preview_patient_import(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_clinician),
+):
+    """Dry-run validation preview for bulk patient import (CSV, JSON, or FHIR)."""
+    file_bytes = await file.read()
+    file_type = file.filename.split(".")[-1] if file.filename and "." in file.filename else "csv"
+    return PatientImportService.parse_and_validate(file_bytes=file_bytes, file_type=file_type)
+
+
+@router.post("/import/execute", response_model=ImportExecutionResult)
+async def execute_patient_import(
+    records: List[ParsedPatientRecord],
+    facility_id: Optional[str] = None,
+    current_user: User = Depends(get_current_clinician),
+    db: AsyncSession = Depends(get_db),
+):
+    """Execute batch insertion of validated clinical patient records."""
+    target_facility = facility_id or current_user.facility_id
+    if not target_facility:
+        fac = (await db.execute(select(Facility).limit(1))).scalar_one_or_none()
+        target_facility = fac.id if fac else "FAC-DISTRICT-01"
+
+    return await PatientImportService.execute_batch_import(
+        records=records,
+        facility_id=target_facility,
+        current_user=current_user,
+        db=db,
+    )
+
+
+@router.get("/duplicates/candidates", response_model=List[DuplicateMatchPair])
+async def list_duplicate_candidates(
+    facility_id: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(require_roles([UserRole.DOCTOR, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """Scan patient directory for potential duplicate charts requiring clinician review."""
+    scoped_facility = facility_id or (current_user.facility_id if current_user.role != UserRole.ADMIN else None)
+    return await DeduplicationService.list_all_potential_duplicates(
+        facility_id=scoped_facility,
+        db=db,
+        limit=limit,
+    )
+
+
+@router.post("/merge", response_model=MergeResult)
+async def merge_patient_records(
+    req: MergeRequest,
+    current_user: User = Depends(require_roles([UserRole.DOCTOR, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reconcile and merge duplicate patient chart into primary record with historical provenance."""
+    try:
+        return await DeduplicationService.merge_patient_records(
+            primary_id=req.primary_patient_id,
+            secondary_id=req.secondary_patient_id,
+            merge_reason=req.merge_reason,
+            current_user=current_user,
+            db=db,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
