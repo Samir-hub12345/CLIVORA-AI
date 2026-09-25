@@ -34,7 +34,6 @@ async def create_triage_case(
     req: CaseCreateRequest,
     request: Request,
     current_user: User = Depends(get_intake_user),
-    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new multimodal triage case with anonymization and structured decision support."""
@@ -128,7 +127,6 @@ async def list_cases(
     assigned_doctor_id: Optional[str] = Query(None, description="Filter by assigned clinician ID"),
     patient_id: Optional[str] = Query(None, description="Filter by patient record ID"),
     limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_clinician),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
@@ -159,7 +157,6 @@ async def list_cases(
 @router.get("/{case_id}", response_model=CaseResponse)
 async def get_case(
     case_id: str,
-    current_user: User = Depends(get_current_clinician),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
@@ -290,7 +287,6 @@ async def verify_case_intake(
 async def delete_case_data(
     case_id: str,
     request: Request,
-    current_user: User = Depends(get_current_doctor),
     current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):

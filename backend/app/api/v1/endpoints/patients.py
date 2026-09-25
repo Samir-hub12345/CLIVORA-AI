@@ -6,7 +6,7 @@ from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import get_current_user, get_current_clinician, get_current_doctor, get_client_ip
+from app.core.deps import get_current_user, get_current_clinician, get_current_doctor, get_current_staff_or_admin, get_client_ip
 from app.db.session import get_db
 from app.models.patient import Patient
 from app.models.identifier import PatientIdentifier, IdentifierType
@@ -185,7 +185,7 @@ async def get_my_patient_profile(
 async def get_patient_profile(
     patient_id: str,
     request: Request,
-    current_user: User = Depends(get_current_clinician),
+    current_user: User = Depends(get_current_staff_or_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve full clinical patient chart and past medical history."""

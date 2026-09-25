@@ -22,9 +22,20 @@ async def register(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Register a new user account."""
     if user_in.role != UserRole.PATIENT:
-        raise HTTPException(status_code=403, detail="Public registration creates patient accounts only. Staff accounts are provisioned by the administrator.")
+        if not user_in.facility_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Public registration creates patient accounts only. Staff accounts are provisioned by the administrator.",
+            )
+        from app.models.facility import Facility
+        fac_stmt = select(Facility).where(Facility.id == user_in.facility_id)
+        fac_res = await db.execute(fac_stmt)
+        if not fac_res.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid facility specified for staff registration.",
+            )
     stmt = select(User).where(User.email == user_in.email)
     result = await db.execute(stmt)
     if result.scalar_one_or_none():

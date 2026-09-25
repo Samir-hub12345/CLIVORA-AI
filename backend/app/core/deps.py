@@ -91,6 +91,7 @@ get_current_clinician = require_roles([UserRole.DOCTOR, UserRole.NURSE])
 get_current_doctor = require_roles([UserRole.DOCTOR])
 get_current_admin = require_roles([UserRole.ADMIN])
 get_current_patient = require_roles([UserRole.PATIENT])
+get_current_staff_or_admin = require_roles([UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN])
 get_intake_user = require_roles([UserRole.PATIENT, UserRole.DOCTOR, UserRole.NURSE])
 
 

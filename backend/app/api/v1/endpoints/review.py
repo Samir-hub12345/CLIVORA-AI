@@ -31,7 +31,6 @@ async def perform_review_action(
     case_id: str,
     req: CaseReviewActionRequest,
     request: Request,
-    current_user: User = Depends(get_current_doctor),
     current_user: User = Depends(get_current_clinician),
     db: AsyncSession = Depends(get_db),
 ):
@@ -144,7 +143,6 @@ async def perform_review_action(
 @router.get("/{case_id}/referral", response_model=ReferralNoteResponse)
 async def get_referral_note(
     case_id: str,
-    current_user: User = Depends(get_current_clinician),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
