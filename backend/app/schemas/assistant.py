@@ -28,6 +28,8 @@ class AssistantMessageRequest(BaseModel):
     context_resource_type: Optional[str] = None  # "case", "intake", "queue", "patient"
     context_resource_id: Optional[str] = None
     voice_input: bool = False
+    history: Optional[List[Dict[str, str]]] = None  # Multi-turn conversational turns [{"role": "user"|"assistant", "content": "..."}]
+    voice_persona: Optional[str] = "clara"  # "clara", "marcus", "maya", "aarav"
 
 
 class ProposedAction(BaseModel):

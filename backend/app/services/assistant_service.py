@@ -17,6 +17,7 @@ from app.schemas.assistant import (
     AssistantToolExecuteRequest,
     AssistantToolExecuteResponse,
 )
+from app.services.ai.gemini_service import ai_service
 
 logger = logging.getLogger("clinova.assistant")
 
@@ -87,9 +88,10 @@ class AssistantService:
 
     @classmethod
     def detect_language(cls, text: str) -> str:
-        """Lightweight script detection for regional Indian languages."""
+        """Lightweight script and phonetic detection for regional Indian languages."""
+        # 1. Unicode native scripts
         if any("\u0900" <= c <= "\u097F" for c in text):
-            return "hi"  # Devanagari (Hindi/Marathi)
+            return "hi"  # Devanagari (Hindi)
         if any("\u0B00" <= c <= "\u0B7F" for c in text):
             return "or"  # Odia script
         if any("\u0980" <= c <= "\u09FF" for c in text):
@@ -98,6 +100,34 @@ class AssistantService:
             return "te"  # Telugu
         if any("\u0B80" <= c <= "\u0BFF" for c in text):
             return "ta"  # Tamil
+        if any("\u0C80" <= c <= "\u0CFF" for c in text):
+            return "kn"  # Kannada
+        if any("\u0D00" <= c <= "\u0D7F" for c in text):
+            return "ml"  # Malayalam
+        if any("\u0A80" <= c <= "\u0AFF" for c in text):
+            return "gu"  # Gujarati
+        if any("\u0A00" <= c <= "\u0A7F" for c in text):
+            return "pa"  # Punjabi
+
+        # 2. Phonetic Romanized Hindi keywords
+        lower = text.lower()
+        hi_words = [
+            "namaste", "namaskar", "mera", "meri", "mere", "mujhe", "aap", "tum",
+            "dard", "sir dard", "pet dard", "bukhar", "khansi", "dawa", "kripya",
+            "kya", "kyu", "kaise", "thik", "nahi", "haan", "batao", "madad",
+            "chhati", "saans", "takleef", "doctor"
+        ]
+        if any(w in lower for w in hi_words):
+            return "hi"
+
+        # 3. Phonetic Romanized Odia keywords
+        or_words = [
+            "mora", "mote", "munda", "bindhuchi", "peto", "jwara", "kasa",
+            "au", "kaha", "hete", "achi", "nahin", "sahajya", "dhanyabad"
+        ]
+        if any(w in lower for w in or_words):
+            return "or"
+
         return "en"
 
     @classmethod
@@ -111,7 +141,8 @@ class AssistantService:
         msg_clean = req.message.strip()
         lower_msg = msg_clean.lower()
         detected_lang = cls.detect_language(msg_clean)
-        response_lang = req.language or (detected_lang if detected_lang != "en" else "en")
+        # Prioritize detected language of the spoken voice so the assistant speaks back in that same language!
+        response_lang = detected_lang if detected_lang != "en" else (req.language or "en")
 
         # -------------------------------------------------------------
         # SAFETY CHECK 1: Prompt Injection & Unsafe Command Filtering
@@ -186,7 +217,11 @@ class AssistantService:
         # -------------------------------------------------------------
         # EMERGENCY RED FLAG ADVISORY (Human oversight first)
         # -------------------------------------------------------------
-        acute_keywords = ["chest pain", "cannot breathe", "difficulty breathing", "severe bleeding", "unconscious", "stroke", "heart attack"]
+        acute_keywords = [
+            "chest pain", "cannot breathe", "difficulty breathing", "severe bleeding", "unconscious", "stroke", "heart attack",
+            "छाती में दर्द", "सांस", "सांस फूलना", "बेहोश", "chhati me dard", "saans",
+            "ଛାତି ଯନ୍ତ୍ରଣା", "ନିଶ୍ୱାସ", "ଅଚେତ", "chhati jantrana"
+        ]
         if any(w in lower_msg for w in acute_keywords):
             em_en = (
                 "⚠️ URGENT HEALTH ADVISORY: The symptoms you described may require immediate medical attention. "
@@ -203,6 +238,39 @@ class AssistantService:
                 original_statement=msg_clean,
                 source_label="Emergency Triage Advisory",
                 follow_up_suggestions=["Call emergency contact", "Notify on-duty clinician"],
+                detected_language=detected_lang,
+            )
+
+        # -------------------------------------------------------------
+        # DOMAIN INTENT: Symptom Intake Reporting
+        # -------------------------------------------------------------
+        symptom_keywords = [
+            "headache", "fever", "cough", "cold", "pain", "stomach", "vomiting", "weakness", "body ache",
+            "सिरदर्द", "बुखार", "खांसी", "जुकाम", "दर्द", "पेट दर्द", "उल्टी", "कमजोरी", "थकान",
+            "sir dard", "bukhar", "khansi", "pet dard",
+            "ମୁଣ୍ଡ ବିନ୍ଧା", "ଜ୍ୱର", "କାଶ", "ଥଣ୍ଡା", "ଯନ୍ତ୍ରଣା", "ପେଟ ବ୍ୟଥା", "ବାନ୍ତି", "ଦୁର୍ବଳତା",
+            "munda bindha", "jwara", "kasa", "thanda", "peto jantrana"
+        ]
+        if any(w in lower_msg for w in symptom_keywords):
+            resp_en = (
+                f"I have noted your reported symptoms. How many days have you been experiencing this, "
+                f"and is there any severe discomfort? I will organize your symptom timeline for clinician review."
+            )
+            resp_hi = (
+                f"मैंने आपके द्वारा बताए गए लक्षण दर्ज कर लिए हैं। आपको यह तकलीफ कितने दिनों से हो रही है, "
+                f"और क्या दर्द अधिक तेज है? मैं आपके लक्षणों का विवरण डॉक्टर की समीक्षा के लिए व्यवस्थित कर रहा हूँ।"
+            )
+            resp_or = (
+                f"ମୁଁ ଆପଣଙ୍କର ଲକ୍ଷଣଗୁଡ଼ିକ ରେକର୍ଡ କରିଛି। ଆପଣଙ୍କୁ ଏହି ଅସୁବିଧା କେତେ ଦିନରୁ ହେଉଛି, "
+                f"ଏବଂ କଷ୍ଟ ଅଧିକ ହେଉଛି କି? ମୁଁ ଡାକ୍ତରଙ୍କ ସମୀକ୍ଷା ପାଇଁ ଆପଣଙ୍କ ତଥ୍ୟ ପ୍ରସ୍ତୁତ କରୁଛି।"
+            )
+            resp_map = {"hi": resp_hi, "or": resp_or}
+            return AssistantMessageResponse(
+                text=resp_map.get(response_lang, resp_en),
+                language=response_lang,
+                original_statement=msg_clean,
+                source_label="Clinical Intake Note (AI-assisted)",
+                follow_up_suggestions=["Record symptom duration", "Record vitals"],
                 detected_language=detected_lang,
             )
 
@@ -360,20 +428,155 @@ class AssistantService:
             )
 
         # -------------------------------------------------------------
-        # DEFAULT BOUNDED ASSISTANT GUIDANCE
+        # CONVERSATIONAL VOICE SKILLS & MULTI-TURN AI CHAT
+        # -------------------------------------------------------------
+        # 1. Attempt Live Gemini Voice Generation if client configured
+        try:
+            gemini_voice_text = await ai_service.generate_voice_chat(
+                message=msg_clean,
+                history=req.history,
+                language=response_lang,
+                persona=getattr(req, "voice_persona", "clara") or "clara",
+                user_name=user.full_name or "Patient",
+                user_role=user.role.value if hasattr(user.role, "value") else str(user.role),
+            )
+            if gemini_voice_text and len(gemini_voice_text.strip()) > 5:
+                return AssistantMessageResponse(
+                    text=gemini_voice_text.strip(),
+                    language=response_lang,
+                    original_statement=msg_clean,
+                    source_label="Clinova Voice AI (Gemini)",
+                    follow_up_suggestions=["Record additional symptom", "Check triage status"],
+                    detected_language=detected_lang,
+                )
+        except Exception as e:
+            logger.warning(f"Voice Gemini chat fallback triggered: {e}")
+
+        # 2. Conversational Heuristic Turn-Taking Engine (Offline & Deterministic)
+        # Check if user is reporting duration
+        if any(w in lower_msg for w in ["days", "day", "hours", "hour", "weeks", "since yesterday", "today", "दिन", "घंटे", "हफ्ते", "କାଲିଠୁ", "ଦିନ"]):
+            dur_en = (
+                "Thank you for sharing that timeline. Knowing how long you have experienced this is key for clinician review. "
+                "Have your symptoms been staying consistent, or are they worsening at particular times like evening or night?"
+            )
+            dur_hi = (
+                "समय अवधि बताने के लिए धन्यवाद। क्या आपके लक्षण पूरे दिन एक जैसे रहते हैं, या शाम या रात के समय अधिक बढ़ जाते हैं?"
+            )
+            dur_or = (
+                "ସମୟ ବିଷୟରେ ଜଣାଇବା ପାଇଁ ଧନ୍ୟବାଦ। ଏହି ଲକ୍ଷଣଗୁଡ଼ିକ କଣ ସବୁବେଳେ ସମାନ ରହୁଛି, ନା ରାତିରେ ଅଧିକ ହେଉଛି?"
+            )
+            dur_map = {"hi": dur_hi, "or": dur_or}
+            return AssistantMessageResponse(
+                text=dur_map.get(response_lang, dur_en),
+                language=response_lang,
+                original_statement=msg_clean,
+                source_label="Conversational Triage Follow-up",
+                follow_up_suggestions=["Describe pain severity", "Record vitals"],
+                detected_language=detected_lang,
+            )
+
+        # Check if user is reporting severity or pain level
+        if any(w in lower_msg for w in ["out of 10", "scale", "severe", "mild", "moderate", "pain is", "तेज", "हल्का", "दर्द", "କଷ୍ଟ", "ଯନ୍ତ୍ରଣା"]):
+            sev_en = (
+                "I understand how uncomfortable that is. Managing your pain and discomfort is our priority. "
+                "Are you able to rest and hydrate comfortably, or is this keeping you from sleeping?"
+            )
+            sev_hi = (
+                "मैं आपकी तकलीफ समझ सकता हूँ। क्या इस परेशानी के कारण आपको सोने या आराम करने में भी कठिनाई हो रही है?"
+            )
+            sev_or = (
+                "ମୁଁ ଆପଣଙ୍କ କଷ୍ଟ ବୁଝିପାରୁଛି। ଏହି ଯନ୍ତ୍ରଣା ଯୋଗୁଁ ଆପଣଙ୍କୁ ଶୋଇବା କିମ୍ବା ବିଶ୍ରାମ ନେବାରେ କୌଣସି ଅସୁବିଧା ହେଉଛି କି?"
+            )
+            sev_map = {"hi": sev_hi, "or": sev_or}
+            return AssistantMessageResponse(
+                text=sev_map.get(response_lang, sev_en),
+                language=response_lang,
+                original_statement=msg_clean,
+                source_label="Conversational Triage Follow-up",
+                follow_up_suggestions=["List current medications", "Request doctor consult"],
+                detected_language=detected_lang,
+            )
+
+        # Check if user is mentioning medications or home remedies taken
+        if any(w in lower_msg for w in ["paracetamol", "tablet", "medicine", "pill", "syrup", "dawa", "दवा", "गोली", "ଔଷଧ"]):
+            med_en = (
+                "Noted. Keeping track of previous medications or home remedies provides valuable context for the doctor. "
+                "Did taking that give you any noticeable relief, or are you still feeling the same?"
+            )
+            med_hi = (
+                "दर्ज कर लिया गया है। आपने जो दवा या घरेलू उपाय लिया, क्या उससे आपको कुछ राहत मिली है?"
+            )
+            med_or = (
+                "ମୁଁ ଏହା ରେକର୍ଡ କରିଛି। ଆପଣ ନେଇଥିବା ଔଷଧ ଦ୍ୱାରା କିଛି ଉପଶମ ମିଳିଛି କି, ନା ସମାନ ଅନୁଭବ ହେଉଛି?"
+            )
+            med_map = {"hi": med_hi, "or": med_or}
+            return AssistantMessageResponse(
+                text=med_map.get(response_lang, med_en),
+                language=response_lang,
+                original_statement=msg_clean,
+                source_label="Medication History Intake",
+                follow_up_suggestions=["Note allergies", "Check clinical queue"],
+                detected_language=detected_lang,
+            )
+
+        # Check if user asks for advice, diet, hydration, or what to do next
+        if any(w in lower_msg for w in ["what should i do", "what can i eat", "food", "diet", "drink", "water", "क्या करूँ", "क्या खाऊं", "पानी", "ଖାଦ୍ୟ", "କଣ କରିବି"]):
+            care_en = (
+                "While waiting for human clinician review, it is generally safest to drink plenty of warm fluids, "
+                "eat light non-greasy foods, and get adequate rest. Would you like me to submit your symptom summary to the clinic intake queue?"
+            )
+            care_hi = (
+                "डॉक्टर द्वारा समीक्षा किए जाने तक, पर्याप्त आराम करें, हल्का भोजन लें और गुनगुने तरल पदार्थ पिएं। क्या आप चाहते हैं कि मैं आपके लक्षणों की रिपोर्ट डॉक्टर को भेज दूँ?"
+            )
+            care_or = (
+                "ଡାକ୍ତର ଦେଖିବା ପର୍ଯ୍ୟନ୍ତ, ପର୍ଯ୍ୟାପ୍ତ ବିଶ୍ରାମ ନିଅନ୍ତୁ, ପ୍ରଚୁର ପାଣି ପିଅନ୍ତୁ ଏବଂ ହାଲୁକା ଖାଦ୍ୟ ଖାଆନ୍ତୁ। ଆପଣ ଚାହାଁନ୍ତି କି ମୁଁ ଡାକ୍ତରଙ୍କ ପାଇଁ ଏହି ରିପୋର୍ଟ ଦାଖଲ କରେ?"
+            )
+            care_map = {"hi": care_hi, "or": care_or}
+            return AssistantMessageResponse(
+                text=care_map.get(response_lang, care_en),
+                language=response_lang,
+                original_statement=msg_clean,
+                source_label="Self-Care & Triage Guidance",
+                follow_up_suggestions=["Submit to clinic intake", "Add another symptom"],
+                detected_language=detected_lang,
+            )
+
+        # Greetings & friendly conversational check-ins
+        if any(w in lower_msg for w in ["hello", "hi", "hey", "how are you", "who are you", "नमस्ते", "ନମସ୍କାର"]):
+            greet_en = (
+                f"Hello {user.full_name}! I am Clinova's voice health companion. "
+                f"I'm here to listen to your health concerns, organize your symptoms, and assist with your clinic visit. How are you feeling right now?"
+            )
+            greet_hi = (
+                f"नमस्ते {user.full_name}! मैं क्लिनोवा का वॉयस स्वास्थ्य सहायक हूँ। "
+                f"मैं आपकी सहायता के लिए तैयार हूँ। आप अभी कैसा महसूस कर रहे हैं?"
+            )
+            greet_or = (
+                f"ନମସ୍କାର {user.full_name}! ମୁଁ କ୍ଲିନୋଭା ର ଭଏସ୍ ସ୍ୱାସ୍ଥ୍ୟ ସହାୟକ। "
+                f"ଆପଣ ବର୍ତ୍ତମାନ କିପରି ଅନୁଭବ କରୁଛନ୍ତି? ଦୟାକରି ଆପଣଙ୍କ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ଜଣାନ୍ତୁ।"
+            )
+            greet_map = {"hi": greet_hi, "or": greet_or}
+            return AssistantMessageResponse(
+                text=greet_map.get(response_lang, greet_en),
+                language=response_lang,
+                original_statement=msg_clean,
+                source_label="Conversational Greeting",
+                follow_up_suggestions=["Report a symptom", "Track case status"],
+                detected_language=detected_lang,
+            )
+
+        # -------------------------------------------------------------
+        # DEFAULT BOUNDED CONVERSATIONAL GUIDANCE
         # -------------------------------------------------------------
         default_en = (
-            f"Hello, {user.full_name}. I am Clinova's AI Health Assistant ({user.role.value.capitalize()} Mode). "
-            f"I can help explain clinical workflow terms, organize symptom timelines, review missing intake factors, "
-            f"and translate clinical notes across 11 Indian languages. What would you like to assist with today?"
+            f"I hear you. As your Clinova voice companion, I can help capture your symptoms, explain medical terminology, "
+            f"or check your clinic visit status. Could you tell me more about what you are experiencing?"
         )
         default_hi = (
-            f"नमस्ते, {user.full_name}। मैं क्लिनोवा का एआई स्वास्थ्य सहायक हूँ। "
-            f"मैं लक्षणों को व्यवस्थित करने, छूटी हुई जानकारी की पहचान करने और 11 भाषाओं में अनुवाद में आपकी सहायता कर सकता हूँ।"
+            f"मैं समझ रहा हूँ। मैं आपके लक्षणों को दर्ज करने, चिकित्सकीय शब्दों को समझाने या केस स्टेटस की जाँच में मदद कर सकता हूँ। क्या आप मुझे थोड़ा और विस्तार से बता सकते हैं?"
         )
         default_or = (
-            f"ନମସ୍କାର, {user.full_name}। ମୁଁ କ୍ଲିନୋଭା ର AI ସ୍ୱାସ୍ଥ୍ୟ ସହାୟକ। "
-            f"ମୁଁ ଆପଣଙ୍କୁ କ୍ଲିନିକାଲ୍ ଇନଟେକ୍ ସଂଗଠନ, ଲକ୍ଷଣ ସମୀକ୍ଷା ଏବଂ ୧୧ଟି ଭାରତୀୟ ଭାଷାରେ ଅନୁବାଦରେ ସାହାଯ୍ୟ କରିପାରିବି।"
+            f"ମୁଁ ବୁଝିପାରୁଛି। ମୁଁ ଆପଣଙ୍କ ଲକ୍ଷଣ ରେକର୍ଡ କରିବା, ଡାକ୍ତରୀ ଶବ୍ଦ ବୁଝାଇବା ଏବଂ କେସ୍ ଷ୍ଟାଟସ୍ ଯାଞ୍ଚ କରିବାରେ ସାହାଯ୍ୟ କରିପାରିବି। ଆପଣଙ୍କ ସମସ୍ୟା ବିଷୟରେ ଆଉ କିଛି କହିପାରିବେ କି?"
         )
 
         def_map = {"hi": default_hi, "or": default_or}
@@ -383,7 +586,7 @@ class AssistantService:
             text=def_map.get(response_lang, default_en),
             language=response_lang,
             original_statement=msg_clean,
-            source_label="Clinova AI Assistant",
+            source_label="Clinova Voice AI Companion",
             follow_up_suggestions=suggestions,
             detected_language=detected_lang,
         )

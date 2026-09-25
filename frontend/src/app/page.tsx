@@ -31,8 +31,6 @@ import {
   Mail,
   Check,
   X,
-  HeartPulse,
-  Eye,
 } from "lucide-react";
 
 export default function Home() {
@@ -136,8 +134,6 @@ export default function Home() {
         "Clear timeline and symptom organization",
         "Empowers patients ahead of doctor consultation",
       ],
-      ctaText: "Start Patient Intake",
-      ctaHref: "/intake",
     },
     {
       title: "Healthcare Staff & Nurses",
@@ -150,8 +146,6 @@ export default function Home() {
         "Local OCR extraction for paper reports",
         "Low-bandwidth toggle for rural connectivity",
       ],
-      ctaText: "Staff Portal Sign In",
-      ctaHref: "/login?role=nurse",
     },
     {
       title: "Physicians & Medical Officers",
@@ -164,8 +158,6 @@ export default function Home() {
         "Instant access to normalized lab parameters",
         "FHIR-aligned referral note exports",
       ],
-      ctaText: "Doctor Portal Sign In",
-      ctaHref: "/login?role=doctor",
     },
     {
       title: "Facility Administrators",
@@ -178,8 +170,6 @@ export default function Home() {
         "Operational queue and wait-time metrics",
         "Strict role-based access control (RBAC)",
       ],
-      ctaText: "Facility Admin Portal",
-      ctaHref: "/login?role=admin",
     },
   ];
 
@@ -212,12 +202,22 @@ export default function Home() {
 
           {/* Action CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
-            <Link
-              href={user ? dashboardPath(user.role) : "/login"}
-              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all flex items-center gap-2"
-            >
-              <span>{user ? "Open my dashboard" : "Sign in to get started"}</span> <ArrowRight className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link
+                href={dashboardPath(user.role)}
+                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all flex items-center gap-2"
+              >
+                <span>Open my dashboard</span> <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                href="/get-started"
+                className="px-7 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
             {isClinician && <Link
               href="/review"
               className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-xl text-sm shadow-sm transition-all flex items-center gap-2"
@@ -225,20 +225,6 @@ export default function Home() {
               <Activity className="w-4 h-4 text-teal-600" />
               <span>Reviewer Dashboard</span>
             </Link>}
-            <Link
-              href="/demo"
-              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all flex items-center gap-2"
-            >
-              <Eye className="w-4 h-4 text-slate-500" />
-              <span>Interactive Demo</span>
-            </Link>
-            <Link
-              href="/get-started"
-              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2"
-            >
-              <span>Get Started</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
             <a
               href="#how-it-works"
               className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-xl text-sm shadow-xs transition-all flex items-center gap-2"
@@ -305,13 +291,13 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-emerald-800">
-                    <span>Stage 4</span>
-                    <Stethoscope className="w-4 h-4 text-emerald-700" />
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span className="text-emerald-700">Stage 4</span>
+                    <Stethoscope className="w-4 h-4 text-emerald-600" />
                   </div>
                   <h4 className="text-xs font-bold text-slate-900">Physician Sign-Off</h4>
-                  <p className="text-[11px] text-emerald-800 leading-snug">
+                  <p className="text-[11px] text-slate-500 leading-snug">
                     Doctor modifies, confirms urgency, and signs off before treatment.
                   </p>
                 </div>
@@ -545,16 +531,6 @@ export default function Home() {
                     ))}
                   </ul>
                 </div>
-
-                <div className="pt-4 border-t border-slate-100">
-                  <Link
-                    href={card.ctaHref}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-900 transition"
-                  >
-                    <span>{card.ctaText}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
               </div>
             ))}
           </div>
@@ -743,14 +719,8 @@ export default function Home() {
               href="/get-started"
               className="px-7 py-3.5 bg-white hover:bg-slate-100 text-teal-900 font-bold rounded-xl text-sm shadow-md transition-all flex items-center gap-2"
             >
-              <span>Get Started (Role Selection)</span>
+              <span>Get Started</span>
               <ArrowRight className="w-4 h-4 text-teal-700" />
-            </Link>
-            <Link
-              href="/login"
-              className="px-7 py-3.5 bg-teal-800/80 hover:bg-teal-800 text-white font-bold rounded-xl text-sm border border-teal-600 transition-all flex items-center gap-2"
-            >
-              <span>Portal Sign In</span>
             </Link>
           </div>
         </section>

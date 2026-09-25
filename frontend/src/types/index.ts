@@ -362,6 +362,8 @@ export interface AssistantMessageRequest {
   context_resource_type?: string;
   context_resource_id?: string;
   voice_input?: boolean;
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
+  voice_persona?: string;
 }
 
 export interface AssistantMessageResponse {

@@ -74,7 +74,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-1.5 text-xs text-slate-500">
               <li>
                 <Link href="/get-started" className="hover:text-teal-700 transition">
-                  Get Started (Role Selection)
+                  Get Started
                 </Link>
               </li>
               <li>

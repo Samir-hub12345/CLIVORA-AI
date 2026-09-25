@@ -107,7 +107,7 @@ function LoginForm() {
       </div>
 
       {/* Role Selection Tabs */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+      <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
         <button
           type="button"
           onClick={() => setDemoCredentials("doctor")}
@@ -131,7 +131,7 @@ function LoginForm() {
           }`}
         >
           <Activity className="w-3.5 h-3.5 text-teal-600" />
-          <span>Staff / Nurse</span>
+          <span>Staff</span>
         </button>
 
         <button
@@ -145,6 +145,19 @@ function LoginForm() {
         >
           <User className="w-3.5 h-3.5 text-blue-600" />
           <span>Patient</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setDemoCredentials("admin")}
+          className={`py-2 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === "admin"
+              ? "bg-white text-amber-800 shadow-xs border border-slate-200"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Building className="w-3.5 h-3.5 text-amber-600" />
+          <span>Admin</span>
         </button>
       </div>
 
@@ -252,21 +265,6 @@ function LoginForm() {
           Sign In to Clinova AI <ArrowRight className="w-4 h-4" />
         </Button>
       </form>
-
-      {/* Separated Facility Admin Direct Entry */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-slate-700">
-          <Building className="w-4 h-4 text-amber-600" />
-          <span>Facility Admin Console</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDemoCredentials("admin")}
-          className="text-amber-800 font-bold hover:underline"
-        >
-          Load Admin Auth &rarr;
-        </button>
-      </div>
 
       {/* Bottom links */}
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">

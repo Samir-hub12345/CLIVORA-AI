@@ -399,6 +399,75 @@ Provide structured JSON with:
             ),
         }
 
+    async def generate_voice_chat(
+        self,
+        message: str,
+        history: Optional[List[dict]] = None,
+        language: str = "en",
+        persona: str = "clara",
+        user_name: str = "Patient",
+        user_role: str = "patient",
+    ) -> Optional[str]:
+        """Generate conversational, speech-optimized voice response using Gemini."""
+        if not self.client:
+            return None
+        try:
+            from google.genai import types
+
+            lang_names = {
+                "en": "English",
+                "hi": "Hindi (हिन्दी)",
+                "or": "Odia (ଓଡ଼ିଆ)",
+                "bn": "Bengali (বাংলা)",
+                "ta": "Tamil (தமிழ்)",
+                "te": "Telugu (తెలుగు)",
+            }
+            lang_label = lang_names.get(language, "English")
+
+            persona_styles = {
+                "clara": "Warm, gentle, deeply empathetic clinical companion",
+                "marcus": "Steady, clear, direct, objective medical officer",
+                "maya": "Friendly, approachable, patient advocate with warm local cadence",
+                "aarav": "Crisp, concise, encouraging modern healthcare navigator",
+            }
+            persona_style = persona_styles.get(persona, persona_styles["clara"])
+
+            history_lines = []
+            if history:
+                for h in history[-6:]:
+                    role = "User" if h.get("role") == "user" else "Clinova"
+                    history_lines.append(f"{role}: {h.get('content', '')}")
+            history_text = "\n".join(history_lines) if history_lines else "None (first turn)"
+
+            system_instruction = (
+                f"You are Clinova Voice, an expert real-time voice health assistant ({persona_style}). "
+                f"You are speaking aloud directly to {user_name} ({user_role}). "
+                f"MANDATORY VOICE RULES:\n"
+                f"1. Spoken out loud: NEVER use bullet points, numbered lists, markdown, asterisks (*), or tables. Use natural human spoken sentences.\n"
+                f"2. Language: You MUST reply entirely in {lang_label}.\n"
+                f"3. Natural Turn-Taking: Acknowledge the user's specific statement, provide practical clinical guidance or empathy, and end with ONE short, natural follow-up question.\n"
+                f"4. Length: Keep it concise (2-4 spoken sentences), exactly like ChatGPT Advanced Voice Mode.\n"
+                f"5. Safety: Do not provide a definitive diagnosis or prescribe drugs. If red-flag symptoms are mentioned (e.g. chest pain, difficulty breathing, severe bleeding), immediately urge emergency care."
+            )
+
+            prompt = f"Conversation history:\n{history_text}\n\nCurrent user spoken statement: \"{message}\"\n\nSpoken response:"
+
+            response = await self.client.aio.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.7,
+                    max_output_tokens=250,
+                ),
+            )
+            if response and response.text:
+                clean_text = response.text.strip().replace("*", "").replace("#", "")
+                return clean_text
+        except Exception as e:
+            logger.warning(f"Gemini voice chat call failed or unavailable: {e}")
+            return None
+        return None
 
 
 ai_service = GeminiClinicalService()
