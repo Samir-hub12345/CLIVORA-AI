@@ -1,59 +1,32 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-  X,
-  Send,
-  Sparkles,
-  AlertTriangle,
-  CheckCircle2,
-  HelpCircle,
-  Minimize2,
-  PowerOff,
-  RotateCcw,
-} from "lucide-react";
+import { Mic, MicOff, X, Volume2, Sparkles, Activity } from "lucide-react";
 import { assistantApi } from "@/lib/api";
-import {
-  AssistantMessageResponse,
-  AssistantCapabilities,
-  ProposedAction,
-} from "@/types";
+import { ProposedAction } from "@/types";
 import { useAuth } from "@/lib/auth";
-
-const SUPPORTED_LANGUAGES = [
-  { code: "en", name: "English" },
-  { code: "hi", name: "हिन्दी (Hindi)" },
-  { code: "or", name: "ଓଡ଼ିଆ (Odia)" },
-  { code: "bn", name: "বাংলা (Bengali)" },
-  { code: "te", name: "తెలుగు (Telugu)" },
-  { code: "ta", name: "தமிழ் (Tamil)" },
-  { code: "mr", name: "मराठी (Marathi)" },
-  { code: "gu", name: "ગુજરાતી (Gujarati)" },
-  { code: "kn", name: "ಕನ್ನಡ (Kannada)" },
-  { code: "ml", name: "മലയാളം (Malayalam)" },
-  { code: "pa", name: "ਪੰਜਾਬੀ (Punjabi)" },
-];
 
 export const FloatingAssistant: React.FC = () => {
   const { user } = useAuth();
 
-  // Assistant active/disabled state
+  // Assistant enabled state & voice session active state
   const [enabled, setEnabled] = useState<boolean>(true);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [voiceActive, setVoiceActive] = useState<boolean>(false);
+  const [voiceState, setVoiceState] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [language, setLanguage] = useState<string>("en");
-  const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
+
+  // Live subtitles for spoken conversation
+  const [humanSpeech, setHumanSpeech] = useState<string>("");
+  const [assistantSpeech, setAssistantSpeech] = useState<string>("");
+
+  // Pending action awaiting voice confirmation
+  const [pendingAction, setPendingAction] = useState<ProposedAction | null>(null);
 
   // Dragging & Dismiss State
-  const [position, setPosition] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isOverDismiss, setIsOverDismiss] = useState<boolean>(false);
+
   const dragStartRef = useRef<{
     startX: number;
     startY: number;
@@ -61,66 +34,49 @@ export const FloatingAssistant: React.FC = () => {
     elemY: number;
     moved: boolean;
   }>({ startX: 0, startY: 0, elemX: 0, elemY: 0, moved: false });
+
   const buttonRef = useRef<HTMLDivElement | null>(null);
   const dismissZoneRef = useRef<HTMLDivElement | null>(null);
 
-  // Voice & Interaction State
-  const [isListening, setIsListening] = useState<boolean>(false);
-  const [speechSupported, setSpeechSupported] = useState<boolean>(true);
-  const [inputMessage, setInputMessage] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
-  const [response, setResponse] = useState<AssistantMessageResponse | null>(null);
-  const [executingTool, setExecutingTool] = useState<boolean>(false);
-  const [toolResult, setToolResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
-
+  // Audio / Speech Recognition Refs
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
+  const isListeningRef = useRef<boolean>(false);
+  const voiceActiveRef = useRef<boolean>(false);
+  const pendingActionRef = useRef<ProposedAction | null>(null);
 
-  // Initialize position and enabled state from localStorage
+  // Keep refs in sync
+  useEffect(() => {
+    voiceActiveRef.current = voiceActive;
+  }, [voiceActive]);
+
+  useEffect(() => {
+    pendingActionRef.current = pendingAction;
+  }, [pendingAction]);
+
+  // Load preferences and position on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Preference: Enabled
     const storedEnabled = localStorage.getItem("clinova_assistant_enabled");
-    if (storedEnabled === "false") {
-      setEnabled(false);
-    } else {
-      setEnabled(true);
-    }
+    setEnabled(storedEnabled !== "false");
 
-    // Preference: Language
     const storedLang = localStorage.getItem("clinova_assistant_language");
-    if (storedLang) {
-      setLanguage(storedLang);
-    }
+    if (storedLang) setLanguage(storedLang);
 
-    // Preference: TTS
-    const storedTts = localStorage.getItem("clinova_assistant_tts");
-    if (storedTts !== null) {
-      setTtsEnabled(storedTts !== "false");
-    }
-
-    // Default or stored position (bounded)
-    const storedPos = localStorage.getItem("clinova_assistant_pos");
+    // Initial bounded position
     const pad = 24;
-    const btnSize = 56;
+    const btnSize = 60;
     const defaultX = window.innerWidth - btnSize - pad;
     const defaultY = window.innerHeight - btnSize - pad;
 
+    const storedPos = localStorage.getItem("clinova_assistant_pos");
     if (storedPos) {
       try {
         const parsed = JSON.parse(storedPos);
-        const clampedX = Math.max(
-          16,
-          Math.min(window.innerWidth - btnSize - 16, parsed.x)
-        );
-        const clampedY = Math.max(
-          16,
-          Math.min(window.innerHeight - btnSize - 16, parsed.y)
-        );
+        const clampedX = Math.max(16, Math.min(window.innerWidth - btnSize - 16, parsed.x));
+        const clampedY = Math.max(16, Math.min(window.innerHeight - btnSize - 16, parsed.y));
         setPosition({ x: clampedX, y: clampedY });
       } catch {
         setPosition({ x: defaultX, y: defaultY });
@@ -129,33 +85,26 @@ export const FloatingAssistant: React.FC = () => {
       setPosition({ x: defaultX, y: defaultY });
     }
 
-    // Listen to custom toggle events from Header or settings
+    // Listen to custom toggle events from Header
     const handleToggle = (e: CustomEvent<{ enabled: boolean }>) => {
       if (typeof e.detail?.enabled === "boolean") {
         setEnabled(e.detail.enabled);
-        if (e.detail.enabled && !position.x) {
-          setPosition({ x: defaultX, y: defaultY });
+        if (!e.detail.enabled) {
+          stopVoiceSession();
         }
       }
     };
 
-    window.addEventListener(
-      "clinova-assistant-toggle",
-      handleToggle as EventListener
-    );
-
+    window.addEventListener("clinova-assistant-toggle", handleToggle as EventListener);
     return () => {
-      window.removeEventListener(
-        "clinova-assistant-toggle",
-        handleToggle as EventListener
-      );
+      window.removeEventListener("clinova-assistant-toggle", handleToggle as EventListener);
     };
   }, []);
 
-  // Update browser window resize clamping
+  // Window resize bounds clamping
   useEffect(() => {
     const handleResize = () => {
-      const btnSize = 56;
+      const btnSize = 60;
       setPosition((prev) => ({
         x: Math.max(16, Math.min(window.innerWidth - btnSize - 16, prev.x)),
         y: Math.max(16, Math.min(window.innerHeight - btnSize - 16, prev.y)),
@@ -165,180 +114,332 @@ export const FloatingAssistant: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Disable / Dismiss Assistant Handler
+  // Dismiss assistant handler
   const dismissAssistant = useCallback(() => {
+    stopVoiceSession();
     setEnabled(false);
-    setIsOpen(false);
     if (typeof window !== "undefined") {
       localStorage.setItem("clinova_assistant_enabled", "false");
       window.dispatchEvent(
-        new CustomEvent("clinova-assistant-toggle", {
-          detail: { enabled: false },
-        })
+        new CustomEvent("clinova-assistant-toggle", { detail: { enabled: false } })
       );
     }
-    // Inform backend of preference update
     assistantApi
       .updatePreferences({
         assistant_enabled: false,
         language,
         voice_enabled: true,
-        voice_response_enabled: ttsEnabled,
+        voice_response_enabled: true,
       })
       .catch(() => {});
-  }, [language, ttsEnabled]);
+  }, [language]);
 
-  // Speech Recognition Setup
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  // Natural Human Speech Synthesis Output
+  const speakVoice = useCallback(
+    (text: string, onDone?: () => void) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+        onDone?.();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      isSpeakingRef.current = true;
+      setVoiceState("speaking");
+      setAssistantSpeech(text);
+
+      // Stop recognition while assistant is speaking to avoid hearing its own voice
+      if (recognitionRef.current && isListeningRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+        isListeningRef.current = false;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+
+      // Select voice based on language
+      const voices = window.speechSynthesis.getVoices();
+      if (language === "hi") {
+        utterance.lang = "hi-IN";
+        const hiVoice = voices.find((v) => v.lang.startsWith("hi"));
+        if (hiVoice) utterance.voice = hiVoice;
+      } else if (language === "or") {
+        utterance.lang = "or-IN";
+        const orVoice = voices.find((v) => v.lang.startsWith("or") || v.lang.startsWith("hi"));
+        if (orVoice) utterance.voice = orVoice;
+      } else {
+        utterance.lang = "en-IN";
+        const enVoice = voices.find(
+          (v) =>
+            v.lang.startsWith("en-IN") ||
+            v.lang.startsWith("en-GB") ||
+            v.lang.startsWith("en-US")
+        );
+        if (enVoice) utterance.voice = enVoice;
+      }
+
+      utterance.onend = () => {
+        isSpeakingRef.current = false;
+        if (voiceActiveRef.current) {
+          // Immediately resume listening for the ongoing human conversation
+          startListening();
+        } else {
+          setVoiceState("idle");
+        }
+        onDone?.();
+      };
+
+      utterance.onerror = () => {
+        isSpeakingRef.current = false;
+        if (voiceActiveRef.current) {
+          startListening();
+        } else {
+          setVoiceState("idle");
+        }
+        onDone?.();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    },
+    [language]
+  );
+
+  // Process human spoken utterance
+  const processSpokenInput = async (spokenText: string) => {
+    const clean = spokenText.trim();
+    if (!clean) return;
+
+    setHumanSpeech(clean);
+    setVoiceState("thinking");
+
+    // Check if user is confirming or cancelling a pending action by voice
+    const lower = clean.toLowerCase();
+    const currentAction = pendingActionRef.current;
+
+    if (currentAction) {
+      const isAffirmative =
+        lower.includes("confirm") ||
+        lower.includes("yes") ||
+        lower.includes("proceed") ||
+        lower.includes("approve") ||
+        lower.includes("do it") ||
+        lower.includes("हाँ") ||
+        lower.includes("कर दो") ||
+        lower.includes("ହଁ");
+
+      const isNegative =
+        lower.includes("cancel") ||
+        lower.includes("no") ||
+        lower.includes("stop") ||
+        lower.includes("don't") ||
+        lower.includes("नहीं") ||
+        lower.includes("ନା");
+
+      if (isAffirmative) {
+        try {
+          const execRes = await assistantApi.executeTool({
+            tool_name: currentAction.tool_name,
+            parameters: currentAction.parameters,
+            confirmed: true,
+          });
+          setPendingAction(null);
+          speakVoice("Action confirmed and executed successfully.");
+          return;
+        } catch {
+          setPendingAction(null);
+          speakVoice("Could not execute action. Please try again.");
+          return;
+        }
+      } else if (isNegative) {
+        setPendingAction(null);
+        speakVoice("Action cancelled.");
+        return;
+      }
+    }
+
+    // Send query to assistant intelligence
+    try {
+      const res = await assistantApi.sendMessage({
+        message: clean,
+        language,
+        voice_input: true,
+      });
+
+      if (res.data) {
+        const replyText = res.data.text;
+        if (res.data.detected_language && res.data.detected_language !== language) {
+          setLanguage(res.data.detected_language);
+        }
+
+        // Check if consequential action requires voice confirmation
+        if (res.data.requires_confirmation && res.data.proposed_action) {
+          setPendingAction(res.data.proposed_action);
+          const voicePrompt =
+            `${replyText}. Please say "Confirm" to proceed, or say "Cancel" to stop.`;
+          speakVoice(voicePrompt);
+        } else {
+          speakVoice(replyText);
+        }
+      } else {
+        speakVoice("I could not process that. Please say that again.");
+      }
+    } catch {
+      speakVoice("Connection issue. Please check your network and speak again.");
+    }
+  };
+
+  // Start Voice Recognition Listener
+  const startListening = () => {
+    if (typeof window === "undefined" || isSpeakingRef.current) return;
 
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setSpeechSupported(false);
+      speakVoice("Voice recognition is not supported in this browser. Please use Chrome or Edge.");
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = language === "en" ? "en-US" : language === "hi" ? "hi-IN" : "en-IN";
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
-        setInputMessage(transcript);
-        handleSendMessage(transcript, true);
-      }
-      setIsListening(false);
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
-  }, [language]);
-
-  // Voice toggle
-  const toggleListening = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-    } else {
+    try {
       if (recognitionRef.current) {
         try {
-          recognitionRef.current.lang =
-            language === "en" ? "en-US" : language === "hi" ? "hi-IN" : "en-IN";
-          recognitionRef.current.start();
-          setIsListening(true);
-        } catch {
-          setIsListening(false);
-        }
+          recognitionRef.current.abort();
+        } catch {}
       }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang =
+        language === "hi"
+          ? "hi-IN"
+          : language === "or"
+          ? "or-IN"
+          : language === "bn"
+          ? "bn-IN"
+          : language === "ta"
+          ? "ta-IN"
+          : language === "te"
+          ? "te-IN"
+          : "en-IN";
+
+      recognition.onstart = () => {
+        isListeningRef.current = true;
+        setVoiceState("listening");
+      };
+
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        let finalTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+
+        const currentSaid = (finalTranscript || interim).trim();
+        if (currentSaid) {
+          setHumanSpeech(currentSaid);
+        }
+
+        // Debounce silence detection: process when user stops speaking for 1.2s
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        if (finalTranscript.trim()) {
+          silenceTimerRef.current = setTimeout(() => {
+            processSpokenInput(finalTranscript);
+          }, 600);
+        } else if (interim.trim()) {
+          silenceTimerRef.current = setTimeout(() => {
+            processSpokenInput(interim);
+          }, 1400);
+        }
+      };
+
+      recognition.onerror = (e: any) => {
+        if (e.error === "no-speech") {
+          // Keep listening in conversation mode
+          if (voiceActiveRef.current && !isSpeakingRef.current) {
+            try {
+              recognition.start();
+            } catch {}
+          }
+        } else if (e.error !== "aborted") {
+          isListeningRef.current = false;
+        }
+      };
+
+      recognition.onend = () => {
+        isListeningRef.current = false;
+        // If active and not speaking, restart listening automatically for natural conversation
+        if (voiceActiveRef.current && !isSpeakingRef.current) {
+          try {
+            recognition.start();
+          } catch {}
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      isListeningRef.current = false;
     }
   };
 
-  // Text to Speech playback
-  const speakText = useCallback(
-    (text: string) => {
-      if (!ttsEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) {
-        return;
-      }
+  // Start complete Voice-Only Session
+  const startVoiceSession = () => {
+    setVoiceActive(true);
+    voiceActiveRef.current = true;
+    setPendingAction(null);
+
+    // Warm greeting voice intro based on language
+    const greetings: Record<string, string> = {
+      en: "Hello, I am Clinova's voice health assistant. How can I help you?",
+      hi: "नमस्ते, मैं क्लिनोवा का वॉयस स्वास्थ्य सहायक हूँ। मैं आपकी क्या सहायता कर सकता हूँ?",
+      or: "ନମସ୍କାର, ମୁଁ କ୍ଲିନୋଭା ର ଭଏସ୍ ସ୍ୱାସ୍ଥ୍ୟ ସହାୟକ। ମୁଁ ଆପଣଙ୍କୁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?",
+    };
+
+    const greeting = greetings[language] || greetings["en"];
+    speakVoice(greeting);
+  };
+
+  // Stop complete Voice-Only Session
+  const stopVoiceSession = () => {
+    setVoiceActive(false);
+    voiceActiveRef.current = false;
+    setVoiceState("idle");
+    setPendingAction(null);
+    setHumanSpeech("");
+    setAssistantSpeech("");
+
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language === "hi" ? "hi-IN" : "en-US";
-      utterance.rate = 1.0;
-      window.speechSynthesis.speak(utterance);
-    },
-    [ttsEnabled, language]
-  );
-
-  // Send message to assistant
-  const handleSendMessage = async (msgToSend?: string, wasVoice = false) => {
-    const text = (msgToSend || inputMessage).trim();
-    if (!text || isLoading) return;
-
-    setLastUserMessage(text);
-    setInputMessage("");
-    setIsLoading(true);
-    setToolResult(null);
-
-    try {
-      const res = await assistantApi.sendMessage({
-        message: text,
-        language,
-        voice_input: wasVoice,
-      });
-      if (res.data) {
-        setResponse(res.data);
-        if (ttsEnabled && res.data.text) {
-          speakText(res.data.text);
-        }
-      } else {
-        setResponse({
-          text: res.error || "I could not process that request at this moment. Please check your network connection or try again.",
-          language,
-          source_label: "Service Notice",
-          requires_confirmation: false,
-          follow_up_suggestions: ["Try again", "Describe symptoms"],
-        });
-      }
-    } catch (err: any) {
-      setResponse({
-        text: "I could not process that request at this moment. Please check your network connection or try again.",
-        language,
-        source_label: "Service Error",
-        requires_confirmation: false,
-        follow_up_suggestions: ["Try again", "Describe symptoms"],
-      });
-    } finally {
-      setIsLoading(false);
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {}
+      isListeningRef.current = false;
     }
   };
 
-  // Execute human-in-the-loop confirmed tool
-  const handleExecuteTool = async (action: ProposedAction, confirmed: boolean) => {
-    setExecutingTool(true);
-    try {
-      const res = await assistantApi.executeTool({
-        tool_name: action.tool_name,
-        parameters: action.parameters,
-        confirmed,
-      });
-      if (res.data) {
-        setToolResult({
-          success: res.data.success,
-          message: res.data.message,
-        });
-        if (res.data.success && ttsEnabled) {
-          speakText("Action confirmed and executed successfully.");
-        }
-      } else {
-        setToolResult({
-          success: false,
-          message: res.error || "Failed to execute action.",
-        });
-      }
-    } catch (err: any) {
-      setToolResult({
-        success: false,
-        message: err.message || "Failed to execute action.",
-      });
-    } finally {
-      setExecutingTool(false);
+  // Toggle Voice Session on Floating Icon Click
+  const toggleVoiceSession = () => {
+    if (voiceActive) {
+      stopVoiceSession();
+    } else {
+      startVoiceSession();
     }
   };
 
-  // Pointer Drag Handlers (Draggable with boundary clamp & drag-to-dismiss)
+  // Pointer Drag Handlers (Draggable with drag-to-dismiss)
   const handlePointerDown = (e: React.PointerEvent) => {
-    // Only drag with primary mouse button / touch
     if (e.button !== 0) return;
     dragStartRef.current = {
       startX: e.clientX,
@@ -360,29 +461,22 @@ export const FloatingAssistant: React.FC = () => {
       dragStartRef.current.moved = true;
     }
 
-    const btnSize = 56;
-    const nextX = Math.max(
-      12,
-      Math.min(window.innerWidth - btnSize - 12, dragStartRef.current.elemX + dx)
-    );
-    const nextY = Math.max(
-      12,
-      Math.min(window.innerHeight - btnSize - 12, dragStartRef.current.elemY + dy)
-    );
+    const btnSize = 60;
+    const nextX = Math.max(12, Math.min(window.innerWidth - btnSize - 12, dragStartRef.current.elemX + dx));
+    const nextY = Math.max(12, Math.min(window.innerHeight - btnSize - 12, dragStartRef.current.elemY + dy));
 
     setPosition({ x: nextX, y: nextY });
 
-    // Check collision with dismiss zone at bottom center
     if (dismissZoneRef.current) {
       const rect = dismissZoneRef.current.getBoundingClientRect();
       const btnCenterX = nextX + btnSize / 2;
       const btnCenterY = nextY + btnSize / 2;
 
       const isOver =
-        btnCenterX >= rect.left - 20 &&
-        btnCenterX <= rect.right + 20 &&
-        btnCenterY >= rect.top - 20 &&
-        btnCenterY <= rect.bottom + 20;
+        btnCenterX >= rect.left - 24 &&
+        btnCenterX <= rect.right + 24 &&
+        btnCenterY >= rect.top - 24 &&
+        btnCenterY <= rect.bottom + 24;
 
       setIsOverDismiss(isOver);
     }
@@ -395,25 +489,25 @@ export const FloatingAssistant: React.FC = () => {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {}
 
-    // If dropped over dismiss zone: dismiss assistant completely
+    // Drop over dismiss zone: disable assistant
     if (isOverDismiss) {
       dismissAssistant();
       setIsOverDismiss(false);
       return;
     }
 
-    // Persist clamped position
+    // Persist position
     if (typeof window !== "undefined") {
       localStorage.setItem("clinova_assistant_pos", JSON.stringify(position));
     }
 
-    // If it was a click (not a drag), toggle panel
+    // Clicked (not dragged): activate or deactivate voice
     if (!dragStartRef.current.moved) {
-      setIsOpen((prev) => !prev);
+      toggleVoiceSession();
     }
   };
 
-  // If user has disabled the assistant, render nothing
+  // If disabled, render nothing
   if (!enabled) {
     return null;
   }
@@ -422,7 +516,6 @@ export const FloatingAssistant: React.FC = () => {
     <>
       {/* ------------------------------------------------------------- */}
       {/* DRAG-TO-DISMISS BOTTOM DROP ZONE                              */}
-      {/* Visible only while user is actively dragging the button        */}
       {/* ------------------------------------------------------------- */}
       {isDragging && (
         <div
@@ -442,16 +535,115 @@ export const FloatingAssistant: React.FC = () => {
             <X className="w-4 h-4" />
           </div>
           <span className="text-xs font-semibold tracking-wide">
-            {isOverDismiss
-              ? "Release to disable Clinova Assistant"
-              : "Drop here to dismiss assistant"}
+            {isOverDismiss ? "Release to remove assistant" : "Drop here to dismiss assistant"}
           </span>
         </div>
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* VOICE-ONLY MINIMAL FLOATING BUTTON                            */}
-      {/* Strictly minimal: NO text labels, NO speech bubbles           */}
+      {/* ACTIVE VOICE-ONLY ORB & SPOKEN SUBTITLE INTERFACE              */}
+      {/* Visible ONLY when voice session is activated by pressing icon */}
+      {/* ------------------------------------------------------------- */}
+      {voiceActive && (
+        <div
+          aria-live="polite"
+          style={{
+            left: `${Math.max(16, Math.min(window.innerWidth - 340, position.x - 140))}px`,
+            top: `${Math.max(16, position.y - 170)}px`,
+          }}
+          className="fixed z-[85] w-[320px] pointer-events-none animate-in fade-in zoom-in-95 duration-200"
+        >
+          <div className="bg-slate-950/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 shadow-2xl shadow-teal-950/40 text-white space-y-2.5">
+            {/* Header: Voice State & Language */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full animate-ping ${
+                    voiceState === "speaking"
+                      ? "bg-teal-400"
+                      : voiceState === "thinking"
+                      ? "bg-amber-400"
+                      : "bg-rose-500"
+                  }`}
+                />
+                <span className="text-[11px] font-bold tracking-wider uppercase text-teal-300 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-teal-400" />
+                  {voiceState === "speaking"
+                    ? "Speaking..."
+                    : voiceState === "thinking"
+                    ? "Thinking..."
+                    : "Listening to your voice..."}
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 uppercase">
+                {language}
+              </span>
+            </div>
+
+            {/* Dynamic Sound Wave Visualizer */}
+            <div className="flex items-center justify-center gap-1.5 h-10 py-1 bg-slate-900/60 rounded-xl border border-slate-800">
+              {[40, 75, 100, 60, 90, 45, 80, 50, 95, 30].map((h, i) => (
+                <span
+                  key={i}
+                  style={{
+                    height:
+                      voiceState === "speaking"
+                        ? `${Math.max(15, (h * Math.sin((i + 1) * 0.8)) % 100)}%`
+                        : voiceState === "listening"
+                        ? `${h * 0.6}%`
+                        : "20%",
+                  }}
+                  className={`w-1 rounded-full transition-all duration-150 ${
+                    voiceState === "speaking"
+                      ? "bg-gradient-to-t from-teal-500 to-emerald-400 animate-pulse"
+                      : voiceState === "listening"
+                      ? "bg-gradient-to-t from-rose-500 to-teal-400 animate-pulse"
+                      : "bg-slate-700"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Live Spoken Subtitles */}
+            <div className="min-h-[48px] max-h-[72px] overflow-hidden text-xs leading-relaxed">
+              {voiceState === "speaking" && assistantSpeech && (
+                <p className="text-teal-200 line-clamp-3">
+                  <span className="text-slate-400 text-[10px] block font-semibold uppercase tracking-wider">
+                    Clinova Spoken Response:
+                  </span>
+                  &ldquo;{assistantSpeech}&rdquo;
+                </p>
+              )}
+
+              {voiceState !== "speaking" && humanSpeech && (
+                <p className="text-slate-200 line-clamp-3">
+                  <span className="text-slate-400 text-[10px] block font-semibold uppercase tracking-wider">
+                    You Said:
+                  </span>
+                  &ldquo;{humanSpeech}&rdquo;
+                </p>
+              )}
+
+              {!assistantSpeech && !humanSpeech && (
+                <p className="text-slate-400 italic text-[11px] text-center pt-2">
+                  Speak naturally into your microphone...
+                </p>
+              )}
+            </div>
+
+            {/* Voice-only Action Prompt if pending confirmation */}
+            {pendingAction && (
+              <div className="bg-amber-950/80 border border-amber-500/40 rounded-lg p-2 text-[10px] text-amber-200 text-center font-medium">
+                Say &ldquo;Confirm&rdquo; to execute action, or &ldquo;Cancel&rdquo; to discard.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* VOICE-ONLY MINIMAL FLOATING ICON BUTTON                       */}
+      {/* Activated ONLY by pressing this icon; no text input or buttons */}
       {/* ------------------------------------------------------------- */}
       <div
         ref={buttonRef}
@@ -471,331 +663,38 @@ export const FloatingAssistant: React.FC = () => {
         <button
           type="button"
           aria-label="Clinova AI Voice Assistant"
-          title="Clinova AI Voice Assistant (Drag to reposition, drop at bottom to dismiss)"
-          className={`relative group flex items-center justify-center w-14 h-14 rounded-full shadow-xl transition-all ${
-            isOpen
-              ? "bg-slate-900 text-teal-400 ring-2 ring-teal-500 shadow-teal-900/30"
-              : isListening
-              ? "bg-rose-600 text-white animate-pulse ring-4 ring-rose-300 shadow-rose-600/40"
-              : "bg-gradient-to-tr from-teal-600 to-emerald-600 text-white hover:shadow-teal-600/40 hover:scale-105 active:scale-95"
+          title={
+            voiceActive
+              ? "Clinova Voice Active (Tap to stop voice)"
+              : "Clinova Voice Assistant (Tap to start speaking, drag to dismiss)"
+          }
+          className={`relative group flex items-center justify-center w-15 h-15 rounded-full shadow-2xl transition-all ${
+            voiceActive
+              ? voiceState === "speaking"
+                ? "bg-gradient-to-tr from-teal-500 to-cyan-500 text-white ring-4 ring-teal-300 shadow-teal-500/50 scale-110"
+                : "bg-gradient-to-tr from-rose-600 to-pink-600 text-white ring-4 ring-rose-300 shadow-rose-600/50 scale-110"
+              : "bg-gradient-to-tr from-teal-600 to-emerald-600 text-white hover:shadow-teal-600/50 hover:scale-105 active:scale-95"
           }`}
         >
-          {/* Subtle audio ripple ring when active */}
-          {isListening && (
-            <span className="absolute -inset-1 rounded-full border-2 border-rose-400 animate-ping opacity-75" />
+          {/* Subtle pulsating ripple rings when voice conversation is active */}
+          {voiceActive && (
+            <>
+              <span className="absolute -inset-2 rounded-full border-2 border-teal-400 animate-ping opacity-60 pointer-events-none" />
+              <span className="absolute -inset-1 rounded-full border border-teal-300 animate-pulse opacity-80 pointer-events-none" />
+            </>
           )}
 
-          {isOpen ? (
-            <Minimize2 className="w-5 h-5" />
-          ) : isListening ? (
-            <Mic className="w-6 h-6 animate-bounce" />
+          {voiceActive ? (
+            voiceState === "speaking" ? (
+              <Volume2 className="w-7 h-7 animate-bounce" />
+            ) : (
+              <Mic className="w-7 h-7 animate-pulse" />
+            )
           ) : (
-            <Mic className="w-6 h-6" />
+            <Mic className="w-7 h-7" />
           )}
         </button>
       </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* VOICE-FIRST INTERACTION PANEL                                 */}
-      {/* ------------------------------------------------------------- */}
-      {isOpen && (
-        <div
-          role="dialog"
-          aria-labelledby="assistant-panel-title"
-          className="fixed bottom-24 right-4 sm:right-8 z-[95] w-[92vw] sm:w-[420px] max-h-[82vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-3 duration-200"
-        >
-          {/* Panel Header */}
-          <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-teal-600 text-white rounded-lg">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <h3
-                  id="assistant-panel-title"
-                  className="text-xs font-bold tracking-tight text-white flex items-center gap-1.5"
-                >
-                  Clinova Voice Assistant
-                  <span className="text-[9px] bg-teal-950 text-teal-300 px-1.5 py-0.5 rounded border border-teal-800 uppercase font-medium">
-                    {user?.role || "Patient"}
-                  </span>
-                </h3>
-                <p className="text-[10px] text-slate-400">
-                  Voice-first clinical triage intelligence
-                </p>
-              </div>
-            </div>
-
-            {/* Header controls: TTS toggle, Language, Dismiss, Close */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !ttsEnabled;
-                  setTtsEnabled(next);
-                  localStorage.setItem("clinova_assistant_tts", String(next));
-                }}
-                title={ttsEnabled ? "Mute voice readout" : "Enable voice readout"}
-                className={`p-1.5 rounded-lg text-slate-400 hover:text-white transition ${
-                  ttsEnabled ? "bg-slate-800 text-teal-300" : ""
-                }`}
-              >
-                {ttsEnabled ? (
-                  <Volume2 className="w-3.5 h-3.5" />
-                ) : (
-                  <VolumeX className="w-3.5 h-3.5" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={dismissAssistant}
-                title="Disable assistant (can re-enable from header)"
-                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
-              >
-                <PowerOff className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                title="Minimize assistant"
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Language selector bar */}
-          <div className="bg-slate-50 border-b border-slate-100 px-4 py-1.5 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500 font-medium">Spoken Language:</span>
-            <select
-              value={language}
-              onChange={(e) => {
-                const val = e.target.value;
-                setLanguage(val);
-                localStorage.setItem("clinova_assistant_language", val);
-              }}
-              className="bg-white border border-slate-200 rounded px-2 py-0.5 text-slate-700 font-semibold text-xs focus:ring-1 focus:ring-teal-500 outline-none"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Conversation & Responses Container */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3.5 min-h-[160px] max-h-[380px]">
-            {/* Voice Hub Hero */}
-            <div className="flex flex-col items-center justify-center p-3 bg-gradient-to-b from-teal-50/50 to-white rounded-xl border border-teal-100/60 text-center">
-              <button
-                type="button"
-                onClick={toggleListening}
-                className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-md transition-all ${
-                  isListening
-                    ? "bg-rose-600 text-white scale-110 shadow-rose-500/40 ring-4 ring-rose-200"
-                    : "bg-teal-600 text-white hover:bg-teal-700 hover:scale-105"
-                }`}
-              >
-                {isListening ? (
-                  <MicOff className="w-7 h-7" />
-                ) : (
-                  <Mic className="w-7 h-7" />
-                )}
-              </button>
-              <span className="mt-2 text-xs font-semibold text-slate-700">
-                {isListening
-                  ? "Listening... Speak your symptom or question"
-                  : "Tap to Speak (Voice-First)"}
-              </span>
-              <span className="text-[10px] text-slate-400">
-                Supports English, Hindi, Odia & 8 other languages
-              </span>
-            </div>
-
-            {/* Last User Query */}
-            {lastUserMessage && (
-              <div className="flex justify-end">
-                <div className="bg-teal-600 text-white text-xs rounded-2xl rounded-tr-xs px-3.5 py-2 max-w-[85%] shadow-xs">
-                  {lastUserMessage}
-                </div>
-              </div>
-            )}
-
-            {/* Loading Indicator */}
-            {isLoading && (
-              <div className="flex items-center gap-2 text-xs text-slate-500 italic p-2">
-                <Sparkles className="w-4 h-4 text-teal-600 animate-spin" />
-                <span>Processing clinical assistant intelligence...</span>
-              </div>
-            )}
-
-            {/* Assistant Response Card */}
-            {response && (
-              <div className="space-y-2">
-                {/* Emergency banner if acute */}
-                {response.source_label?.includes("Emergency") && (
-                  <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-start gap-2.5 text-rose-900 text-xs">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block">
-                        Emergency Red Flag Detected
-                      </span>
-                      <p className="text-[11px] text-rose-800 leading-relaxed">
-                        {response.text}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Normal Response Text */}
-                {!response.source_label?.includes("Emergency") && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-xs p-3.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold tracking-wider text-teal-800 bg-teal-100/80 px-2 py-0.5 rounded border border-teal-200">
-                        {response.source_label}
-                      </span>
-                      {response.detected_language && (
-                        <span className="text-[9px] text-slate-400">
-                          Detected: {response.detected_language.toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line">
-                      {response.text}
-                    </p>
-                  </div>
-                )}
-
-                {/* Human Confirmation Card for Consequential Actions */}
-                {response.requires_confirmation && response.proposed_action && (
-                  <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-2">
-                    <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-                      <AlertTriangle className="w-4 h-4 text-amber-600" />
-                      <span>Human Review Required (Action Proposal)</span>
-                    </div>
-                    <p className="text-[11px] text-amber-800">
-                      {response.proposed_action.description}
-                    </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        disabled={executingTool}
-                        onClick={() =>
-                          handleExecuteTool(response.proposed_action!, true)
-                        }
-                        className="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Confirm Action</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={executingTool}
-                        onClick={() =>
-                          handleExecuteTool(response.proposed_action!, false)
-                        }
-                        className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tool Execution Result */}
-                {toolResult && (
-                  <div
-                    className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
-                      toolResult.success
-                        ? "bg-emerald-50 text-emerald-900 border border-emerald-200"
-                        : "bg-slate-100 text-slate-800 border border-slate-200"
-                    }`}
-                  >
-                    {toolResult.success ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <HelpCircle className="w-4 h-4 text-slate-500" />
-                    )}
-                    <span>{toolResult.message}</span>
-                  </div>
-                )}
-
-                {/* Quick Follow-up suggestion pills */}
-                {response.follow_up_suggestions?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {response.follow_up_suggestions.map((sug) => (
-                      <button
-                        key={sug}
-                        type="button"
-                        onClick={() => handleSendMessage(sug)}
-                        className="text-[10px] bg-slate-100 hover:bg-teal-50 hover:text-teal-800 border border-slate-200 text-slate-700 font-medium px-2.5 py-1 rounded-full transition"
-                      >
-                        {sug}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Default Quick Prompts if no conversation yet */}
-            {!response && !isLoading && (
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  Suggested topics
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    "Check my intake case status",
-                    "What information is missing?",
-                    "Explain hypertension",
-                    "How to record vitals",
-                  ].map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => handleSendMessage(chip)}
-                      className="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-800 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition"
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Text Input Fallback (for loud environments / keyboard users) */}
-          <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              placeholder="Or type a question / symptom..."
-              className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-600"
-            />
-            <button
-              type="button"
-              disabled={!inputMessage.trim() || isLoading}
-              onClick={() => handleSendMessage()}
-              className="p-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-xl transition"
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Safety Disclaimer Footer */}
-          <div className="px-3 py-1 bg-slate-100 border-t border-slate-200 text-[9px] text-slate-500 text-center">
-            Educational prototype only. All clinical decisions require licensed
-            human review.
-          </div>
-        </div>
-      )}
     </>
   );
 };
