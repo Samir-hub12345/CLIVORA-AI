@@ -97,3 +97,13 @@ async def ping_health():
         "status": "ok",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.get("/metrics", tags=["Health", "Observability"])
+@router.get("/health/metrics", tags=["Health", "Observability"], include_in_schema=False)
+async def get_prometheus_metrics():
+    """Prometheus exposition metrics endpoint for real-time observability."""
+    from app.core.metrics import metrics_collector
+    content = metrics_collector.generate_prometheus_output()
+    return Response(content=content, media_type="text/plain; version=0.0.4; charset=utf-8")
+

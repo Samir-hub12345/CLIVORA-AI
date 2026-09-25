@@ -19,8 +19,11 @@ from app.db.migrations import upgrade_ownership
 from app.core.security import create_access_token, get_password_hash
 from app.models.user import User, UserRole
 
-@pytest_asyncio.fixture
+import app.db.session as session_module
+
+@pytest_asyncio.fixture(autouse=True)
 async def database(tmp_path, monkeypatch):
+<<<<<<< HEAD
     if "sqlite" in os.environ.get("DATABASE_URL", ""):
         engine = create_async_engine("sqlite+aiosqlite:///" + str(tmp_path / "test.db"))
         sessions = async_sessionmaker(engine, expire_on_commit=False)
@@ -30,6 +33,25 @@ async def database(tmp_path, monkeypatch):
         monkeypatch.setattr(main_module, "async_session_factory", sessions)
         monkeypatch.setattr(audit_module, "async_session_factory", sessions)
         await main_module.seed_initial_data()
+=======
+    engine = create_async_engine("sqlite+aiosqlite:///" + str(tmp_path / "test.db"))
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(upgrade_ownership)
+    monkeypatch.setattr(session_module, "async_session_factory", sessions)
+    monkeypatch.setattr(session_module, "engine", engine)
+    monkeypatch.setattr(main_module, "async_session_factory", sessions)
+    monkeypatch.setattr(audit_module, "async_session_factory", sessions)
+    await main_module.seed_initial_data()
+    async with sessions() as db:
+        db.add_all([
+            User(email="nurse@test.invalid", full_name="Test Nurse", role=UserRole.NURSE, hashed_password=get_password_hash("TestPassword123!")),
+            User(email="second.doctor@test.invalid", full_name="Second Doctor", role=UserRole.DOCTOR, hashed_password=get_password_hash("TestPassword123!")),
+        ])
+        await db.commit()
+    async def test_db():
+>>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
         async with sessions() as db:
             db.add_all([
                 User(email="nurse@test.invalid", full_name="Test Nurse", role=UserRole.NURSE, hashed_password=get_password_hash("TestPassword123!")),

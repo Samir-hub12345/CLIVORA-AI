@@ -9,10 +9,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.models.case import TriageCase
 from app.models.user import User, UserRole
-from app.core.deps import get_intake_user, get_current_clinician, get_current_doctor, get_client_ip
+from app.core.deps import (
+    get_client_ip,
+    get_current_clinician,
+    get_current_doctor,
+    get_current_user,
+    get_current_user_optional,
+    get_intake_user,
+)
 from app.schemas.portal import PatientCaseResponse
 from app.api.v1.endpoints.portal import patient_case_response
-from app.core.deps import get_current_user, get_current_user_optional, get_current_clinician, get_client_ip
 from app.schemas.case import (
     CaseCreateRequest,
     CaseResponse,
@@ -127,17 +133,17 @@ async def list_cases(
     assigned_doctor_id: Optional[str] = Query(None, description="Filter by assigned clinician ID"),
     patient_id: Optional[str] = Query(None, description="Filter by patient record ID"),
     limit: int = Query(50, ge=1, le=100),
+<<<<<<< HEAD
     current_user: Optional[User] = Depends(get_current_user_optional),
+=======
+    current_user: User = Depends(get_current_clinician),
+>>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve prioritized queue of triage cases with backend role isolation."""
     stmt = select(TriageCase).where(TriageCase.is_deleted == False)
 
-    # Backend RBAC / Data Isolation:
-    # If the user is logged in as a patient, they can ONLY see their own cases!
-    if current_user and current_user.role == UserRole.PATIENT:
-        stmt = stmt.where(TriageCase.patient_id == current_user.id)
-    elif patient_id:
+    if patient_id:
         stmt = stmt.where(TriageCase.patient_id == patient_id)
 
     if assigned_doctor_id:
@@ -157,7 +163,11 @@ async def list_cases(
 @router.get("/{case_id}", response_model=CaseResponse)
 async def get_case(
     case_id: str,
+<<<<<<< HEAD
     current_user: Optional[User] = Depends(get_current_user_optional),
+=======
+    current_user: User = Depends(get_current_clinician),
+>>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve single case by ID or synthetic_case_id with patient isolation checks."""
@@ -287,7 +297,11 @@ async def verify_case_intake(
 async def delete_case_data(
     case_id: str,
     request: Request,
+<<<<<<< HEAD
     current_user: User = Depends(get_current_clinician),
+=======
+    current_user: User = Depends(get_current_doctor),
+>>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Data retention: delete temporary media and anonymize/purge case record."""

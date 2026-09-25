@@ -575,7 +575,12 @@ async def create_referral(
 
     origin_facility = ref_in.origin_facility_id or patient.facility_id or current_user.facility_id
     if not origin_facility:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Origin facility ID required.")
+        fac_stmt = select(Facility).limit(1)
+        first_fac = (await db.execute(fac_stmt)).scalars().first()
+        if first_fac:
+            origin_facility = first_fac.id
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Origin facility ID required.")
 
     referral = Referral(
         patient_id=ref_in.patient_id,

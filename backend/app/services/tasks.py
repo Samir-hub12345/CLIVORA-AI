@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.job import BackgroundJob, JobStatus, JobType
-from app.db.session import async_session_factory
+from app.db import session as session_module
 
 logger = logging.getLogger("clinova")
 
@@ -41,7 +41,7 @@ class TaskManager:
     @staticmethod
     async def execute_job_async(job_id: str):
         """Asynchronous execution worker for background processing."""
-        async with async_session_factory() as db:
+        async with session_module.async_session_factory() as db:
             stmt = select(BackgroundJob).where(BackgroundJob.id == job_id)
             job = (await db.execute(stmt)).scalar_one_or_none()
             if not job:

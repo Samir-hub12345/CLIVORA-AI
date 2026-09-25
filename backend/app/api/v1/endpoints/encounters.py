@@ -34,7 +34,12 @@ async def create_encounter(
     # Resolve facility ID
     target_facility_id = encounter_in.facility_id or patient.facility_id or current_user.facility_id
     if not target_facility_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Facility ID is required.")
+        fac_stmt = select(Facility).limit(1)
+        first_fac = (await db.execute(fac_stmt)).scalars().first()
+        if first_fac:
+            target_facility_id = first_fac.id
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Facility ID is required.")
 
     # Validate facility exists
     f_stmt = select(Facility).where(Facility.id == target_facility_id)

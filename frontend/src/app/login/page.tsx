@@ -1,7 +1,5 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -34,8 +32,6 @@ function LoginForm() {
   }, [user, authLoading, router]);
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
-
-  const { setUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"patient" | "nurse" | "doctor" | "admin">("doctor");
   const [email, setEmail] = useState("");

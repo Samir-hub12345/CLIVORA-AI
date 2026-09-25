@@ -12,13 +12,14 @@ import {
   TranslationResult,
   ReferralNote,
   OCRField,
-<<<<<<< HEAD
   MedicalDocument,
   DocumentArtifact,
   PresignedUrlResponse,
-=======
-  PatientCase, PatientConsultation, CaseReceipt, PortalProfileInput, AdminOverview,
->>>>>>> 302921bb894142216625e5237b0c38f47fa9ff20
+  PatientCase,
+  PatientConsultation,
+  CaseReceipt,
+  PortalProfileInput,
+  AdminOverview,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -105,26 +106,6 @@ export async function fetchApi<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      cache: "no-store",
-    });
-
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      if (response.status === 401 && token && token === getToken() && !endpoint.startsWith("/api/v1/auth/login")) {
-        clearToken();
-        window.dispatchEvent(new Event("clinova:session-expired"));
-      }
-      if (response.status === 403 && !endpoint.startsWith("/api/v1/auth/")) {
-        window.dispatchEvent(new Event("clinova:access-denied"));
-      }
-      let errorMsg = response.statusText;
-      if (data?.detail) {
-        errorMsg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
   const executeRequest = async (): Promise<ApiResponse<T>> => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -144,6 +125,13 @@ export async function fetchApi<T>(
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
+        if (response.status === 401 && token && token === getToken() && !endpoint.startsWith("/api/v1/auth/login")) {
+          clearToken();
+          window.dispatchEvent(new Event("clinova:session-expired"));
+        }
+        if (response.status === 403 && !endpoint.startsWith("/api/v1/auth/")) {
+          window.dispatchEvent(new Event("clinova:access-denied"));
+        }
         let errorMsg = response.statusText;
         if (data?.detail) {
           errorMsg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
@@ -176,15 +164,6 @@ export async function fetchApi<T>(
     }
   };
 
-    return {
-      data,
-      status: response.status,
-    };
-  } catch (error: unknown) {
-    return {
-      error: error instanceof Error ? error.message : "Network error. Please ensure Clinova AI services are running.",
-      status: 500,
-    };
   // Safe retry: ONLY retry idempotent GET requests once upon network failure
   // NEVER automatically retry state-modifying mutations (POST, PUT, DELETE) to protect clinical integrity
   const initial = await executeRequest();
@@ -554,6 +533,91 @@ export const api = {
   async toggleUserStatus(userId: string, isActive: boolean) {
     return fetchApi<User>(`/api/v1/auth/users/${userId}/status?is_active=${isActive}`, {
       method: "PUT",
+    });
+  },
+
+  // Bulk Ingestion & FHIR
+  async previewPatientImport(formData: FormData) {
+    return fetchApi<{
+      total_records: number;
+      valid_count: number;
+      invalid_count: number;
+      preview_items: any[];
+      validation_errors: Array<{ row_number: number; raw_data: any; errors: string[] }>;
+    }>("/api/v1/patients/import/preview", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  async executePatientImport(records: any[], facilityId?: string) {
+    const qs = facilityId ? `?facility_id=${encodeURIComponent(facilityId)}` : "";
+    return fetchApi<{
+      total_processed: number;
+      created_count: number;
+      skipped_count: number;
+      duplicate_count: number;
+      created_patient_ids: string[];
+    }>(`/api/v1/patients/import/execute${qs}`, {
+      method: "POST",
+      body: JSON.stringify(records),
+    });
+  },
+
+  // Deduplication & Merge
+  async getDuplicateCandidates(facilityId?: string) {
+    const qs = facilityId ? `?facility_id=${encodeURIComponent(facilityId)}` : "";
+    return fetchApi<Array<{
+      primary_patient_id: string;
+      primary_mrn: string;
+      primary_name: string;
+      duplicate_patient_id: string;
+      duplicate_mrn: string;
+      duplicate_name: string;
+      confidence_score: number;
+      match_level: string;
+      matching_signals: string[];
+    }>>(`/api/v1/patients/duplicates/candidates${qs}`);
+  },
+
+  async mergePatients(payload: {
+    primary_patient_id: string;
+    secondary_patient_id: string;
+    merge_reason: string;
+  }) {
+    return fetchApi<{
+      primary_patient_id: string;
+      merged_patient_id: string;
+      encounters_moved: number;
+      observations_moved: number;
+      notes_moved: number;
+      documents_moved: number;
+      cases_moved: number;
+      status: string;
+    }>("/api/v1/patients/merge", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Data Retention & Disposal
+  async triggerRetentionSweep(dryRun: boolean = true) {
+    return fetchApi<{
+      timestamp: string;
+      dry_run: boolean;
+      rules_executed: Array<{
+        rule_name: string;
+        candidates_count: number;
+        purged_count: number;
+        bytes_freed: number;
+        details: any;
+      }>;
+      total_candidates: number;
+      total_purged: number;
+      total_bytes_freed: number;
+      duration_seconds: number;
+    }>(`/api/v1/admin/retention/sweep?dry_run=${dryRun}`, {
+      method: "POST",
     });
   },
 };
