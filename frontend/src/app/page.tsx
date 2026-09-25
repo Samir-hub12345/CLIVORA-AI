@@ -31,6 +31,8 @@ import {
   Mail,
   Check,
   X,
+  UserPlus,
+  LogIn,
 } from "lucide-react";
 
 export default function Home() {
@@ -200,7 +202,7 @@ export default function Home() {
             structured, explainable clinical triage notes for licensed doctor review and authorization.
           </p>
 
-          {/* Action CTAs */}
+          {/* Action CTAs: 3-Button Layout */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
             {user ? (
               <Link
@@ -210,13 +212,29 @@ export default function Home() {
                 <span>Open my dashboard</span> <ArrowRight className="w-4 h-4" />
               </Link>
             ) : (
-              <Link
-                href="/get-started"
-                className="px-7 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2"
-              >
-                <span>Get Started</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <>
+                <Link
+                  href="/intake"
+                  className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Patient Intake</span>
+                </Link>
+                <Link
+                  href="/register"
+                  className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-xl text-sm shadow-sm transition-all flex items-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4 text-teal-600" />
+                  <span>Sign Up</span>
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-sm transition-all flex items-center gap-2"
+                >
+                  <LogIn className="w-4 h-4 text-slate-600" />
+                  <span>Login</span>
+                </Link>
+              </>
             )}
             {isClinician && <Link
               href="/review"
@@ -716,11 +734,25 @@ export default function Home() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
-              href="/get-started"
-              className="px-7 py-3.5 bg-white hover:bg-slate-100 text-teal-900 font-bold rounded-xl text-sm shadow-md transition-all flex items-center gap-2"
+              href="/intake"
+              className="px-6 py-3.5 bg-white hover:bg-slate-100 text-teal-900 font-bold rounded-xl text-sm shadow-md transition-all flex items-center gap-2"
             >
-              <span>Get Started</span>
-              <ArrowRight className="w-4 h-4 text-teal-700" />
+              <FileText className="w-4 h-4 text-teal-700" />
+              <span>Patient Intake</span>
+            </Link>
+            <Link
+              href="/register"
+              className="px-6 py-3.5 bg-teal-800/80 hover:bg-teal-800 text-white font-bold rounded-xl text-sm border border-teal-600 transition-all flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Sign Up</span>
+            </Link>
+            <Link
+              href="/login"
+              className="px-6 py-3.5 bg-teal-800/80 hover:bg-teal-800 text-white font-bold rounded-xl text-sm border border-teal-600 transition-all flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Login</span>
             </Link>
           </div>
         </section>

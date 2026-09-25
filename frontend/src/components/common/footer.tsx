@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Activity, ShieldCheck, Lock, Hospital, AlertTriangle, FileText, Mail } from "lucide-react";
-import { APP_NAME } from "@/lib/constants";
+import { Activity, ShieldCheck, Lock, AlertTriangle, Mail } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (

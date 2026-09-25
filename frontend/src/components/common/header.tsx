@@ -8,10 +8,7 @@ import {
   Menu,
   X,
   LogOut,
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
-  User,
   LayoutDashboard,
   Mic,
   MicOff,
@@ -259,6 +256,12 @@ export const Header: React.FC = () => {
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Link
+                href="/intake"
+                className="px-3 py-1.5 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg text-xs font-semibold transition-colors border border-teal-200"
+              >
+                Patient Intake
+              </Link>
+              <Link
                 href="/login"
                 className="px-3 py-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors border border-transparent hover:border-slate-200"
               >
@@ -373,18 +376,25 @@ export const Header: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <Link
+                  href="/intake"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center px-2 py-2 border border-teal-200 text-teal-700 hover:bg-teal-50 rounded-lg text-xs font-semibold"
+                >
+                  Intake
+                </Link>
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold"
+                  className="w-full text-center px-2 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold"
                 >
                   Login
                 </Link>
                 <Link
                   href="/get-started"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-xs"
+                  className="w-full text-center px-2 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-xs"
                 >
                   Get Started
                 </Link>
