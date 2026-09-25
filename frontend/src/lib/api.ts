@@ -20,6 +20,12 @@ import {
   CaseReceipt,
   PortalProfileInput,
   AdminOverview,
+  AssistantPreference,
+  AssistantCapabilities,
+  AssistantMessageRequest,
+  AssistantMessageResponse,
+  AssistantToolExecuteRequest,
+  AssistantToolExecuteResponse,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -688,6 +694,37 @@ export const documentsApi = {
     return fetchApi<DocumentArtifact>(`/api/v1/documents/${documentId}/artifacts`, {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  },
+};
+
+export const assistantApi = {
+  async getCapabilities(): Promise<ApiResponse<AssistantCapabilities>> {
+    return fetchApi<AssistantCapabilities>("/api/v1/assistant/capabilities");
+  },
+
+  async getPreferences(): Promise<ApiResponse<AssistantPreference>> {
+    return fetchApi<AssistantPreference>("/api/v1/assistant/preferences");
+  },
+
+  async updatePreferences(pref: AssistantPreference): Promise<ApiResponse<AssistantPreference>> {
+    return fetchApi<AssistantPreference>("/api/v1/assistant/preferences", {
+      method: "PUT",
+      body: JSON.stringify(pref),
+    });
+  },
+
+  async sendMessage(req: AssistantMessageRequest): Promise<ApiResponse<AssistantMessageResponse>> {
+    return fetchApi<AssistantMessageResponse>("/api/v1/assistant/message", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  async executeTool(req: AssistantToolExecuteRequest): Promise<ApiResponse<AssistantToolExecuteResponse>> {
+    return fetchApi<AssistantToolExecuteResponse>("/api/v1/assistant/tools/execute", {
+      method: "POST",
+      body: JSON.stringify(req),
     });
   },
 };

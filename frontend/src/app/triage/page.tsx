@@ -30,7 +30,7 @@ import { Patient, TriageResponse, VitalsInput } from "@/types";
 function TriageConsole() {
   const { state: networkState, isLowBandwidthActive } = useConnectivity();
   const searchParams = useSearchParams();
-  const initialPatientId = searchParams.get("patientId") || "";
+  const initialPatientId = searchParams?.get("patientId") || "";
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(initialPatientId);

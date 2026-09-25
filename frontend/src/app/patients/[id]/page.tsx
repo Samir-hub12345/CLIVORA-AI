@@ -27,7 +27,7 @@ import { Patient, Consultation } from "@/types";
 export default function PatientChartPage() {
   const params = useParams();
   const router = useRouter();
-  const patientId = params.id as string;
+  const patientId = params?.id as string;
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);

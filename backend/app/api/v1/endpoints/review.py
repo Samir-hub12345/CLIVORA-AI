@@ -29,11 +29,7 @@ async def perform_review_action(
     case_id: str,
     req: CaseReviewActionRequest,
     request: Request,
-<<<<<<< HEAD
-    current_user: User = Depends(get_current_clinician),
-=======
     current_user: User = Depends(get_current_doctor),
->>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Executes human-in-the-loop review action: approve, edit, reject, or escalate."""
@@ -143,11 +139,7 @@ async def perform_review_action(
 @router.get("/{case_id}/referral", response_model=ReferralNoteResponse)
 async def get_referral_note(
     case_id: str,
-<<<<<<< HEAD
-    current_user: Optional[User] = Depends(get_current_user_optional),
-=======
     current_user: User = Depends(get_current_clinician),
->>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve structured referral note for export and printing."""

@@ -34,7 +34,7 @@ export default function CaseReviewDetailPage() {
   const { isDoctor } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const caseId = params.caseId as string;
+  const caseId = params?.caseId as string;
 
   const [caseData, setCaseData] = useState<TriageCase | null>(null);
   const [loading, setLoading] = useState(true);

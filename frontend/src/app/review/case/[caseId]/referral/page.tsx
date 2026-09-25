@@ -21,7 +21,7 @@ import {
 
 export default function ReferralNotePage() {
   const params = useParams();
-  const caseId = params.caseId as string;
+  const caseId = params?.caseId as string;
 
   const [referral, setReferral] = useState<ReferralNote | null>(null);
   const [loading, setLoading] = useState(true);

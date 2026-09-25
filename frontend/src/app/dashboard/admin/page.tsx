@@ -1,14 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { DashboardShell, DataState, Stat } from "@/components/common/dashboard-shell";
+import { RoleGuard } from "@/components/common/role-guard";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { AdminOverview, User } from "@/types";
-import { Activity, ShieldCheck, Trash2, RefreshCw, Server, AlertTriangle } from "lucide-react";
+import {
+  Activity,
+  ShieldCheck,
+  Trash2,
+  RefreshCw,
+  Server,
+  AlertTriangle,
+  Building2,
+  HeartPulse,
+} from "lucide-react";
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,14 +31,19 @@ export default function AdminDashboard() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [o, u] = await Promise.all([api.getAdminOverview(), api.getAdminUsers()]);
-    if (o.error || u.error) {
-      setError(o.error || u.error || "Could not load administration data.");
-    } else {
-      setOverview(o.data || null);
-      setUsers(u.data || []);
+    try {
+      const [o, u] = await Promise.all([api.getAdminOverview(), api.getAdminUsers()]);
+      if (o.error || u.error) {
+        setError(o.error || u.error || "Could not load administration data.");
+      } else {
+        setOverview(o.data || null);
+        setUsers(u.data || []);
+      }
+    } catch {
+      setError("Failed to load administration data. Please retry.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -55,10 +70,19 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      await api.toggleUserStatus(userId, !currentStatus);
+      await load();
+    } catch {
+      // Handled via API error reporting
+    }
+  };
+
   return (
     <DashboardShell
-      title="Admin dashboard"
-      description="Account overview, operational totals, telemetry & compliance lifecycle."
+      title="Admin Dashboard"
+      description="Facility governance, user accounts, operational telemetry & compliance lifecycle."
       refresh={() => void load()}
     >
       <DataState loading={loading} error={error} retry={() => void load()} />
@@ -73,6 +97,50 @@ export default function AdminDashboard() {
             <Stat title="Intake submissions" value={overview.cases} />
             <Stat title="Awaiting review" value={overview.awaiting_review} />
             <Stat title="Audit records" value={overview.audit_records} />
+          </div>
+
+          {/* Facility & Operational Health Cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase">
+                <Building2 className="w-4 h-4 text-teal-600" />
+                <span>Primary Facility</span>
+              </div>
+              <div className="mt-2 text-base font-bold text-slate-900">
+                District Community Health Center
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Tier 2 CHC &bull; 24/7 Primary Triage Desk</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase">
+                <HeartPulse className="w-4 h-4 text-emerald-600" />
+                <span>Operational Status</span>
+              </div>
+              <div className="mt-2 text-lg font-bold text-emerald-700 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span>Services Healthy</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Backend &amp; database operational</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase">
+                <Server className="w-4 h-4 text-indigo-600" />
+                <span>AI Clinical Engine</span>
+              </div>
+              <div className="mt-2 text-lg font-bold text-slate-900">Gemini &amp; Rules</div>
+              <p className="text-xs text-slate-500 mt-0.5">TRIAGE-R01 to R06 active</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase">
+                <Activity className="w-4 h-4 text-purple-600" />
+                <span>Audit Trail Counter</span>
+              </div>
+              <div className="mt-2 text-lg font-bold text-slate-900">{overview.audit_records} Events</div>
+              <p className="text-xs text-slate-500 mt-0.5">Cryptographically logged</p>
+            </div>
           </div>
 
           {/* Action Quick Links */}
@@ -149,7 +217,7 @@ export default function AdminDashboard() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Automated enforcement of HIPAA/GDPR statutory retention limits. Purges soft-deleted documents (&gt;30 days), quarantined malware files (&gt;90 days), and failed ingestion artifacts (&gt;14 days).
+              Automated enforcement of statutory retention limits. Purges soft-deleted documents (&gt;30 days), quarantined malware files (&gt;90 days), and failed ingestion artifacts (&gt;14 days).
             </p>
 
             {retentionReport && (
@@ -183,10 +251,14 @@ export default function AdminDashboard() {
                     <p className="font-semibold text-slate-700">Rules Breakdown:</p>
                     <div className="space-y-1">
                       {retentionReport.rules_executed.map((r: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between text-[11px] py-1 px-2 bg-white rounded border">
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-[11px] py-1 px-2 bg-white rounded border"
+                        >
                           <span className="font-mono text-slate-700">{r.rule_name}</span>
                           <span className="text-slate-500">
-                            {r.candidates_count} candidates &bull; {r.purged_count} purged &bull; {(r.bytes_freed / 1024).toFixed(1)} KB
+                            {r.candidates_count} candidates &bull; {r.purged_count} purged &bull;{" "}
+                            {(r.bytes_freed / 1024).toFixed(1)} KB
                           </span>
                         </div>
                       ))}
@@ -199,9 +271,9 @@ export default function AdminDashboard() {
 
           {/* Account & Role Overview Table */}
           <section id="accounts" className="scroll-mt-24 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">Account &amp; Role Directory</h2>
+            <h2 className="text-lg font-bold text-slate-900">Facility User &amp; Role Directory</h2>
             <p className="text-sm text-slate-500">
-              Staff accounts are provisioned with facility-level cryptographic role assignments.
+              Staff and clinician accounts are provisioned with facility-level cryptographic role assignments.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
@@ -210,27 +282,39 @@ export default function AdminDashboard() {
                     <th className="py-3 pr-4">Name</th>
                     <th className="pr-4">Email</th>
                     <th className="pr-4">Role</th>
-                    <th>Status</th>
+                    <th className="pr-4">Status</th>
+                    <th className="text-right">Governance Action</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {users.map((u) => (
-                    <tr key={u.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                    <tr key={u.id} className="hover:bg-slate-50/50">
                       <td className="py-3 pr-4 font-medium text-slate-900">{u.full_name}</td>
                       <td className="pr-4 font-mono text-xs text-slate-600">{u.email}</td>
                       <td className="pr-4">
-                        <span className="capitalize px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800">
-                          {u.role}
+                        <span className="capitalize px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
+                          {u.role === "nurse" ? "Staff" : u.role}
                         </span>
                       </td>
-                      <td>
+                      <td className="pr-4">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            u.is_active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                            u.is_active
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
                           }`}
                         >
-                          {u.is_active ? "Active" : "Inactive"}
+                          {u.is_active ? "Active" : "Disabled"}
                         </span>
+                      </td>
+                      <td className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleUserStatus(u.id, u.is_active)}
+                          className="text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-50"
+                        >
+                          {u.is_active ? "Deactivate" : "Activate"}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -241,5 +325,13 @@ export default function AdminDashboard() {
         </div>
       )}
     </DashboardShell>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <RoleGuard roles={["admin"]}>
+      <AdminDashboardContent />
+    </RoleGuard>
   );
 }

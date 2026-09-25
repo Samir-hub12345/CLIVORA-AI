@@ -5,12 +5,12 @@
 ---
 
 > [!WARNING]
-> ### ðŸ”’ Mandatory Safety & Non-Diagnostic Disclaimer
+> ### 🔒 Mandatory Safety & Non-Diagnostic Disclaimer
 > **Educational prototype and triage-support purposes only.** This system does **not** diagnose, prescribe treatment, or replace a qualified healthcare professional. All AI-generated information requires human review before clinical action.
 
 ---
 
-## ðŸ“‹ Executive Overview
+## 📋 Executive Overview
 
 **CLINOVA AI** is an explainable, multimodal, human-in-the-loop healthcare triage support platform engineered for government district hospitals, primary health centers (PHCs), public health outreach camps, industrial health units, and campus clinics. 
 
@@ -26,63 +26,63 @@ The system organizes high-volume patient inputs into structured, reviewer-facing
 
 ---
 
-## ðŸ›ï¸ Architecture & Data Flow
+## 🏛️ Architecture & Data Flow
 
 ```text
 Patient / Kiosk / Health Worker
-               â”‚
-               â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚             DEMO CONSENT & CONTEXT           â”‚
-â”‚  Age â€¢ Gender â€¢ Facility â€¢ Preferred Lang    â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                       â”‚
-                       â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚           MULTIMODAL INTAKE PIPELINE         â”‚
-â”‚  Voice (Speech-to-Text) â€¢ Typed Narrative    â”‚
-â”‚  Report OCR (CBC Panel) â€¢ Basic Visuals      â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                       â”‚
-                       â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚        ANONYMIZATION & PRIVACY LAYER         â”‚
-â”‚  PII Redaction â€¢ Synthetic Case ID (CLV-xxx) â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                       â”‚
-                       â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚        INTELLIGENCE & EXTRACTION ENGINE      â”‚
-â”‚  Language Normalization (Odia/Hindi -> Eng)  â”‚
-â”‚  Timeline Synthesis â€¢ Missing Info Detection â”‚
-â”‚  Deterministic Urgency Rules (R01 - R06)     â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                       â”‚
-                       â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚          STRUCTURED REVIEWER NOTE            â”‚
-â”‚  Chief Concern â€¢ Timeline â€¢ OCR Data â€¢ Flags â”‚
-â”‚      *AI GENERATED â€” HUMAN REVIEW REQUIRED*  â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                       â”‚
-                       â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚             HUMAN REVIEW GATE                â”‚
-â”‚       Medical Officer Review Dashboard       â”‚
-â”‚    Confirm  â€¢  Edit  â€¢  Reject  â€¢  Escalate  â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-               â”‚
-               â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚           ACTION & REFERRAL HANDOFF          â”‚
-â”‚   Official Referral Note â€¢ Facility Handoff  â”‚
-â”‚      Immutable Audit Trail â€¢ Data Purge      â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+               │
+               ▼
+┌──────────────────────────────────────────────┐
+│             DEMO CONSENT & CONTEXT           │
+│  Age • Gender • Facility • Preferred Lang    │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│           MULTIMODAL INTAKE PIPELINE         │
+│  Voice (Speech-to-Text) • Typed Narrative    │
+│  Report OCR (CBC Panel) • Basic Visuals      │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│        ANONYMIZATION & PRIVACY LAYER         │
+│  PII Redaction • Synthetic Case ID (CLV-xxx) │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│        INTELLIGENCE & EXTRACTION ENGINE      │
+│  Language Normalization (Odia/Hindi -> Eng)  │
+│  Timeline Synthesis • Missing Info Detection │
+│  Deterministic Urgency Rules (R01 - R06)     │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│          STRUCTURED REVIEWER NOTE            │
+│  Chief Concern • Timeline • OCR Data • Flags │
+│      *AI GENERATED — HUMAN REVIEW REQUIRED*  │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│             HUMAN REVIEW GATE                │
+│       Medical Officer Review Dashboard       │
+│    Confirm  •  Edit  •  Reject  •  Escalate  │
+└──────────────┬───────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────┐
+│           ACTION & REFERRAL HANDOFF          │
+│   Official Referral Note • Facility Handoff  │
+│      Immutable Audit Trail • Data Purge      │
+└──────────────────────────────────────────────┘
 ```
 
 ---
 
-## ðŸ› ï¸ Technology Stack
+## 🛠️ Technology Stack
 
 * **Frontend**: Next.js 14+ (App Router), React 18, TypeScript, Tailwind CSS, Lucide Icons.
 * **Backend**: FastAPI (Python 3.12/3.14 on Uvicorn ASGI), Pydantic v2 validation, SQLAlchemy 2.0 (async).
@@ -92,92 +92,121 @@ Patient / Kiosk / Health Worker
 
 ---
 
-## ðŸ“š Documentation Index
+## 📚 Documentation Index
 
 CLINOVA AI maintains a comprehensive, production-grade technical and clinical documentation suite:
 
+### Core Architecture & System Guides
 | Document | Primary Focus | Target Audience |
 | :--- | :--- | :--- |
-| **[docs/DATABASE_ARCHITECTURE.md](docs/DATABASE_ARCHITECTURE.md)** | Phase 2 full clinical database spec: 18 tables, Mermaid ERD, lifecycles, and indexes. | System Architects, Database Engineers |
-| **[docs/PHASE_2_COMPLETION_REPORT.md](docs/PHASE_2_COMPLETION_REPORT.md)** | Phase 2 completion declaration, migration verification, scaling benchmarks, GO verdict. | Technical Leads, Evaluators |
-| **[docs/PHASE_2_INSPECTION_REPORT.md](docs/PHASE_2_INSPECTION_REPORT.md)** | Phase 2 pre/post audit, schema gap analysis, and before-vs-after comparison matrix. | System Architects, Auditors |
-| **[docs/PHASE_1_COMPLETION_REPORT.md](docs/PHASE_1_COMPLETION_REPORT.md)** | Official Phase 1 completion declaration, verification matrix, test evidence, GO verdict. | Engineering Leads, Evaluators |
-| **[docs/PHASE_1_FOUNDATION.md](docs/PHASE_1_FOUNDATION.md)** | Phase 1 technical specification: migrations, object storage, workers, multi-facility. | Backend Engineers, SREs |
-| **[docs/PHASE_1_INSPECTION_REPORT.md](docs/PHASE_1_INSPECTION_REPORT.md)** | Baseline freeze and re-inspection matrix for Phase 1 foundation. | System Architects, Auditors |
-| **[FEATURES.md](FEATURES.md)** | Multimodal intake, risk engine, queue, review gate, referrals, demo hub. | Clinicians, Product Owners, Developers |
-| **[INFRASTRUCTURE.md](INFRASTRUCTURE.md)** | Topology, Docker Compose, ports, PM2, systemd, TLS, hardware profiles. | DevOps, SREs, Systems Administrators |
-| **[SECURITY.md](SECURITY.md)** | DISHA/ABDM compliance, PII/Aadhaar scrubbing, JWT, audit logs, purge. | Security Engineers, Compliance Officers |
-| **[TESTING.md](TESTING.md)** | Automated test suite (34 tests), Docker testing, frontend build, checklist. | QA Engineers, Backend Developers |
-| **[ROADMAP.md](ROADMAP.md)** | Phased roadmap: MTS pediatric matrix, PWA, Bhashini, ABDM, biomarkers. | Clinical Informatics, Engineering Leads |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | End-to-end data flow, neuro-symbolic patterns, subsystem architecture. | Software Architects, Full-Stack Devs |
 | **[API_SPECIFICATION.md](API_SPECIFICATION.md)**| REST API endpoints, schemas, authentication, status codes, examples. | Backend & Frontend API Integrators |
 | **[clinical-rules.md](clinical-rules.md)** | Deterministic triage rules (`TRIAGE-R01`–`R06`), safety thresholds. | Medical Officers, Informatics Reviewers |
+| **[FEATURES.md](FEATURES.md)** | Multimodal intake, risk engine, queue, review gate, referrals, demo hub. | Clinicians, Product Owners, Developers |
+| **[INFRASTRUCTURE.md](INFRASTRUCTURE.md)** | Topology, Docker Compose, ports, PM2, systemd, TLS, hardware profiles. | DevOps, SREs, Systems Administrators |
+| **[SECURITY.md](SECURITY.md)** | DISHA/ABDM compliance, PII/Aadhaar scrubbing, JWT, audit logs, purge. | Security Engineers, Compliance Officers |
+| **[TESTING.md](TESTING.md)** | Automated test suite (66 tests), Docker testing, frontend build, checklist. | QA Engineers, Backend Developers |
+| **[ROADMAP.md](ROADMAP.md)** | Phased roadmap: MTS pediatric matrix, PWA, Bhashini, ABDM, biomarkers. | Clinical Informatics, Engineering Leads |
 | **[deploy.md](deploy.md)** | Step-by-step production deployment, Docker, bare-metal, disaster recovery. | Infrastructure & DevOps Teams |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contributor setup, branching, git guidelines, validation checklist. | Open-Source Contributors |
 | **[CHANGELOG.md](CHANGELOG.md)** | Semantic release history and implemented vs. planned status matrix. | Maintainers & Evaluators |
 
+### Clinical Specifications & Phase Reports (`docs/`)
+| Document | Primary Focus | Target Audience |
+| :--- | :--- | :--- |
+| **[docs/DATABASE_ARCHITECTURE.md](docs/DATABASE_ARCHITECTURE.md)** | Full clinical database specification: 18 tables, Mermaid ERD, lifecycles, and indexes. | System Architects, Database Engineers |
+| **[docs/DOCUMENT_ARCHITECTURE.md](docs/DOCUMENT_ARCHITECTURE.md)** | Medical document architecture: magic byte validation, quarantine vault, immutable amendments. | Backend Engineers, Security Auditors |
+| **[docs/OBJECT_STORAGE_ARCHITECTURE.md](docs/OBJECT_STORAGE_ARCHITECTURE.md)** | Storage backend abstraction, bucket key hierarchy, chunked streaming, HMAC presigned URLs. | Infrastructure & Backend Engineers |
+| **[docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md)** | RTO/RPO targets, automated database backup, restore verification protocols. | DevOps, SREs, Site Administrators |
+| **[docs/PHASE_3_COMPLETION_REPORT.md](docs/PHASE_3_COMPLETION_REPORT.md)** | Phase 3 completion report: object storage, document security, verification evidence. | Engineering Leads, Evaluators |
+| **[docs/PHASE_3_INSPECTION_REPORT.md](docs/PHASE_3_INSPECTION_REPORT.md)** | Phase 3 baseline freeze and pre/post audit matrix. | System Architects, Auditors |
+| **[docs/PHASE_2_COMPLETION_REPORT.md](docs/PHASE_2_COMPLETION_REPORT.md)** | Phase 2 completion report: clinical data model, observations, notes, referrals. | Technical Leads, Evaluators |
+| **[docs/PHASE_2_INSPECTION_REPORT.md](docs/PHASE_2_INSPECTION_REPORT.md)** | Phase 2 pre/post audit, schema gap analysis, and before-vs-after comparison matrix. | System Architects, Auditors |
+| **[docs/PHASE_1_COMPLETION_REPORT.md](docs/PHASE_1_COMPLETION_REPORT.md)** | Official Phase 1 completion declaration, verification matrix, test evidence, GO verdict. | Engineering Leads, Evaluators |
+| **[docs/PHASE_1_FOUNDATION.md](docs/PHASE_1_FOUNDATION.md)** | Phase 1 technical specification: migrations, object storage, workers, multi-facility. | Backend Engineers, SREs |
+| **[docs/PHASE_1_INSPECTION_REPORT.md](docs/PHASE_1_INSPECTION_REPORT.md)** | Baseline freeze and re-inspection matrix for Phase 1 foundation. | System Architects, Auditors |
+| **[docs/CLEANUP_INSPECTION_REPORT.md](docs/CLEANUP_INSPECTION_REPORT.md)** | Safe codebase cleanup baseline report, duplicate inventory, and reference audit. | Quality Engineers, Maintainers |
+
+### Clinical Governance & Compliance Policies (`docs/compliance/`)
+| Policy Document | Scope & Purpose | Target Audience |
+| :--- | :--- | :--- |
+| **[docs/compliance/CLINICAL_VALIDATION_PROTOCOL.md](docs/compliance/CLINICAL_VALIDATION_PROTOCOL.md)** | Formal clinical validation protocol, sensitivity/specificity benchmarks, HITL gate mandate. | Medical Officers, Clinical Reviewers |
+| **[docs/compliance/HIPAA_COMPLIANCE_MAPPING.md](docs/compliance/HIPAA_COMPLIANCE_MAPPING.md)** | Administrative, physical, and technical safeguards mapping for clinical data protection. | Compliance Officers, Security Teams |
+| **[docs/compliance/DATA_RETENTION_AND_DISPOSAL_POLICY.md](docs/compliance/DATA_RETENTION_AND_DISPOSAL_POLICY.md)** | Automated retention sweeps, cryptographic shredding, and media purge policies. | Data Protection Officers, SREs |
+| **[docs/compliance/INCIDENT_RESPONSE_POLICY.md](docs/compliance/INCIDENT_RESPONSE_POLICY.md)** | Security incident classification, containment, forensics, and notification timelines. | SecOps, System Administrators |
+| **[docs/compliance/PRIVACY_POLICY.md](docs/compliance/PRIVACY_POLICY.md)** | Patient data sovereignty, PII de-identification, and consent management. | Privacy Officers, Legal Counsel |
+| **[docs/compliance/PRODUCTION_LAUNCH_CHECKLIST.md](docs/compliance/PRODUCTION_LAUNCH_CHECKLIST.md)** | Comprehensive 8-category go-live verification checklist for healthcare deployments. | Lead Engineers, Facility Directors |
+
 ---
 
-## ðŸ“ Repository Structure
+## 📁 Repository Structure
 
 ```text
 CLINOVA-AI/
-â”œâ”€â”€ frontend/
-â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”œâ”€â”€ app/
-â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx                    # Polished healthcare landing page
-â”‚   â”‚   â”‚   â”œâ”€â”€ intake/page.tsx             # 4-step Multimodal Intake Wizard
-â”‚   â”‚   â”‚   â”œâ”€â”€ review/page.tsx             # Prioritized Reviewer Queue
-â”‚   â”‚   â”‚   â”œâ”€â”€ review/case/[caseId]/page.tsx # Case Review & Human Gate
-â”‚   â”‚   â”‚   â”œâ”€â”€ review/case/[caseId]/referral/page.tsx # Printable Referral Note
-â”‚   â”‚   â”‚   â”œâ”€â”€ demo/page.tsx               # 6 Public Health Demo Scenarios
-â”‚   â”‚   â”‚   â”œâ”€â”€ dashboard/page.tsx          # Provider metrics dashboard
-â”‚   â”‚   â”‚   â””â”€â”€ audit/page.tsx              # Audit trail viewer
-â”‚   â”‚   â”œâ”€â”€ components/
-â”‚   â”‚   â”‚   â”œâ”€â”€ clinical/                   # Safety banner, voice recorder, OCR uploader, timeline
-â”‚   â”‚   â”‚   â”œâ”€â”€ common/                     # Header, footer, navigation
-â”‚   â”‚   â”‚   â””â”€â”€ ui/                         # Badges, buttons, cards
-â”‚   â”‚   â”œâ”€â”€ lib/                            # API client & auth provider
-â”‚   â”‚   â””â”€â”€ types/                          # TypeScript definitions
-â”‚   â”œâ”€â”€ package.json
-â”‚   â””â”€â”€ Dockerfile
-â”‚
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx                             # Polished healthcare landing page
+│   │   │   ├── intake/page.tsx                      # 4-step Multimodal Intake Wizard
+│   │   │   ├── triage/page.tsx                      # Triage assessment portal
+│   │   │   ├── review/page.tsx                      # Prioritized Reviewer Queue
+│   │   │   ├── review/case/[caseId]/page.tsx        # Case Review & Human Gate
+│   │   │   ├── review/case/[caseId]/referral/page.tsx # Printable Referral Note
+│   │   │   ├── dashboard/page.tsx                   # Unified role-adaptive clinical dashboard
+│   │   │   ├── patients/page.tsx                    # Patient directory (EHR)
+│   │   │   ├── patients/[id]/page.tsx               # Patient chart detail
+│   │   │   ├── consultations/page.tsx               # Consultations list
+│   │   │   ├── documents/page.tsx                   # Medical documents repository
+│   │   │   ├── audit/page.tsx                       # Audit trail viewer
+│   │   │   ├── demo/page.tsx                        # 6 Public Health Demo Scenarios
+│   │   │   └── login/page.tsx                       # Authentication & role switcher
+│   │   ├── components/
+│   │   │   ├── assistant/                           # Floating Health Assistant
+│   │   │   ├── clinical/                            # Safety banner, voice recorder, OCR uploader, timeline
+│   │   │   ├── common/                              # Header, footer, navigation, network indicators
+│   │   │   └── ui/                                  # Badges, buttons, cards
+│   │   ├── lib/                                     # API client, auth provider, offline queue
+│   │   └── types/                                   # TypeScript definitions
+│   ├── package.json
+│   └── Dockerfile
+│
 ├── backend/
-│   ├── alembic/                         # Database schema migrations (Alembic async)
+│   ├── alembic/                                     # Database schema migrations (Alembic async)
 │   ├── app/
 │   │   ├── api/v1/endpoints/
-│   │   │   ├── cases.py                 # Triage cases CRUD & queue
-│   │   │   ├── intake.py                # Speech, translation & OCR endpoints
-│   │   │   ├── review.py                # Review actions & referral generation
-│   │   │   ├── auth.py                  # Authentication & JWT
-│   │   │   ├── patients.py              # EHR patient charts & multi-identifiers
-│   │   │   ├── encounters.py            # Clinical encounters lifecycle & visits
-│   │   │   ├── clinical.py              # Observations/vitals, allergies, meds, notes, diagnoses, referrals, timeline
-│   │   │   ├── audit.py                 # HIPAA-ready audit logging
-│   │   │   ├── documents.py             # Object storage upload/download & metadata
-│   │   │   ├── facilities.py            # Multi-facility & tenant management
-│   │   │   ├── jobs.py                  # Background asynchronous task queue
-│   │   │   └── health.py                # Liveness & Readiness health probes
-│   │   ├── core/                        # Config, security, dependencies, Redis pool
-│   │   ├── models/                      # 18 Normalized Entities: Facility, User, Patient, PatientIdentifier,
-│   │   │                                # Encounter, ClinicalObservation, Allergy, Medication, Condition,
-│   │   │                                # Diagnosis, ClinicalNote, NoteAmendment, AIRun, Referral,
-│   │   │                                # TriageCase, Consultation, Document, BackgroundJob, AuditLog
-│   │   ├── schemas/                     # Pydantic request/response models & clinical schemas
-│   │   ├── services/                    # Anonymizer, RiskEngine, Speech, Translation, OCR, Gemini, Storage, TaskManager
-│   │   └── main.py                      # FastAPI factory, DB lifecycle & synthetic seed data
-│   ├── tests/                           # Automated Pytest suite (34 passing tests)
+│   │   │   ├── cases.py                             # Triage cases CRUD & queue
+│   │   │   ├── intake.py                            # Speech, translation & OCR endpoints
+│   │   │   ├── review.py                            # Review actions & referral generation
+│   │   │   ├── auth.py                              # Authentication & JWT
+│   │   │   ├── patients.py                          # EHR patient charts & multi-identifiers
+│   │   │   ├── encounters.py                        # Clinical encounters lifecycle & visits
+│   │   │   ├── clinical.py                          # Observations/vitals, allergies, meds, notes, diagnoses, referrals
+│   │   │   ├── audit.py                             # HIPAA-ready audit logging
+│   │   │   ├── documents.py                         # Object storage upload/download & metadata
+│   │   │   ├── facilities.py                        # Multi-facility & tenant management
+│   │   │   ├── jobs.py                              # Background asynchronous task queue
+│   │   │   ├── assistant.py                         # Floating clinical assistant endpoint
+│   │   │   └── health.py                            # Liveness & Readiness health probes
+│   │   ├── core/                                    # Config, security, dependencies, Redis pool
+│   │   ├── models/                                  # 18 Normalized Entities (Facility, User, Patient, Encounter, etc.)
+│   │   ├── schemas/                                 # Pydantic request/response models & clinical schemas
+│   │   ├── services/                                # Anonymizer, RiskEngine, Speech, OCR, Gemini, Storage, TaskManager
+│   │   └── main.py                                  # FastAPI factory, DB lifecycle & synthetic seed data
+│   ├── tests/                                       # Automated Pytest suite (66 passing tests)
+│   ├── manage.py                                    # Administrative CLI management utility
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── docs/                                # Clinical architecture & phase reports
-│   ├── DATABASE_ARCHITECTURE.md         # Comprehensive ER diagram, schemas, lifecycles, and indexes
-│   ├── PHASE_2_COMPLETION_REPORT.md     # Phase 2 verification report & GO decision
-│   ├── PHASE_2_INSPECTION_REPORT.md     # Phase 2 baseline freeze and re-inspection matrix
-│   ├── PHASE_1_COMPLETION_REPORT.md     # Phase 1 verification report & GO decision
-│   ├── PHASE_1_FOUNDATION.md            # Architecture, models, security & storage specs
-│   └── PHASE_1_INSPECTION_REPORT.md     # Baseline freeze & re-inspection matrix for Phase 1
+├── docs/                                            # Clinical architecture & phase reports
+│   ├── compliance/                                  # Governance & compliance policies
+│   ├── DATABASE_ARCHITECTURE.md                     # Comprehensive ER diagram, schemas, lifecycles, and indexes
+│   ├── DOCUMENT_ARCHITECTURE.md                     # Medical document security & storage specification
+│   ├── OBJECT_STORAGE_ARCHITECTURE.md               # Storage backend, streaming pipeline, HMAC presigned URLs
+│   ├── DISASTER_RECOVERY.md                         # Backup/restore protocols and RTO/RPO metrics
+│   └── CLEANUP_INSPECTION_REPORT.md                 # Baseline cleanup inspection report
 │
+├── infrastructure/                                  # Production deployment assets (Nginx, Docker Compose)
+├── scripts/                                         # Database backup and verification scripts
 ├── docker-compose.yml
 ├── .env.example
 ├── README.md
@@ -196,7 +225,7 @@ CLINOVA-AI/
 
 ---
 
-## âš¡ Quickstart Commands (Windows PowerShell)
+## ⚡ Quickstart Commands (Windows PowerShell)
 
 ### Option 1: One-Command Startup with Docker Compose (Recommended)
 
@@ -251,18 +280,22 @@ npm run dev
 
 ## 🧪 Running Automated Tests
 
-### Backend Pytest Suite (47 Tests — 100% Pass Rate)
+### Backend Pytest Suite (66 Tests — 100% Pass Rate)
 
-Run the full automated test suite inside the container:
+Run the full automated test suite:
 
 ```powershell
-docker compose exec backend pytest -v
+cd backend
+.\.venv\Scripts\python.exe -m pytest tests -v
 ```
 
-*Tests cover:*
+*Test suites cover:*
+* **Phase 4 Enterprise Readiness & Scale (6 tests):** Keyset cursor-based pagination encode/decode, Prometheus telemetry metrics collection, bulk CSV patient import preview and execution, bulk FHIR bundle import, patient deduplication & chart merge with provenance tracking, and automated retention sweeps.
 * **Phase 3 Medical Documents & Object Storage (13 tests):** Valid PDF/image uploads with SHA-256 integrity, magic byte file signature validation (PDF, PNG, JPEG, TIFF, WEBP, DICOM) and disguised executable/script rejection (`MZ`, `ELF`, shell), path traversal sanitization, anti-malware scanning with unmapped quarantine vault isolation & HTTP 403 blocks, IDOR cross-patient isolation, HMAC-SHA256 presigned access tokens, document versioning & clinical amendment lineage (`POST /{id}/amend`), derived analytical artifacts (`document_artifacts`), soft deletion & retention compliance, zero-buffering 64KB chunked large file streaming (10MB–500MB), cross-facility multi-tenant isolation, anonymous denial, and search/filtering/pagination.
 * **Phase 2 Clinical Architecture (11 tests):** Clinical encounters lifecycle, discrete observations/vitals & LOINC verification, allergies & intolerances, medication regimens, diagnoses with AI attribution & clinician verification, clinical notes immutability & amendment audit tracking, referral management, multi-tenancy cross-facility isolation, patient multi-system identifiers & auto-MRN, longitudinal patient timeline aggregation, and synthetic scale benchmark (1,000+ observations < 5ms).
 * **Phase 1 Foundation & Security (23 tests):** Anonymization, Aadhaar redaction, Risk engine breathing/cardiovascular rules, Routine presentations, Non-diagnostic triage note synthesis, Consultation lifecycle, EHR patient CRUD, Authentication, IDOR cross-patient isolation (OWASP API1:2023), Health liveness & readiness (PostgreSQL + Redis ping), Multi-facility scoping, Object storage lifecycle & MIME/traversal validation, and Asynchronous background task queues.
+* **AI Decision Support & Assistant (5 tests):** Assistant capabilities and preferences, prompt injection defense, medical boundary and emergency escalation enforcement, multilingual support (English, Hindi, Odia), and RBAC tool execution boundaries.
+* **Role Workflows & Authorization Matrix (8 tests):** Private endpoints auth enforcement, full 4-role endpoint permission matrix (Admin, Doctor, Nurse, Patient), self-registration staff protection, patient intake review and isolation, EHR chart ID isolation, encounter doctor ownership, and immutable patient notes.
 
 ### Frontend TypeScript & Build Verification
 
@@ -274,18 +307,7 @@ npm run build
 
 ---
 
-## 📚 Architectural & Clinical Documentation
-
-* **[Medical Document Architecture](docs/DOCUMENT_ARCHITECTURE.md)**: Metadata schema, magic byte detection table, quarantine isolation, immutable amendment versioning, and derived artifacts.
-* **[Object Storage Architecture](docs/OBJECT_STORAGE_ARCHITECTURE.md)**: Storage backend abstraction (`BaseStorageBackend`, `LocalStorageBackend`, `S3StorageBackend`), bucket key hierarchy, zero-buffering streaming pipeline, and HMAC presigned URLs.
-* **[Clinical Data Model & EHR Architecture](docs/CLINICAL_DATA_MODEL.md)**: Encounters, observations, diagnoses, notes, allergies, medications, and referrals.
-* **[Database Schema & Tenancy Guide](docs/DATABASE_SCHEMA.md)**: PostgreSQL schemas, indexes, and multi-tenant isolation.
-* **[Phase 3 Inspection Report](docs/PHASE_3_INSPECTION_REPORT.md)**: Pre-implementation audit and final post-implementation re-inspection matrix.
-* **[Phase 3 Completion Report](docs/PHASE_3_COMPLETION_REPORT.md)**: Formal GO certification and verification results.
-
----
-
-## ðŸŽ­ 3-Minute Clinical Demonstration Workflow
+## 🎭 3-Minute Clinical Demonstration Workflow
 
 1. **Landing Page (`/`)**: Notice the prominent amber Non-Diagnostic Disclaimer, feature pillars, and India-wide facility relevance.
 2. **Start Intake (`/intake`)**:
@@ -309,7 +331,22 @@ npm run build
 
 ---
 
-## ðŸ”’ Security & Privacy Controls
+## 👥 Role-Isolated Dashboard Environments & Credentials
+
+Clinova AI strictly isolates authenticated users into four distinct environments based on verified session roles, ensuring zero feature leakage and independent backend object authorization:
+
+| Environment | Role Claim | Dashboard Route | Pre-Seeded Credentials | Primary Capabilities |
+| :--- | :--- | :--- | :--- | :--- |
+| **Patient** | `patient` | `/dashboard/patient` | `patient@clinova.ai` / `ClinovaPatient2026!` | Personal intake submissions, profile management (`/portal/profile`), recorded vitals review, medical document access. Zero staff/doctor controls. |
+| **Doctor / Clinician** | `doctor` | `/dashboard/doctor` | `doctor@clinova.ai` / `ClinovaDoctor2026!` | Clinical decision center, priority review queue (`/review`), case inspection with real vitals & AI support, note approval/rejection/referral, EHR directory, consultations. |
+| **Staff / Nurse** | `nurse` | `/dashboard/nurse`<br>*(alias: `/dashboard/staff`)* | `staff@clinova.ai` / `ClinovaStaff2026!` | Frontline operational intake, patient registration, identity verification, rapid vitals documentation (BP, HR, SpO2, Temp, RR), departmental physician routing and handoffs. |
+| **Admin** | `admin` | `/dashboard/admin` | `admin@clinova.ai` / `ClinovaAdmin2026!` | Institutional governance, user accounts & activation toggles, HIPAA data retention disposal lifecycle sweeps, system health & Prometheus telemetry, immutable audit logs (`/audit`). |
+
+*Direct visits to `/dashboard` automatically route users to their authorized environment. Direct visits to unauthorized routes are rejected by frontend `RoleGuard` and independently defended by backend HTTP 403 API dependencies.*
+
+---
+
+## 🔒 Security & Privacy Controls
 
 * **Anonymization Layer**: Direct personal identifiers (phone numbers, email addresses, 12-digit Aadhaar sequences) are masked with `[PHONE_REMOVED]`, `[EMAIL_REDACTED]`, and `[GOVT_ID_REDACTED]`.
 * **Synthetic Identifiers**: Cases use anonymous IDs (`CLV-DEMO-001`).

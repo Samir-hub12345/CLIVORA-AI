@@ -22,7 +22,9 @@ async def register(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-<<<<<<< HEAD
+    """Register a new user account."""
+    if user_in.role == UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Administrator accounts cannot be self-registered.")
     if user_in.role != UserRole.PATIENT:
         if not user_in.facility_id:
             raise HTTPException(
@@ -37,13 +39,6 @@ async def register(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid facility specified for staff registration.",
             )
-=======
-    """Register a new user account."""
-    if user_in.role == UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Administrator accounts cannot be self-registered.")
-    if user_in.role != UserRole.PATIENT and not user_in.facility_id:
-        raise HTTPException(status_code=403, detail="Public registration creates patient accounts only. Staff accounts are provisioned by the administrator.")
->>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     stmt = select(User).where(User.email == user_in.email)
     result = await db.execute(stmt)
     if result.scalar_one_or_none():

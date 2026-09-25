@@ -13,8 +13,11 @@ import {
   ShieldCheck,
   User,
   LayoutDashboard,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { dashboardPath } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { NetworkIndicator } from "@/components/common/network-indicator";
 
@@ -22,6 +25,33 @@ export const Header: React.FC = () => {
   const pathname = usePathname();
   const { user, logout, isDoctor, isAdmin, isPatient } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [assistantEnabled, setAssistantEnabled] = useState<boolean>(true);
+
+  // Sync assistant state from localStorage & custom events
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isEnabled = localStorage.getItem("clinova_assistant_enabled") !== "false";
+    setAssistantEnabled(isEnabled);
+
+    const handleToggle = (e: CustomEvent<{ enabled: boolean }>) => {
+      if (typeof e.detail?.enabled === "boolean") {
+        setAssistantEnabled(e.detail.enabled);
+      }
+    };
+    window.addEventListener("clinova-assistant-toggle", handleToggle as EventListener);
+    return () => window.removeEventListener("clinova-assistant-toggle", handleToggle as EventListener);
+  }, []);
+
+  const toggleAssistant = () => {
+    const next = !assistantEnabled;
+    setAssistantEnabled(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("clinova_assistant_enabled", String(next));
+      window.dispatchEvent(
+        new CustomEvent("clinova-assistant-toggle", { detail: { enabled: next } })
+      );
+    }
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -45,39 +75,42 @@ export const Header: React.FC = () => {
 
     if (isPatient) {
       return [
+        { label: "My Dashboard", href: "/dashboard/patient" },
         { label: "Patient Intake", href: "/intake" },
-        { label: "My Records", href: "/dashboard" },
         { label: "Documents", href: "/documents" },
       ];
     }
 
     if (user.role === "nurse") {
       return [
+        { label: "Staff Dashboard", href: "/dashboard/nurse" },
         { label: "Patient Intake", href: "/intake" },
         { label: "Review Queue", href: "/review" },
+        { label: "Patients", href: "/patients" },
         { label: "Documents", href: "/documents" },
-        { label: "Staff Dashboard", href: "/dashboard" },
       ];
     }
 
     if (isDoctor) {
       return [
+        { label: "Doctor Dashboard", href: "/dashboard/doctor" },
         { label: "Review Queue", href: "/review" },
         { label: "EHR Directory", href: "/patients" },
+        { label: "Consultations", href: "/consultations" },
+        { label: "AI Triage", href: "/triage" },
         { label: "Documents", href: "/documents" },
-        { label: "Doctor Dashboard", href: "/dashboard" },
       ];
     }
 
     if (isAdmin) {
       return [
+        { label: "Admin Console", href: "/dashboard/admin" },
         { label: "Audit Trail", href: "/audit" },
         { label: "Documents", href: "/documents" },
-        { label: "Admin Console", href: "/dashboard" },
       ];
     }
 
-    return [{ label: "Dashboard", href: "/dashboard" }, { label: "Documents", href: "/documents" }];
+    return [{ label: "Dashboard", href: dashboardPath(user.role) }, { label: "Documents", href: "/documents" }];
   };
 
   const authNavItems = getAuthenticatedNavItems();
@@ -120,7 +153,7 @@ export const Header: React.FC = () => {
                 ))
               : user
               ? authNavItems.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                  const active = pathname === item.href || (pathname ? pathname.startsWith(item.href + "/") : false);
                   return (
                     <Link
                       key={item.href}
@@ -147,8 +180,41 @@ export const Header: React.FC = () => {
           </nav>
         </div>
 
-        {/* Right side controls: Real-Time Network Indicator, User Auth / CTAs, Hamburger */}
+        {/* Right side controls: Real-Time Network Indicator, Assistant Control, User Auth / CTAs, Hamburger */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Assistant Quick Toggle */}
+          <button
+            type="button"
+            onClick={toggleAssistant}
+            title={
+              assistantEnabled
+                ? "Clinova Voice Assistant: Active (Click to disable)"
+                : "Clinova Voice Assistant: Disabled (Click to enable)"
+            }
+            aria-label={
+              assistantEnabled
+                ? "Disable Clinova Assistant"
+                : "Enable Clinova Assistant"
+            }
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${
+              assistantEnabled
+                ? "bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100"
+                : "bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200 hover:text-slate-800"
+            }`}
+          >
+            {assistantEnabled ? (
+              <>
+                <Mic className="w-3.5 h-3.5 text-teal-600" />
+                <span className="hidden md:inline text-[11px]">Assistant Active</span>
+              </>
+            ) : (
+              <>
+                <MicOff className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden md:inline text-[11px]">Enable Assistant</span>
+              </>
+            )}
+          </button>
+
           {/* Real-Time Adaptive Network Indicator */}
           <NetworkIndicator />
 
@@ -156,7 +222,7 @@ export const Header: React.FC = () => {
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
-                href="/dashboard"
+                href={dashboardPath(user.role)}
                 className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-800 border border-teal-200 rounded-lg text-xs font-semibold hover:bg-teal-100 transition"
               >
                 <LayoutDashboard className="w-3.5 h-3.5 text-teal-700" />
@@ -261,6 +327,29 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+            {/* Mobile Assistant Toggle */}
+            <button
+              type="button"
+              onClick={toggleAssistant}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold border ${
+                assistantEnabled
+                  ? "bg-teal-50 text-teal-800 border-teal-200"
+                  : "bg-slate-100 text-slate-600 border-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {assistantEnabled ? (
+                  <Mic className="w-4 h-4 text-teal-600" />
+                ) : (
+                  <MicOff className="w-4 h-4 text-slate-400" />
+                )}
+                <span>Clinova Voice Assistant</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold tracking-wider">
+                {assistantEnabled ? "Active" : "Disabled"}
+              </span>
+            </button>
+
             {user ? (
               <div className="flex items-center justify-between pt-1">
                 <div>
@@ -269,7 +358,7 @@ export const Header: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/dashboard"
+                    href={dashboardPath(user.role)}
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-3 py-1.5 bg-teal-50 text-teal-800 border border-teal-200 rounded-lg text-xs font-semibold"
                   >

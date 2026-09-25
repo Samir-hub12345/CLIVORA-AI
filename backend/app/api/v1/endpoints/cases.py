@@ -133,11 +133,7 @@ async def list_cases(
     assigned_doctor_id: Optional[str] = Query(None, description="Filter by assigned clinician ID"),
     patient_id: Optional[str] = Query(None, description="Filter by patient record ID"),
     limit: int = Query(50, ge=1, le=100),
-<<<<<<< HEAD
-    current_user: Optional[User] = Depends(get_current_user_optional),
-=======
     current_user: User = Depends(get_current_clinician),
->>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve prioritized queue of triage cases with backend role isolation."""
@@ -163,11 +159,7 @@ async def list_cases(
 @router.get("/{case_id}", response_model=CaseResponse)
 async def get_case(
     case_id: str,
-<<<<<<< HEAD
-    current_user: Optional[User] = Depends(get_current_user_optional),
-=======
     current_user: User = Depends(get_current_clinician),
->>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve single case by ID or synthetic_case_id with patient isolation checks."""
@@ -297,11 +289,7 @@ async def verify_case_intake(
 async def delete_case_data(
     case_id: str,
     request: Request,
-<<<<<<< HEAD
-    current_user: User = Depends(get_current_clinician),
-=======
     current_user: User = Depends(get_current_doctor),
->>>>>>> 3f0d7e13b81af3a543752df1631a7635a59ff0fc
     db: AsyncSession = Depends(get_db),
 ):
     """Data retention: delete temporary media and anonymize/purge case record."""

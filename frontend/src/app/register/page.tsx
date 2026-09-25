@@ -22,7 +22,7 @@ import { ClinicalDisclaimer } from "@/components/clinical/disclaimer";
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const roleParam = searchParams.get("role");
+  const roleParam = searchParams?.get("role");
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

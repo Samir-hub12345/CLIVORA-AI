@@ -51,6 +51,7 @@ Clinova AI bridges the gap between walk-in patient presentations and attending c
 | **Demonstrations** | 6 pre-configured synthetic public health scenarios with 1-click loading. | Scenario builder UI for custom training and academic simulation. |
 | **Data Privacy** | In-flight regex scrubbing (Aadhaar, mobile, email) & 1-click case purge. | Automated differential privacy masking for epidemiological telemetry. |
 | **Adaptive Connectivity** | Real-time 4-state network monitoring (`GOOD`, `NORMAL`, `SLOW`, `OFFLINE`), 4-bar indicator, safe API retry policies, and clinical intake guards. | Local offline queue with deferred cryptographically-signed sync. |
+| **Role-Isolated Dashboards** | 4 strictly isolated environments (Patient, Doctor, Staff, Admin) with zero feature leakage, role-based navigation, and backend object authorization. | Granular sub-departmental access delegation. |
 
 ---
 

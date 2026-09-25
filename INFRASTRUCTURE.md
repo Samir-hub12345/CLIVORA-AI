@@ -1,4 +1,4 @@
-# CLINOVA AI â€” Infrastructure & Systems Architecture
+# CLINOVA AI — Infrastructure & Systems Architecture
 
 **Document Version:** 1.0.0  
 **Target Environments:** Rural Primary Health Centers (PHCs), Community Health Centers (CHCs), Government District Hospital OPDs, Campus Clinics, and Cloud Staging  
@@ -7,7 +7,7 @@
 ---
 
 > [!WARNING]
-> ### ðŸ”’ Clinical Safety & Operational Mandate
+> ### 🔒 Clinical Safety & Operational Mandate
 > **Educational prototype and clinical decision support system only.** Infrastructure configurations must maintain the persistent amber non-diagnostic clinical disclaimer banner across all deployment tiers and ensure attending clinician sign-off gates are active before clinical use.
 
 ---
@@ -32,40 +32,40 @@
 CLINOVA AI is architected as an interconnected four-tier service stack optimized for high availability, low latency, and zero-cloud offline survivability:
 
 ```text
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                              CLIENT INGRESS                                 â”‚
-â”‚          Web Browser (Desktop / Tablet / Low-Bandwidth Mobile Kiosk)        â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                       â”‚ HTTP / HTTPS (Port 80/443)
-                                       â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚               REVERSE PROXY & TLS TERMINATION (Nginx / Caddy)               â”‚
-â”‚                  - TLS 1.3 / HSTS / Static Asset Caching                     â”‚
-â”‚                  - Request Rate Limiting / CORS Enforcement                 â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                       â”‚ /                             â”‚ /api/v1
-                       â–¼                               â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚     FRONTEND APPLICATION     â”‚              â”‚      BACKEND REST SERVICE     â”‚
-â”‚   Next.js 14 (Node.js 18+)   â”‚              â”‚   FastAPI (Python 3.12/3.14)  â”‚
-â”‚   - SSR & React 18 UI        â”‚              â”‚   - Async Uvicorn ASGI Server â”‚
-â”‚   - Tailwind CSS & Lucide    â”‚              â”‚   - Pydantic v2 Validation    â”‚
-â”‚   - Port: 3000               â”‚              â”‚   - Risk Signal Engine (R01+) â”‚
-â”‚   Container: clinova-frontendâ”‚              â”‚   - Port: 8000                â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜              â”‚   Container: clinova-backend  â”‚
-                                              â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
-                                                      â”‚               â”‚
-                              SQLAlchemy 2.0 (asyncpg)â”‚               â”‚ aioredis
-                                                      â–¼               â–¼
-                                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                                              â”‚  DATABASE     â”‚ â”‚ IN-MEMORY   â”‚
-                                              â”‚  PostgreSQL 16â”‚ â”‚ CACHE       â”‚
-                                              â”‚  Port: 5432   â”‚ â”‚ Redis 7     â”‚
-                                              â”‚  Container:   â”‚ â”‚ Port: 6379  â”‚
-                                              â”‚  clinova-db   â”‚ â”‚ Container:  â”‚
-                                              â”‚  DB: clinova  â”‚ â”‚ clinova-    â”‚
-                                              â”‚               â”‚ â”‚ redis       â”‚
-                                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT INGRESS                                 │
+│          Web Browser (Desktop / Tablet / Low-Bandwidth Mobile Kiosk)        │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ HTTP / HTTPS (Port 80/443)
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               REVERSE PROXY & TLS TERMINATION (Nginx / Caddy)               │
+│                  - TLS 1.3 / HSTS / Static Asset Caching                     │
+│                  - Request Rate Limiting / CORS Enforcement                 │
+└──────────────────────┬───────────────────────────────┬──────────────────────┘
+                       │ /                             │ /api/v1
+                       ▼                               ▼
+┌──────────────────────────────┐              ┌───────────────────────────────┐
+│     FRONTEND APPLICATION     │              │      BACKEND REST SERVICE     │
+│   Next.js 14 (Node.js 18+)   │              │   FastAPI (Python 3.12/3.14)  │
+│   - SSR & React 18 UI        │              │   - Async Uvicorn ASGI Server │
+│   - Tailwind CSS & Lucide    │              │   - Pydantic v2 Validation    │
+│   - Port: 3000               │              │   - Risk Signal Engine (R01+) │
+│   Container: clinova-frontend│              │   - Port: 8000                │
+└──────────────────────────────┘              │   Container: clinova-backend  │
+                                              └───────┬───────────────┬───────┘
+                                                      │               │
+                              SQLAlchemy 2.0 (asyncpg)│               │ aioredis
+                                                      ▼               ▼
+                                              ┌───────────────┐ ┌─────────────┐
+                                              │  DATABASE     │ │ IN-MEMORY   │
+                                              │  PostgreSQL 16│ │ CACHE       │
+                                              │  Port: 5432   │ │ Redis 7     │
+                                              │  Container:   │ │ Port: 6379  │
+                                              │  clinova-db   │ │ Container:  │
+                                              │  DB: clinova  │ │ clinova-    │
+                                              │               │ │ redis       │
+                                              └───────────────┘ └─────────────┘
 ```
 
 ---
@@ -305,15 +305,15 @@ CLINOVA AI is designed to run across three distinct deployment tiers:
 
 ### Tier 1: Rural PHC / Outreach Laptop (Edge Mode)
 - **Target Context**: Sub-centers, mobile outreach camps, intermittent power.
-- **Hardware**: Single laptop or mini-PC (Intel Core i3/i5 or AMD Ryzen 3, 4â€“8 GB RAM, 64 GB SSD).
+- **Hardware**: Single laptop or mini-PC (Intel Core i3/i5 or AMD Ryzen 3, 4–8 GB RAM, 64 GB SSD).
 - **Runtime Configuration**: Standalone Docker Compose stack with `DEMO_MODE=True`, lightweight local mocks for STT/OCR, low-bandwidth mode enabled on client browser.
-- **Concurrent Users**: 1â€“5 intake kiosks or tablets.
+- **Concurrent Users**: 1–5 intake kiosks or tablets.
 
 ### Tier 2: Community Health Center (CHC) / Campus Clinic (Standard Mode)
 - **Target Context**: Institutional clinic with dedicated local area network (LAN).
-- **Hardware**: On-premise departmental server (4â€“8 vCPUs, 16 GB RAM, 256 GB NVMe SSD).
+- **Hardware**: On-premise departmental server (4–8 vCPUs, 16 GB RAM, 256 GB NVMe SSD).
 - **Runtime Configuration**: Docker Compose stack with `faster-whisper` and local OCR service workers.
-- **Concurrent Users**: 10â€“25 intake tablets and clinician review terminals.
+- **Concurrent Users**: 10–25 intake tablets and clinician review terminals.
 
 ### Tier 3: District Hospital OPD / High-Volume Urban Center (Enterprise Mode)
 - **Target Context**: Tertiary referral hospital OPD handling 1,000+ daily walk-ins.

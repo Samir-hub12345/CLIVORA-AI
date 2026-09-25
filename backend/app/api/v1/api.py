@@ -1,21 +1,22 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, auth, patients, consultations, ai_assist, audit, cases, intake, review
-from app.api.v1.endpoints import portal, admin
 from app.api.v1.endpoints import (
-    health,
-    auth,
-    patients,
-    consultations,
+    admin,
     ai_assist,
+    assistant,
     audit,
+    auth,
     cases,
-    intake,
-    review,
-    documents,
-    jobs,
-    facilities,
-    encounters,
     clinical,
+    consultations,
+    documents,
+    encounters,
+    facilities,
+    health,
+    intake,
+    jobs,
+    patients,
+    portal,
+    review,
 )
 
 api_router = APIRouter()
@@ -41,3 +42,6 @@ api_router.include_router(audit.router, prefix="/audit-logs", tags=["Audit Trail
 api_router.include_router(cases.router, prefix="/cases", tags=["Triage Cases & Queue"])
 api_router.include_router(intake.router, prefix="/intake", tags=["Multimodal Intake"])
 api_router.include_router(review.router, prefix="/review", tags=["Reviewer & Referral"])
+
+# Floating Health Assistant
+api_router.include_router(assistant.router, prefix="/assistant", tags=["Clinova Floating Assistant"])

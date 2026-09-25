@@ -327,3 +327,65 @@ export interface PresignedUrlResponse {
   expires_in_seconds: number;
   expires_at: string;
 }
+
+export interface AssistantPreference {
+  assistant_enabled: boolean;
+  language: string;
+  voice_enabled: boolean;
+  voice_response_enabled: boolean;
+}
+
+export interface SupportedLanguage {
+  code: string;
+  name: string;
+}
+
+export interface AssistantCapabilities {
+  role: string;
+  available_tools: string[];
+  supported_languages: SupportedLanguage[];
+  voice_input_available: boolean;
+  tts_available: boolean;
+  disclaimer: string;
+}
+
+export interface ProposedAction {
+  tool_name: string;
+  description: string;
+  parameters: Record<string, any>;
+  risk_level: string;
+}
+
+export interface AssistantMessageRequest {
+  message: string;
+  language?: string;
+  context_resource_type?: string;
+  context_resource_id?: string;
+  voice_input?: boolean;
+}
+
+export interface AssistantMessageResponse {
+  text: string;
+  language: string;
+  original_statement?: string;
+  source_label: string;
+  requires_confirmation: boolean;
+  proposed_action?: ProposedAction;
+  structured_data?: Record<string, any>;
+  follow_up_suggestions: string[];
+  detected_language?: string;
+}
+
+export interface AssistantToolExecuteRequest {
+  tool_name: string;
+  parameters?: Record<string, any>;
+  confirmed?: boolean;
+}
+
+export interface AssistantToolExecuteResponse {
+  success: boolean;
+  tool_name: string;
+  result: any;
+  message: string;
+  audit_logged: boolean;
+}

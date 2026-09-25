@@ -1,14 +1,14 @@
-# CLINOVA AI â€” Product & Clinical Informatics Roadmap
+# CLINOVA AI — Product & Clinical Informatics Roadmap
 
 **Document Version:** 1.0.0  
 **Status:** Living Strategy Document  
 **Current Baseline:** v0.2.0 (Integrated Staging)  
-**Planning Horizon:** 2026 â€“ 2027  
+**Planning Horizon:** 2026 – 2027  
 
 ---
 
 > [!WARNING]
-> ### ðŸ”’ Clinical Safety & Non-Diagnostic Roadmap Mandate
+> ### 🔒 Clinical Safety & Non-Diagnostic Roadmap Mandate
 > **Strict Adherence to Non-Autonomous Triage.** All future architectural and functional additions to CLINOVA AI must strictly adhere to the human-in-the-loop clinical safety mandate: the system is an educational and decision-support assistant; it must **never** make autonomous medical diagnoses, issue unvalidated drug prescriptions, or bypass qualified attending healthcare personnel.
 
 ---
@@ -18,8 +18,8 @@
 1. [Current Operational Baseline (v0.2.0)](#1-current-operational-baseline-v020)
 2. [Strategic Vision & Architectural Pillars](#2-strategic-vision--architectural-pillars)
 3. [Phase 1: Near-Term Enhancements (Q4 2026)](#3-phase-1-near-term-enhancements-q4-2026)
-4. [Phase 2: Mid-Term Capabilities (Q1â€“Q2 2027)](#4-phase-2-mid-term-capabilities-q1q2-2027)
-5. [Phase 3: Long-Term Ecosystem Integration (Q3â€“Q4 2027)](#5-phase-3-long-term-ecosystem-integration-q3q4-2027)
+4. [Phase 2: Mid-Term Capabilities (Q1–Q2 2027)](#4-phase-2-mid-term-capabilities-q1q2-2027)
+5. [Phase 3: Long-Term Ecosystem Integration (Q3–Q4 2027)](#5-phase-3-long-term-ecosystem-integration-q3q4-2027)
 6. [Feature Prioritization Matrix](#6-feature-prioritization-matrix)
 7. [Clinical Governance & Ethics Review](#7-clinical-governance--ethics-review)
 
@@ -45,17 +45,17 @@ As of release **v0.2.0**, the following core capabilities are verified and opera
 CLINOVA AI evolves around four guiding principles designed for public health resilience in India:
 
 ```text
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                       FOUR ARCHITECTURAL PILLARS                        â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚ 1. Zero-Bypass    â”‚ 2. Vernacular     â”‚ 3. Edge-First     â”‚ 4. ABDM     â”‚
-â”‚    Human Gate     â”‚    Inclusivity    â”‚    Offline Sync   â”‚    Aligned  â”‚
-â”‚                   â”‚                   â”‚                   â”‚             â”‚
-â”‚ Clinician retains â”‚ Native Indian     â”‚ Fully operational â”‚ Seamless    â”‚
-â”‚ final decision    â”‚ languages without â”‚ in air-gapped     â”‚ national    â”‚
-â”‚ authority on all  â”‚ translation       â”‚ rural health      â”‚ health data â”‚
-â”‚ clinical actions. â”‚ latency.          â”‚ sub-centers.      â”‚ exchange.   â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       FOUR ARCHITECTURAL PILLARS                        │
+├───────────────────┬───────────────────┬───────────────────┬─────────────┤
+│ 1. Zero-Bypass    │ 2. Vernacular     │ 3. Edge-First     │ 4. ABDM     │
+│    Human Gate     │    Inclusivity    │    Offline Sync   │    Aligned  │
+│                   │                   │                   │             │
+│ Clinician retains │ Native Indian     │ Fully operational │ Seamless    │
+│ final decision    │ languages without │ in air-gapped     │ national    │
+│ authority on all  │ translation       │ rural health      │ health data │
+│ clinical actions. │ latency.          │ sub-centers.      │ exchange.   │
+└───────────────────┴───────────────────┴───────────────────┴─────────────┘
 ```
 
 ---
@@ -82,7 +82,7 @@ CLINOVA AI evolves around four guiding principles designed for public health res
 
 ---
 
-## 4. Phase 2: Mid-Term Capabilities (Q1â€“Q2 2027)
+## 4. Phase 2: Mid-Term Capabilities (Q1–Q2 2027)
 
 ### 4.1 Real-Time Streaming Audio Transcription
 - Upgrade from batch audio submission to live WebSocket chunked streaming:
@@ -103,7 +103,7 @@ CLINOVA AI evolves around four guiding principles designed for public health res
 
 ---
 
-## 5. Phase 3: Long-Term Ecosystem Integration (Q3â€“Q4 2027)
+## 5. Phase 3: Long-Term Ecosystem Integration (Q3–Q4 2027)
 
 ### 5.1 ABDM / Ayushman Bharat Digital Mission Gateway
 - Full compliance with national health exchange milestones:

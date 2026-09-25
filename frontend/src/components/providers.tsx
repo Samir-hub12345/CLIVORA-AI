@@ -6,6 +6,7 @@ import { RouteAccess } from "@/components/common/role-guard";
 import { ConnectivityProvider } from "@/lib/connectivity";
 import { NetworkToast } from "@/components/common/network-toast";
 import { DevNetworkDebug } from "@/components/common/dev-network-debug";
+import { FloatingAssistant } from "@/components/assistant/floating-assistant";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </RouteAccess>
         <NetworkToast />
         <DevNetworkDebug />
+        <FloatingAssistant />
       </AuthProvider>
     </ConnectivityProvider>
   );

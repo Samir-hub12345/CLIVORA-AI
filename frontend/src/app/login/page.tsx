@@ -31,7 +31,7 @@ function LoginForm() {
     if (!authLoading && user) router.replace(dashboardPath(user.role));
   }, [user, authLoading, router]);
   const searchParams = useSearchParams();
-  const roleParam = searchParams.get("role");
+  const roleParam = searchParams?.get("role");
 
   const [activeTab, setActiveTab] = useState<"patient" | "nurse" | "doctor" | "admin">("doctor");
   const [email, setEmail] = useState("");

@@ -10,40 +10,50 @@ export function dashboardPath(role: UserRole): string {
 type NavItem = { label: string; href: string };
 export const navigationByRole: Record<UserRole, NavItem[]> = {
   patient: [
-    { label: "My dashboard", href: "/dashboard/patient" },
-    { label: "Start intake", href: "/intake" },
-    { label: "My profile", href: "/portal/profile" },
+    { label: "My Dashboard", href: "/dashboard/patient" },
+    { label: "Start Intake", href: "/intake" },
+    { label: "Documents", href: "/documents" },
+    { label: "My Profile", href: "/portal/profile" },
   ],
   doctor: [
-    { label: "Dashboard", href: "/dashboard/doctor" },
-    { label: "Review queue", href: "/review" },
-    { label: "Patients", href: "/patients" },
+    { label: "Doctor Dashboard", href: "/dashboard/doctor" },
+    { label: "Review Queue", href: "/review" },
+    { label: "EHR Directory", href: "/patients" },
     { label: "Consultations", href: "/consultations" },
-    { label: "AI triage", href: "/triage" },
-    { label: "Intake", href: "/intake" },
+    { label: "AI Triage", href: "/triage" },
+    { label: "Documents", href: "/documents" },
   ],
   nurse: [
-    { label: "Dashboard", href: "/dashboard/nurse" },
-    { label: "Review queue", href: "/review" },
+    { label: "Staff Dashboard", href: "/dashboard/nurse" },
+    { label: "Patient Intake", href: "/intake" },
+    { label: "Review Queue", href: "/review" },
     { label: "Patients", href: "/patients" },
-    { label: "Consultations", href: "/consultations" },
-    { label: "Intake", href: "/intake" },
+    { label: "Documents", href: "/documents" },
   ],
   admin: [
-    { label: "Dashboard", href: "/dashboard/admin" },
-    { label: "Accounts", href: "/dashboard/admin#accounts" },
-    { label: "Audit trail", href: "/audit" },
+    { label: "Admin Console", href: "/dashboard/admin" },
+    { label: "Audit Trail", href: "/audit" },
+    { label: "Documents", href: "/documents" },
   ],
 };
 const allRoles: UserRole[] = ["patient", "doctor", "nurse", "admin"];
 const clinical: UserRole[] = ["doctor", "nurse"];
 const protectedPrefixes: [string, UserRole[]][] = [
-  ["/dashboard/patient", ["patient"]], ["/dashboard/doctor", ["doctor"]],
-  ["/dashboard/admin", ["admin"]], ["/dashboard/nurse", ["nurse"]],
-  ["/dashboard", allRoles], ["/portal", ["patient"]],
-  ["/patients", clinical], ["/review", clinical],
-  ["/consultations", clinical], ["/triage", clinical],
-  ["/audit", ["admin"]], ["/intake", ["patient", "doctor", "nurse"]],
+  ["/dashboard/patient", ["patient"]],
+  ["/dashboard/doctor", ["doctor"]],
+  ["/dashboard/admin", ["admin"]],
+  ["/dashboard/nurse", ["nurse"]],
+  ["/dashboard/staff", ["nurse"]],
+  ["/dashboard", allRoles],
+  ["/portal", ["patient"]],
+  ["/patients/profile", ["patient"]],
+  ["/patients", clinical],
+  ["/review", clinical],
+  ["/consultations", clinical],
+  ["/triage", ["doctor"]],
+  ["/audit", ["admin"]],
+  ["/intake", ["patient", "doctor", "nurse"]],
+  ["/documents", allRoles],
 ];
 export function rolesForPath(path: string): UserRole[] | null {
   return protectedPrefixes.find(([prefix]) => path === prefix || path.startsWith(prefix + "/"))?.[1] ?? null;

@@ -31,6 +31,6 @@ export function RouteAccess({ children }: { children: React.ReactNode }) {
     window.addEventListener("clinova:access-denied", denied);
     return () => window.removeEventListener("clinova:access-denied", denied);
   }, [router]);
-  const roles = rolesForPath(pathname);
+  const roles = pathname ? rolesForPath(pathname) : null;
   return roles ? <RoleGuard roles={roles}>{children}</RoleGuard> : <>{children}</>;
 }

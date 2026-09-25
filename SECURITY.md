@@ -1,4 +1,4 @@
-# CLINOVA AI â€” Healthcare Security, Safety & Privacy Policy
+# CLINOVA AI — Healthcare Security, Safety & Privacy Policy
 
 **Document Version:** 1.0.0  
 **Target Audience:** Security engineers, clinical compliance officers, data protection officers, and infrastructure administrators  
@@ -7,7 +7,7 @@
 ---
 
 > [!WARNING]
-> ### ðŸ”’ Clinical Safety & Non-Diagnostic Mandate
+> ### 🔒 Clinical Safety & Non-Diagnostic Mandate
 > **Educational prototype and clinical decision support system only.** CLINOVA AI does not diagnose disease, prescribe pharmaceuticals, or make autonomous medical decisions. All AI-generated triage suggestions, risk flags, and clinical notes strictly require qualified medical professional validation and explicit human sign-off prior to clinical or administrative action.
 
 ---
@@ -52,29 +52,29 @@ Meets standards under the **Information Technology (Reasonable Security Practice
 The primary patient safety risk in clinical AI systems is autonomous action or clinician over-reliance. CLINOVA AI mitigates this through architectural hard barriers:
 
 ```text
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                    HUMAN-IN-THE-LOOP SAFETY GATEWAY                     â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                   â”‚
-                                   â–¼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    HUMAN-IN-THE-LOOP SAFETY GATEWAY                     │
+└─────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
                    [ Generative / Multimodal Intake ]
-                                   â”‚
-                                   â–¼
+                                   │
+                                   ▼
                   [ Deterministic Risk Signal Engine ]
-                                   â”‚
-                                   â–¼
+                                   │
+                                   ▼
                     [ Proposed Clinical Summary ]
-                                   â”‚
-                                   â–¼
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-        â”‚       QUALIFIED ATTENDING CLINICIAN REVIEW GATE     â”‚
-        â”‚  1. Inspect Timeline & Original Vernacular Audio    â”‚
-        â”‚  2. Review Provenance-Linked Lab Parameters         â”‚
-        â”‚  3. Edit Note / Override Triage Category            â”‚
-        â”‚  4. Electronic Sign-Off / Confirm / Escalate        â”‚
-        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                   â”‚ Explicit Clinician Signature
-                                   â–¼
+                                   │
+                                   ▼
+        ┌─────────────────────────────────────────────────────┐
+        │       QUALIFIED ATTENDING CLINICIAN REVIEW GATE     │
+        │  1. Inspect Timeline & Original Vernacular Audio    │
+        │  2. Review Provenance-Linked Lab Parameters         │
+        │  3. Edit Note / Override Triage Category            │
+        │  4. Electronic Sign-Off / Confirm / Escalate        │
+        └──────────────────────────┬──────────────────────────┘
+                                   │ Explicit Clinician Signature
+                                   ▼
                     [ Official Health Record / Transfer ]
 ```
 
@@ -117,11 +117,11 @@ In demonstration and public health outreach modes, patient charts are generated 
 
 | Endpoint Group | `admin` | `doctor` | `nurse` | `patient` |
 | :--- | :---: | :---: | :---: | :---: |
-| `POST /api/v1/intake/process` | âœ… | âœ… | âœ… | âœ… |
-| `GET /api/v1/cases/` (Queue) | âœ… | âœ… | âœ… | âŒ |
-| `POST /api/v1/review/action` | âœ… | âœ… | âŒ | âŒ |
-| `DELETE /api/v1/cases/{id}` | âœ… | âœ… | âŒ | âŒ |
-| `GET /api/v1/audit-logs/` | âœ… | âŒ | âŒ | âŒ |
+| `POST /api/v1/intake/process` | ✅ | ✅ | ✅ | ✅ |
+| `GET /api/v1/cases/` (Queue) | ✅ | ✅ | ✅ | ❌ |
+| `POST /api/v1/review/action` | ✅ | ✅ | ❌ | ❌ |
+| `DELETE /api/v1/cases/{id}` | ✅ | ✅ | ❌ | ❌ |
+| `GET /api/v1/audit-logs/` | ✅ | ❌ | ❌ | ❌ |
 
 ---
 

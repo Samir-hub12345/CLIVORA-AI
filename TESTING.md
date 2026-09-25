@@ -1,4 +1,4 @@
-# CLINOVA AI â€” Testing & Quality Assurance Handbook
+# CLINOVA AI — Testing & Quality Assurance Handbook
 
 **Document Version:** 1.0.0  
 **Target Audience:** Software developers, clinical informatics testers, DevOps engineers, and QA reviewers  
@@ -7,7 +7,7 @@
 ---
 
 > [!WARNING]
-> ### ðŸ”’ Clinical Safety & Testing Philosophy
+> ### 🔒 Clinical Safety & Testing Philosophy
 > **Zero-Risk Testing Mandate.** CLINOVA AI enforces a strict synthetic-only testing policy. Real patient health information (PHI) or identifiable clinical data must never be used in unit tests, integration tests, or mock datasets. Every clinical urgency rule must be rigorously tested against deterministic criteria to prevent clinical triage regressions.
 
 ---
@@ -39,14 +39,14 @@ The backend test suite (`backend/tests/`) contains 15 automated test cases execu
 
 ```text
 backend/tests/
-â”œâ”€â”€ conftest.py               # Shared test fixtures & async database engine
-â”œâ”€â”€ test_risk_engine.py       # Deterministic clinical risk rules & PII redaction (6 tests)
-â”œâ”€â”€ test_health.py            # Service health probe & root metadata (2 tests)
-â”œâ”€â”€ test_ai.py                # AI clinical triage & SOAP note synthesis (2 tests)
-â”œâ”€â”€ test_auth.py              # JWT authentication & credential validation (2 tests)
-â”œâ”€â”€ test_patients.py          # EHR patient registry CRUD lifecycle (1 test)
-â”œâ”€â”€ test_consultations.py     # Clinical consultation management (1 test)
-â””â”€â”€ test_audit.py             # Medicolegal audit logging persistence (1 test)
+├── conftest.py               # Shared test fixtures & async database engine
+├── test_risk_engine.py       # Deterministic clinical risk rules & PII redaction (6 tests)
+├── test_health.py            # Service health probe & root metadata (2 tests)
+├── test_ai.py                # AI clinical triage & SOAP note synthesis (2 tests)
+├── test_auth.py              # JWT authentication & credential validation (2 tests)
+├── test_patients.py          # EHR patient registry CRUD lifecycle (1 test)
+├── test_consultations.py     # Clinical consultation management (1 test)
+└── test_audit.py             # Medicolegal audit logging persistence (1 test)
 ```
 
 ### 2.1 Test Module Breakdown
@@ -186,7 +186,7 @@ To verify real-time application behavior transitions under live network throttli
 
 Before submitting a Pull Request or promoting code to staging, verify each item:
 
-- [ ] **Deterministic Rules Intact**: All 6 triage rules (`TRIAGE-R01`â€“`TRIAGE-R06`) correctly trigger their designated priority levels.
+- [ ] **Deterministic Rules Intact**: All 6 triage rules (`TRIAGE-R01`–`TRIAGE-R06`) correctly trigger their designated priority levels.
 - [ ] **PII Scrubbing Enforced**: Phone numbers, email addresses, and 12-digit Aadhaar numbers are masked before database insertion.
 - [ ] **Persistent Disclaimer Visible**: Amber clinical safety banner renders across all frontend pages (`/`, `/intake`, `/review`, `/demo`).
 - [ ] **Human-in-the-Loop Active**: Automated endpoints do not autonomously write approved clinical notes without clinician action.
