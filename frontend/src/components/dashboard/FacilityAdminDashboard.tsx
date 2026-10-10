@@ -850,6 +850,386 @@ export const FacilityAdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+    )}
+
+        {/* Tab 2: Facility Profile */}
+        {activeTab === "facility" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Facility Profile & Operational Configuration</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Institutional parameters, physical location, and statutory bed licenses
+                </p>
+              </div>
+              <span className="badge badge-teal">NMC / State Health Registered</span>
+            </div>
+
+            <form onSubmit={handleSaveFacility} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div className="grid grid-2 gap-4">
+                <div className="field">
+                  <label className="label">Facility Full Legal Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={facilityName}
+                    onChange={(e) => setFacilityName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label className="label">Physical Address</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={facilityLocation}
+                    onChange={(e) => setFacilityLocation(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-3 gap-4">
+                <div className="field">
+                  <label className="label">Total Licensed Beds</label>
+                  <input
+                    type="number"
+                    className="input"
+                    value={bedCapacityTotal}
+                    onChange={(e) => setBedCapacityTotal(Number(e.target.value))}
+                    min={1}
+                  />
+                </div>
+                <div className="field">
+                  <label className="label">Current Occupied Beds</label>
+                  <input
+                    type="number"
+                    className="input"
+                    value={bedCapacityOccupied}
+                    onChange={(e) => setBedCapacityOccupied(Number(e.target.value))}
+                    min={0}
+                  />
+                </div>
+                <div className="field">
+                  <label className="label">Emergency Resuscitation Bays</label>
+                  <input type="number" className="input" defaultValue={8} readOnly />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => toast("License Verified", "State Clinical Establishment Act compliance status: Active", "info")}
+                >
+                  <Shield style={{ width: 14, height: 14 }} />
+                  Verify Accreditation
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save style={{ width: 14, height: 14 }} />
+                  Save Facility Profile
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Tab 3: Staff Roster */}
+        {activeTab === "staff" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Hospital Personnel & Staff Roster</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Clinical officers, specialists, and duty roster schedules
+                </p>
+              </div>
+              <button className="btn btn-primary" onClick={() => setIsAddStaffOpen(true)}>
+                <Plus style={{ width: 15, height: 15 }} />
+                <span>Add Staff Member</span>
+              </button>
+            </div>
+
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Staff Code</th>
+                    <th>Name</th>
+                    <th>Clinical Role</th>
+                    <th>Department</th>
+                    <th>Duty Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {staffList.map((st) => (
+                    <tr key={st.id}>
+                      <td style={{ fontWeight: 600 }}>{st.code}</td>
+                      <td>{st.name}</td>
+                      <td>{st.role}</td>
+                      <td>
+                        <span className="badge badge-outline">{st.department}</span>
+                      </td>
+                      <td>
+                        <span className={`badge ${st.status === "On Duty" ? "badge-success" : st.status === "On Call" ? "badge-warning" : "badge-info"}`}>
+                          {st.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => {
+                            setStaffList((prev) =>
+                              prev.map((s) =>
+                                s.id === st.id
+                                  ? { ...s, status: s.status === "On Duty" ? "Off Duty" : "On Duty" }
+                                  : s
+                              )
+                            );
+                            toast("Status Updated", `${st.name} marked as ${st.status === "On Duty" ? "Off Duty" : "On Duty"}`, "info");
+                          }}
+                        >
+                          Toggle Status
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Department Capacity */}
+        {activeTab === "capacity" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Service Capacity & Department Load</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Live department load and bed occupancy across specialized units
+                </p>
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={() => setIsReserveBedOpen(true)}>
+                <Bed style={{ width: 14, height: 14 }} />
+                <span>Reserve Inpatient Bed</span>
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 24 }}>
+              {[
+                { name: "Intensive Care Unit (ICU)", occupied: 18, total: 20, pct: "90%", status: "Critical Load", color: "#dc2626" },
+                { name: "Emergency Care Unit", occupied: 22, total: 25, pct: "88%", status: "High Load", color: "#ea580c" },
+                { name: "Cardiology Inpatient", occupied: 14, total: 16, pct: "87.5%", status: "High Load", color: "#ea580c" },
+                { name: "General Medicine Ward", occupied: 50, total: 59, pct: "84.7%", status: "Optimal", color: "#16a34a" },
+              ].map((dept, idx) => (
+                <div key={idx} className="card" style={{ padding: 18, borderRadius: 12, border: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                    <span style={{ fontWeight: 700, fontSize: "0.9375rem" }}>{dept.name}</span>
+                    <span style={{ fontWeight: 800, fontSize: "1.125rem", color: dept.color }}>{dept.pct}</span>
+                  </div>
+                  <div className="subtle xs" style={{ marginBottom: 10 }}>
+                    {dept.occupied} of {dept.total} beds occupied
+                  </div>
+                  <div style={{ width: "100%", height: 8, backgroundColor: "#f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ width: dept.pct, height: "100%", backgroundColor: dept.color, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: "0.75rem", color: dept.color, fontWeight: 600 }}>
+                    {dept.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Equipment Inventory */}
+        {activeTab === "resources" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Medical Equipment & Fleet Inventory</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Operational readiness, battery status, and telemetry maintenance logs
+                </p>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => toast("Fleet Scanned", "All 34 point-of-care devices report positive telemetry ping", "success")}
+              >
+                <Activity style={{ width: 14, height: 14 }} />
+                <span>Scan Telemetry</span>
+              </button>
+            </div>
+
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Equipment Type</th>
+                    <th>Identifier / Asset #</th>
+                    <th>Current Location</th>
+                    <th>Status</th>
+                    <th>Battery / Power</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { type: "Critical Care Ventilator", code: "VENT-004", ward: "ICU / Bed 02", status: "In Use", battery: "100% Mains", ok: true },
+                    { type: "Neonatal Incubator", code: "INC-011", ward: "NICU / Bay 03", status: "Available", battery: "98% Ready", ok: true },
+                    { type: "Multi-parameter Monitor", code: "MON-082", ward: "Emergency / Bay 01", status: "In Use", battery: "100% Mains", ok: true },
+                    { type: "Infusion Syringe Pump", code: "PUMP-029", ward: "Ward B / R201", status: "Calibration Due", battery: "85% Standby", ok: false },
+                  ].map((eq, idx) => (
+                    <tr key={idx}>
+                      <td style={{ fontWeight: 600 }}>{eq.type}</td>
+                      <td><code>{eq.code}</code></td>
+                      <td>{eq.ward}</td>
+                      <td>
+                        <span className={`badge ${eq.status === "In Use" ? "badge-teal" : eq.status === "Available" ? "badge-success" : "badge-warning"}`}>
+                          {eq.status}
+                        </span>
+                      </td>
+                      <td className="subtle">{eq.battery}</td>
+                      <td>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => toast("Equipment Logged", `Maintenance inspection confirmed for ${eq.code}`, "info")}
+                        >
+                          Inspect
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 6: Hospital Analytics */}
+        {activeTab === "analytics" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Hospital Operational Analytics</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Key performance metrics for clinical throughput and patient flow
+                </p>
+              </div>
+              <span className="badge badge-teal">Live Monthly Aggregation</span>
+            </div>
+
+            <div className="grid grid-4 gap-4" style={{ marginBottom: 24 }}>
+              <div className="card" style={{ padding: 18, borderRadius: 12 }}>
+                <span className="subtle xs">Avg Length of Stay (ALOS)</span>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--navy-900)", marginTop: 4 }}>4.2 Days</div>
+                <span className="xs subtle">Target: &lt; 5.0 Days</span>
+              </div>
+              <div className="card" style={{ padding: 18, borderRadius: 12 }}>
+                <span className="subtle xs">Bed Occupancy Rate</span>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#ea580c", marginTop: 4 }}>86.7%</div>
+                <span className="xs subtle">Capacity threshold: 85%</span>
+              </div>
+              <div className="card" style={{ padding: 18, borderRadius: 12 }}>
+                <span className="subtle xs">Bed Turnover Interval</span>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--teal-700)", marginTop: 4 }}>18.4 Hours</div>
+                <span className="xs subtle">Sanitization & intake turn</span>
+              </div>
+              <div className="card" style={{ padding: 18, borderRadius: 12 }}>
+                <span className="subtle xs">30-Day Emergency Readmission</span>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#16a34a", marginTop: 4 }}>3.1%</div>
+                <span className="xs subtle">National benchmark: 5.5%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 7: Operational Reports */}
+        {activeTab === "reports" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Operational Capacity Reports & Audits</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Export compliance reports and historical facility census
+                </p>
+              </div>
+              <button className="btn btn-primary" onClick={handleExportReport}>
+                <Download style={{ width: 15, height: 15 }} />
+                <span>Export Operational Report (PDF/CSV)</span>
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { title: "Monthly Bed Census & Occupancy Statement", desc: "Detailed breakdown of inpatient admissions, bed stays, and unit discharges", date: "May 2026" },
+                { title: "SBAR Inter-Facility Transfer & Referral Throughput", desc: "Ingress vs egress emergency and elective patient referrals", date: "Q2 2026" },
+                { title: "Medical Equipment Calibration & Uptime Audit", desc: "Fleet telemetry uptime verification compliant with ISO 13485", date: "Past 90 Days" },
+              ].map((rep, idx) => (
+                <div key={idx} className="card" style={{ padding: 16, borderRadius: 12, border: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <strong>{rep.title}</strong>
+                    <div className="subtle xs" style={{ marginTop: 2 }}>{rep.desc} · Period: {rep.date}</div>
+                  </div>
+                  <button className="btn btn-secondary btn-sm" onClick={handleExportReport}>
+                    <Download style={{ width: 14, height: 14 }} />
+                    Download
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 8: Facility Settings */}
+        {activeTab === "settings" && (
+          <div className="card" style={{ padding: 24, borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Facility Administration Settings</h2>
+                <p style={{ color: "var(--text-3)", fontSize: "0.875rem", margin: "4px 0 0" }}>
+                  Emergency overflow triggers, surge protocols, and administrative notifications
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div className="card" style={{ padding: 18, borderRadius: 12, backgroundColor: "#f8fafc" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <strong>Surge Capacity Alert Threshold</strong>
+                    <div className="subtle xs">Trigger regional notification when facility occupancy exceeds threshold</div>
+                  </div>
+                  <span className="badge badge-warning">88%</span>
+                </div>
+              </div>
+
+              <div className="card" style={{ padding: 18, borderRadius: 12, backgroundColor: "#f8fafc" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <strong>Paschim Banga Emergency Doctrine Strict Mode</strong>
+                    <div className="subtle xs">Enforces immediate attending physician review for all critical referrals</div>
+                  </div>
+                  <span className="badge badge-success">Enforced</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => toast("Settings Saved", "Facility operational configuration saved", "success")}
+                >
+                  <Save style={{ width: 14, height: 14 }} />
+                  <span>Save Configuration</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal: Reserve Bed */}
         {isReserveBedOpen && (
