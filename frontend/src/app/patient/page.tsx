@@ -3,13 +3,25 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useClinova } from "@/lib/referenceContext";
+import { PatientDashboard } from "@/components/dashboard/PatientDashboard";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Activity, ShieldCheck, ArrowRight, Clock, FileCheck2, Search, KeyRound } from "lucide-react";
+import { Activity, ShieldCheck, ArrowRight, KeyRound, Search } from "lucide-react";
 
-export default function PatientLandingPage() {
+export default function PatientPage() {
   const router = useRouter();
+  const { user } = useClinova();
   const [tokenInput, setTokenInput] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  // If authenticated as PATIENT, SYSTEM_ADMIN, or demo session, render the complete authentic Patient Dashboard!
+  if (user && (user.role === "PATIENT" || user.role === "SYSTEM_ADMIN" || user.role === "CLINICIAN")) {
+    return (
+      <React.Suspense fallback={<div className="page" style={{ padding: 48, textAlign: "center" }}><span className="spinner" /></div>}>
+        <PatientDashboard />
+      </React.Suspense>
+    );
+  }
 
   const handleLookup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +35,7 @@ export default function PatientLandingPage() {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--clinova-space-6)" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 20px 48px", display: "flex", flexDirection: "column", gap: "var(--clinova-space-6)" }}>
       <PageHeader
         title="Patient Intake & Care Navigation Portal"
         subtitle="Digital symptom registration, vernacular speech entry, and targeted pre-consultation inquiries"
@@ -90,59 +102,6 @@ export default function PatientLandingPage() {
             <span>View Care Status</span>
           </button>
         </form>
-      </div>
-
-      <div className="clinova-grid-3col">
-        <div className="clinova-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <ShieldCheck style={{ width: 18, height: 18, color: "var(--clinova-success)" }} aria-hidden="true" />
-            <h4 style={{ fontSize: "0.9375rem" }}>Safe & Confidential</h4>
-          </div>
-          <p style={{ fontSize: "0.8125rem", color: "var(--clinova-text-secondary)" }}>
-            Zero third-party commercial data sharing. Compliant with DPDP Act 2023.
-          </p>
-        </div>
-
-        <div className="clinova-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Clock style={{ width: 18, height: 18, color: "var(--clinova-informational)" }} aria-hidden="true" />
-            <h4 style={{ fontSize: "0.9375rem" }}>Saves Hospital Time</h4>
-          </div>
-          <p style={{ fontSize: "0.8125rem", color: "var(--clinova-text-secondary)" }}>
-            Pre-structures chief complaints so the doctor can focus on your physical examination.
-          </p>
-        </div>
-
-        <div className="clinova-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <FileCheck2 style={{ width: 18, height: 18, color: "#7c3aed" }} aria-hidden="true" />
-            <h4 style={{ fontSize: "0.9375rem" }}>Optional Uploads</h4>
-          </div>
-          <p style={{ fontSize: "0.8125rem", color: "var(--clinova-text-secondary)" }}>
-            Easily attach prior prescriptions or lab reports for automated local text extraction.
-          </p>
-        </div>
-      </div>
-
-      {/* Synthetic Demonstration Quick Track */}
-      <div className="card" style={{ backgroundColor: "var(--surface-sunken)" }}>
-        <div className="card-body tight stack gap-2">
-          <span className="section-title">SYNTHETIC DEMONSTRATION CASES</span>
-          <h4 style={{ fontSize: "0.9375rem", margin: "2px 0 6px" }}>
-            Track Existing Demonstration Patient Tokens
-          </h4>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <Link href="/patient/case/PT-SYN-0014" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
-              Track PT-SYN-0014 (Routine URI)
-            </Link>
-            <Link href="/patient/case/PT-SYN-0842" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
-              Track PT-SYN-0842 (Critical Chest Pain)
-            </Link>
-            <Link href="/patient/case/PT-SYN-0319" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
-              Track PT-SYN-0319 (Urgent Febrile)
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -30,6 +30,8 @@ import {
   ShieldAlert,
   Server,
   HeartPulse,
+  Layers,
+  Activity,
 } from "lucide-react";
 import { useClinova, ClinovaProvider } from "@/lib/referenceContext";
 import { EnvironmentBanner } from "./EnvironmentBanner";
@@ -42,6 +44,7 @@ import { FloatingPersonaSwitcher } from "./FloatingPersonaSwitcher";
 import { RoleBadge } from "./RoleBadge";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { AskClinovaDrawer } from "./AskClinovaDrawer";
+import { RoleChooserModal } from "@/components/dashboard/RoleChooserModal";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -75,6 +78,7 @@ const InnerAppShell: React.FC<AppShellProps> = ({
   const [isFacilityOpen, setIsFacilityOpen] = useState(false);
   const [isSystemOpen, setIsSystemOpen] = useState(false);
   const [isAskOpen, setIsAskOpen] = useState(false);
+  const [isRoleChooserOpen, setIsRoleChooserOpen] = useState(false);
 
   // Close menus on route change
   useEffect(() => {
@@ -106,54 +110,117 @@ const InnerAppShell: React.FC<AppShellProps> = ({
     return pathname.startsWith(href);
   };
 
-  const navSections = [
-    {
-      title: "Workspace",
-      items: [
-        { label: "Overview", href: "/", icon: LayoutDashboard },
-        { label: "Patients", href: "/patients", icon: Users },
-        { label: "Appointments", href: "/appointments", icon: Calendar },
-        { label: "Consultations", href: "/consultations", icon: Stethoscope },
-        { label: "Clinical Notes", href: "/notes", icon: FileText },
-        { label: "Lab Results", href: "/labs", icon: FlaskConical },
-        {
-          label: "Follow-ups",
-          href: "/follow-ups",
-          icon: Clock,
-          count: pendingFollowUpsCount > 0 ? pendingFollowUpsCount : undefined,
-        },
-      ],
-    },
-    {
-      title: "Review & AI",
-      items: [
-        {
-          label: "Review Center",
-          href: "/review",
-          icon: CheckSquare,
-          count: pendingReviewsCount > 0 ? pendingReviewsCount : undefined,
-        },
-        { label: "AI Assistant", href: "/assistant", icon: Sparkles },
-      ],
-    },
-    {
-      title: "Administration",
-      items: [
-        { label: "Reports", href: "/reports", icon: BarChart3 },
-        { label: "Audit Log", href: "/audit", icon: Shield },
-        { label: "Settings", href: "/settings", icon: SettingsIcon },
-      ],
-    },
-    {
-      title: "Clinical Workstations",
-      items: [
-        { label: "Nurse Triage", href: "/staff/triage", icon: HeartPulse },
-        { label: "Reception Desk", href: "/staff/reception", icon: UserPlus },
-        { label: "Facility Resources", href: "/facilities", icon: Building2 },
-        { label: "SBAR Referrals", href: "/referrals", icon: Share2 },
-      ],
-    },
-  ];
+  const userRole = (user?.role || "CLINICIAN").toUpperCase();
+
+  // Role-specific brand and navigation mapping according to Sections 4-9
+  let brandName = { main: "Clinova", sub: "AI" };
+  let navSections: { title: string; items: { label: string; href: string; icon: any; count?: number }[] }[] = [];
+
+  if (userRole === "PATIENT") {
+    brandName = { main: "HealthCare+", sub: "Portal" };
+    navSections = [
+      {
+        title: "Patient Navigation",
+        items: [
+          { label: "Dashboard", href: "/patient", icon: LayoutDashboard },
+          { label: "My Records", href: "/patient?tab=records", icon: FileText },
+          { label: "Appointments", href: "/patient?tab=appointments", icon: Calendar },
+          { label: "Reports", href: "/patient?tab=reports", icon: BarChart3 },
+          { label: "Messages", href: "/patient?tab=messages", icon: Sparkles },
+          { label: "Follow-up", href: "/patient?tab=followup", icon: Clock },
+          { label: "Profile", href: "/patient?tab=profile", icon: Users },
+        ],
+      },
+    ];
+  } else if (userRole === "RECEPTIONIST") {
+    brandName = { main: "HTN", sub: "Reception" };
+    navSections = [
+      {
+        title: "Receptionist Navigation",
+        items: [
+          { label: "Dashboard", href: "/staff/reception", icon: LayoutDashboard },
+          { label: "Patient Registration", href: "/staff/reception?tab=register", icon: UserPlus },
+          { label: "Appointments", href: "/staff/reception?tab=schedule", icon: Calendar },
+          { label: "Check-in", href: "/staff/reception?tab=checkin", icon: CheckSquare },
+          { label: "Patient Queue", href: "/staff/reception?tab=queue", icon: Users },
+          { label: "Patient Lookup", href: "/staff/reception?tab=lookup", icon: Search },
+          { label: "Notifications", href: "/staff/reception?tab=notifications", icon: Bell },
+        ],
+      },
+    ];
+  } else if (userRole === "NURSE") {
+    brandName = { main: "MediWatch", sub: "Triage" };
+    navSections = [
+      {
+        title: "Nurse Navigation",
+        items: [
+          { label: "Dashboard", href: "/staff/triage", icon: LayoutDashboard },
+          { label: "Assigned Queue", href: "/staff/triage?tab=queue", icon: Users },
+          { label: "Patient Intake", href: "/patient/intake", icon: FileText },
+          { label: "Vital Signs", href: "/staff/triage?tab=vitals", icon: HeartPulse },
+          { label: "Evidence Upload", href: "/staff/triage?tab=evidence", icon: Sparkles },
+          { label: "Patient Timeline", href: "/staff/triage?tab=timeline", icon: Clock },
+          { label: "Tasks", href: "/staff/triage?tab=tasks", icon: CheckSquare },
+          { label: "Handover", href: "/staff/triage?tab=handover", icon: Share2 },
+        ],
+      },
+    ];
+  } else if (userRole === "FACILITY_ADMIN") {
+    brandName = { main: "Operations", sub: "& Resource" };
+    navSections = [
+      {
+        title: "Facility Management",
+        items: [
+          { label: "Dashboard", href: "/facilities", icon: LayoutDashboard },
+          { label: "Facility Management", href: "/facilities?tab=management", icon: Building2 },
+          { label: "Staff Management", href: "/facilities?tab=staff", icon: Users },
+          { label: "Service Capacity", href: "/facilities?tab=capacity", icon: HeartPulse },
+          { label: "Resource Planning", href: "/facilities?tab=resources", icon: LayoutDashboard },
+          { label: "Analytics", href: "/facilities?tab=analytics", icon: BarChart3 },
+          { label: "Reports", href: "/facilities?tab=reports", icon: FileText },
+          { label: "Settings", href: "/settings", icon: SettingsIcon },
+        ],
+      },
+    ];
+  } else if (userRole === "SYSTEM_ADMIN" || userRole === "AUDITOR") {
+    brandName = { main: "CLINOVA", sub: "Admin" };
+    navSections = [
+      {
+        title: "Platform Administration",
+        items: [
+          { label: "Dashboard", href: "/system", icon: LayoutDashboard },
+          { label: "User Management", href: "/system?tab=users", icon: Users },
+          { label: "Role Management", href: "/system?tab=roles", icon: Shield },
+          { label: "Facility Directory", href: "/facilities", icon: Building2 },
+          { label: "System Analytics", href: "/system?tab=analytics", icon: BarChart3 },
+          { label: "AI Model Status", href: "/system?tab=models", icon: Sparkles },
+          { label: "Audit Logs", href: "/audit", icon: ShieldAlert },
+          { label: "System Health", href: "/system?tab=health", icon: Server },
+          { label: "Security", href: "/system?tab=security", icon: Shield },
+          { label: "Settings", href: "/settings", icon: SettingsIcon },
+        ],
+      },
+    ];
+  } else {
+    // Clinician / Medical Officer
+    brandName = { main: "Clinova", sub: "Doctor" };
+    navSections = [
+      {
+        title: "Clinical Navigation",
+        items: [
+          { label: "Dashboard", href: "/", icon: LayoutDashboard },
+          { label: "Patient Review", href: "/staff/review", icon: CheckSquare, count: pendingReviewsCount > 0 ? pendingReviewsCount : undefined },
+          { label: "Clinical Cases", href: "/staff/cases/CASE-SYNTH-003", icon: Stethoscope },
+          { label: "AI Insights", href: "/assistant", icon: Sparkles },
+          { label: "CAREGRAPH", href: "/review?tab=caregraph", icon: Activity },
+          { label: "Safety Alerts", href: "/review?tab=safety", icon: ShieldAlert },
+          { label: "Referrals", href: "/referrals", icon: Share2 },
+          { label: "Reports", href: "/reports", icon: BarChart3 },
+          { label: "Follow-up", href: "/follow-ups", icon: Clock, count: pendingFollowUpsCount > 0 ? pendingFollowUpsCount : undefined },
+        ],
+      },
+    ];
+  }
 
   const mobileNavItems = [
     { label: "Today", href: "/", icon: LayoutDashboard },
@@ -187,7 +254,7 @@ const InnerAppShell: React.FC<AppShellProps> = ({
                   </svg>
                 </span>
                 <span className="brand-name">
-                  Clinova <span>AI</span>
+                  {brandName.main} <span>{brandName.sub}</span>
                 </span>
               </Link>
               <button
@@ -258,6 +325,7 @@ const InnerAppShell: React.FC<AppShellProps> = ({
               <button
                 className="workspace-switch hide-mobile"
                 aria-label="Current workspace: Lekki Family Health Clinic"
+                onClick={() => setIsRoleChooserOpen(true)}
               >
                 <span className="ws-mark">LF</span>
                 <span className="ws-text stack">
@@ -398,6 +466,17 @@ const InnerAppShell: React.FC<AppShellProps> = ({
                           className="menu-item"
                           onClick={() => {
                             setUserMenuOpen(false);
+                            setIsRoleChooserOpen(true);
+                          }}
+                        >
+                          <Layers style={{ width: 16, height: 16 }} />
+                          <span>Switch Role / Facility</span>
+                        </button>
+                        <button
+                          role="menuitem"
+                          className="menu-item"
+                          onClick={() => {
+                            setUserMenuOpen(false);
                             router.push("/settings");
                           }}
                         >
@@ -466,6 +545,7 @@ const InnerAppShell: React.FC<AppShellProps> = ({
       <FacilityDrawer isOpen={isFacilityOpen} onClose={() => setIsFacilityOpen(false)} />
       <SystemAuditDrawer isOpen={isSystemOpen} onClose={() => setIsSystemOpen(false)} />
       <AskClinovaDrawer isOpen={isAskOpen} onClose={() => setIsAskOpen(false)} />
+      <RoleChooserModal isOpen={isRoleChooserOpen} onClose={() => setIsRoleChooserOpen(false)} />
 
       {/* Floating Demo Persona Switcher (Fixed Bottom-Right) */}
       <FloatingPersonaSwitcher />

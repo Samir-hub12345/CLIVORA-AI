@@ -515,3 +515,152 @@ export const SEED_AUDIT: AuditEntry[] = [
   { id: "au4", ts: "Today 09:20", actor: "Dr. Joshua Ajose", action: "Opened consultation", category: "Record access", record: "ENC-5833", outcome: "Success", detail: "Patient in room" },
   { id: "au5", ts: "Today 09:41", actor: "Dr. Joshua Ajose", action: "Draft saved", category: "Clinical review", record: "ENC-5833", outcome: "Success", detail: "AI sections verified" }
 ];
+
+export interface TriagePatientItem {
+  id: string;
+  caseId: string;
+  name: string;
+  ward: string;
+  vitalsNote: string;
+  score: number;
+  acuity: "HIGH" | "MODERATE" | "LOW" | "CRITICAL";
+  hr: number;
+  bp: string;
+  spo2: number;
+  temp: number;
+  rr: number;
+  symptoms: string[];
+  missingInfo: string[];
+}
+
+export const INITIAL_TRIAGE_PATIENTS: TriagePatientItem[] = [
+  {
+    id: "PT-SYN-001",
+    caseId: "CASE-SYNTH-001",
+    name: "Elena Kostov",
+    ward: "ICU / R001",
+    vitalsNote: "Oxygen Saturation elevated (89% on room air)",
+    score: 100,
+    acuity: "HIGH",
+    hr: 118,
+    bp: "88/54",
+    spo2: 89,
+    temp: 38.6,
+    rr: 28,
+    symptoms: ["Severe acute dyspnea", "Accessory muscle use", "Diaphoresis"],
+    missingInfo: ["Arterial Blood Gas (ABG)", "Baseline ECG"],
+  },
+  {
+    id: "PT-SYN-002",
+    caseId: "CASE-SYNTH-002",
+    name: "Robert Chen",
+    ward: "WARD-B / R201",
+    vitalsNote: "Heart Rate elevated (112 bpm)",
+    score: 57,
+    acuity: "MODERATE",
+    hr: 112,
+    bp: "135/86",
+    spo2: 96,
+    temp: 37.8,
+    rr: 20,
+    symptoms: ["Palpitations", "Lightheadedness upon standing"],
+    missingInfo: ["Serum Electrolytes Panel"],
+  },
+  {
+    id: "PT-SYN-003",
+    caseId: "CASE-SYNTH-003",
+    name: "Kevin Durant",
+    ward: "WARD-C / R302",
+    vitalsNote: "Oxygen Saturation stable (97%)",
+    score: 10,
+    acuity: "LOW",
+    hr: 76,
+    bp: "122/78",
+    spo2: 97,
+    temp: 36.8,
+    rr: 16,
+    symptoms: ["Mild productive cough", "Low-grade fatigue"],
+    missingInfo: [],
+  },
+  {
+    id: "PT-SYN-004",
+    caseId: "CASE-SYNTH-004",
+    name: "James Wilson",
+    ward: "WARD-A / R101",
+    vitalsNote: "Scheduled elective vitals",
+    score: 5,
+    acuity: "LOW",
+    hr: 72,
+    bp: "120/80",
+    spo2: 99,
+    temp: 36.6,
+    rr: 14,
+    symptoms: ["Pre-operative routine checkup"],
+    missingInfo: [],
+  },
+  {
+    id: "PT-SYN-005",
+    caseId: "CASE-SYNTH-005",
+    name: "Sunita Rao",
+    ward: "WARD-A / R102",
+    vitalsNote: "Febrile illness (Temp 38.4°C)",
+    score: 10,
+    acuity: "LOW",
+    hr: 88,
+    bp: "118/74",
+    spo2: 98,
+    temp: 38.4,
+    rr: 18,
+    symptoms: ["Fever and chills for 48 hours", "Frontal headache"],
+    missingInfo: ["Malaria & Dengue rapid antigen tests"],
+  },
+  {
+    id: "PT-SYN-006",
+    caseId: "CASE-SYNTH-006",
+    name: "Rajesh Kumar",
+    ward: "EMERGENCY / ER-01",
+    vitalsNote: "Crushing retrosternal chest pain (Shock index 1.05)",
+    score: 95,
+    acuity: "HIGH",
+    hr: 110,
+    bp: "92/60",
+    spo2: 93,
+    temp: 37.1,
+    rr: 24,
+    symptoms: ["Crushing chest pain radiating to jaw and left shoulder", "Diaphoresis", "Nausea"],
+    missingInfo: ["12-lead ECG strip", "Troponin-I Level"],
+  },
+  {
+    id: "PT-SYN-007",
+    caseId: "CASE-SYNTH-007",
+    name: "Priya Das",
+    ward: "OPD / OPD-03",
+    vitalsNote: "Vital signs within normal limits",
+    score: 5,
+    acuity: "LOW",
+    hr: 74,
+    bp: "115/72",
+    spo2: 99,
+    temp: 36.7,
+    rr: 16,
+    symptoms: ["Dry cough for 3 days", "Mild pharyngitis"],
+    missingInfo: [],
+  },
+  {
+    id: "PT-SYN-008",
+    caseId: "CASE-SYNTH-008",
+    name: "Ada Okafor",
+    ward: "OPD / OPD-01",
+    vitalsNote: "Blood Pressure check (138/88 mmHg)",
+    score: 5,
+    acuity: "LOW",
+    hr: 78,
+    bp: "138/88",
+    spo2: 98,
+    temp: 36.9,
+    rr: 16,
+    symptoms: ["Routine chronic hypertension follow-up"],
+    missingInfo: ["Medication reconciliation check"],
+  },
+];
+

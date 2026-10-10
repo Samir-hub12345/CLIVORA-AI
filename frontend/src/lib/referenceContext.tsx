@@ -29,6 +29,8 @@ import {
   SEED_LABS,
   SEED_FOLLOWUPS,
   SEED_AUDIT,
+  TriagePatientItem,
+  INITIAL_TRIAGE_PATIENTS,
 } from "./referenceData";
 
 export interface ToastItem {
@@ -52,6 +54,7 @@ export interface ClinovaContextType {
   personas: Persona[];
   patients: Patient[];
   appointments: Appointment[];
+  triageQueue: TriagePatientItem[];
   consultations: Record<string, Consultation>;
   reviews: ReviewItem[];
   labs: LabResult[];
@@ -73,6 +76,12 @@ export interface ClinovaContextType {
   signOut: () => Promise<void>;
   switchRole: (roleId: string) => Promise<void>;
   addPatient: (patient: Partial<Patient>) => string;
+  addAppointment: (appt: Partial<Appointment>) => string;
+  cancelAppointment: (id: string) => void;
+  rescheduleAppointment: (id: string, newTime: string) => void;
+  addTriageCase: (patient: Partial<TriagePatientItem>) => void;
+  updateTriageVitals: (patientId: string, vitals: Partial<TriagePatientItem>) => void;
+  addReviewItem: (item: Partial<ReviewItem>) => void;
   startConsult: (patientId: string) => string;
   updateConsult: (id: string, updater: (prev: Consultation) => Partial<Consultation>, logReason?: string) => void;
   setReviewStatus: (
@@ -155,6 +164,7 @@ export const ClinovaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [personas, setPersonas] = useState<Persona[]>(FALLBACK_PERSONAS);
   const [patients, setPatients] = useState<Patient[]>(SEED_PATIENTS);
   const [appointments, setAppointments] = useState<Appointment[]>(SEED_APPOINTMENTS);
+  const [triageQueue, setTriageQueue] = useState<TriagePatientItem[]>(INITIAL_TRIAGE_PATIENTS);
   const [consultations, setConsultations] = useState<Record<string, Consultation>>(SEED_CONSULTATIONS);
   const [reviews, setReviews] = useState<ReviewItem[]>(SEED_REVIEWS);
   const [labs, setLabs] = useState<LabResult[]>(SEED_LABS);
@@ -363,6 +373,138 @@ export const ClinovaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [patients, log, toast]
   );
 
+  const addAppointment = useCallback(
+    (data: Partial<Appointment>): string => {
+      const id = "ap_" + Math.random().toString(36).slice(2, 8);
+      const newAppt: Appointment = {
+        id,
+        time: data.time || "Today 14:00",
+        patientId: data.patientId || "CLN-10482",
+        type: data.type || "Consultation",
+        clinician: data.clinician || "joshua",
+        status: data.status || "Scheduled",
+        room: data.room || "Room 1",
+      };
+      setAppointments((prev) => [newAppt, ...prev]);
+      log({
+        action: "Booked appointment",
+        category: "Record access",
+        record: newAppt.patientId,
+        detail: `${newAppt.type} with ${newAppt.clinician} at ${newAppt.time}`,
+      });
+      toast("Appointment booked", `Scheduled for ${newAppt.time} with ${newAppt.clinician}`, "success");
+      return id;
+    },
+    [log, toast]
+  );
+
+  const cancelAppointment = useCallback(
+    (id: string) => {
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: "Cancelled" as const } : a))
+      );
+      log({
+        action: "Cancelled appointment",
+        category: "Record access",
+        record: id,
+        detail: `Appointment ${id} marked as cancelled`,
+      });
+      toast("Appointment cancelled", "The appointment has been cancelled", "info");
+    },
+    [log, toast]
+  );
+
+  const rescheduleAppointment = useCallback(
+    (id: string, newTime: string) => {
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, time: newTime, status: "Scheduled" as const } : a))
+      );
+      log({
+        action: "Rescheduled appointment",
+        category: "Record access",
+        record: id,
+        detail: `Appointment ${id} moved to ${newTime}`,
+      });
+      toast("Appointment rescheduled", `Updated time to ${newTime}`, "success");
+    },
+    [log, toast]
+  );
+
+  const addTriageCase = useCallback(
+    (data: Partial<TriagePatientItem>) => {
+      const id = data.id || "PT-SYN-" + Math.floor(1000 + Math.random() * 9000);
+      const caseId = data.caseId || "CASE-SYNTH-" + Math.floor(100 + Math.random() * 900);
+      const newCase: TriagePatientItem = {
+        id,
+        caseId,
+        name: data.name || "Newly Registered Patient",
+        ward: data.ward || "OPD / Intake",
+        vitalsNote: data.vitalsNote || "Awaiting nurse triage and vitals recording",
+        score: data.score ?? 15,
+        acuity: data.acuity || "MODERATE",
+        hr: data.hr ?? 78,
+        bp: data.bp || "120/80",
+        spo2: data.spo2 ?? 98,
+        temp: data.temp ?? 37.0,
+        rr: data.rr ?? 16,
+        symptoms: data.symptoms || ["General intake"],
+        missingInfo: data.missingInfo || ["Vital Signs Acquisition"],
+      };
+      setTriageQueue((prev) => [newCase, ...prev]);
+      log({
+        action: "Routed to nurse triage",
+        category: "Record access",
+        record: `${id} (${caseId})`,
+        detail: `Patient ${newCase.name} queued for vitals acquisition`,
+      });
+    },
+    [log]
+  );
+
+  const updateTriageVitals = useCallback(
+    (patientId: string, vitals: Partial<TriagePatientItem>) => {
+      setTriageQueue((prev) =>
+        prev.map((p) => (p.id === patientId ? { ...p, ...vitals } : p))
+      );
+      log({
+        action: "Updated triage vitals",
+        category: "Clinical review",
+        record: patientId,
+        detail: `Vitals recorded: HR ${vitals.hr || "-"}, BP ${vitals.bp || "-"}, SpO2 ${vitals.spo2 || "-"}%`,
+      });
+    },
+    [log]
+  );
+
+  const addReviewItem = useCallback(
+    (data: Partial<ReviewItem>) => {
+      const nextId = data.id || "rv_" + Math.random().toString(36).slice(2, 7);
+      const newItem: ReviewItem = {
+        id: nextId,
+        patientId: data.patientId || "CLN-10482",
+        type: data.type || "documentation",
+        title: data.title || "Intake triage assessment",
+        createdBy: data.createdBy || me.name,
+        createdAt: "Just now",
+        aiStatus: data.aiStatus || "AI-assisted",
+        missing: data.missing ?? 0,
+        sources: data.sources || ["Triage Intake", "Vitals Log"],
+        status: data.status || "pending",
+        preview: data.preview || "Patient triage intake complete. Awaiting physician review.",
+        note: data.note,
+      };
+      setReviews((prev) => [newItem, ...prev]);
+      log({
+        action: "Submitted for clinical review",
+        category: "Approval",
+        record: newItem.patientId,
+        detail: newItem.title,
+      });
+      toast("Queued for doctor review", `${newItem.title} added to clinician workbench`, "success");
+    },
+    [me.name, log, toast]
+  );
+
   const startConsult = useCallback(
     (patientId: string): string => {
       const p = patients.find((pat) => pat.id === patientId);
@@ -531,6 +673,7 @@ export const ClinovaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     personas,
     patients,
     appointments,
+    triageQueue,
     consultations,
     reviews,
     labs,
@@ -547,6 +690,12 @@ export const ClinovaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     signOut,
     switchRole,
     addPatient,
+    addAppointment,
+    cancelAppointment,
+    rescheduleAppointment,
+    addTriageCase,
+    updateTriageVitals,
+    addReviewItem,
     startConsult,
     updateConsult,
     setReviewStatus,
