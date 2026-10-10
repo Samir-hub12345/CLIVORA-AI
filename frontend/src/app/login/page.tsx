@@ -2,30 +2,20 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  LogIn,
-  AlertTriangle,
-  ShieldCheck,
-  Stethoscope,
-  UserCheck,
-  UserPlus,
-  Building2,
+  Mail,
   Lock,
-  ArrowRight,
-  Activity,
   Eye,
   EyeOff,
-  Mail,
-  KeyRound,
-  FileText,
-  Clock,
-  Sparkles,
-  CheckCircle2,
   Building,
+  ShieldCheck,
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
-import { login } from "@/lib/api";
+import { useClinova } from "@/lib/referenceContext";
 
 const FLOW_STEPS = [
   { step: 1, title: "Relevant clinical history is organised", actor: "AI" },
@@ -39,432 +29,419 @@ const FLOW_STEPS = [
 const DEMO_ROLES = [
   {
     id: "clinician",
-    label: "Attending Physician (Doctor)",
-    desc: "Doctor Reviewer Workbench & Decision Sign-off",
+    label: "Clinician (Attending Physician)",
+    description: "Doctor Reviewer Workbench & Decision Sign-off",
+    email: "joshua.ajose@lekkifamily.clinic",
     route: "/staff/review",
   },
   {
     id: "nurse",
-    label: "Triage Nurse (RN)",
-    desc: "Vital Signs & NEWS2 Acuity Worklist",
+    label: "Nurse (Triage Nurse)",
+    description: "Bedside Acuity, NEWS2 & Vital Signs",
+    email: "chidinma.eze@lekkifamily.clinic",
     route: "/staff/triage",
   },
   {
     id: "receptionist",
-    label: "Medical Receptionist",
-    desc: "Patient Registration & Pathway Routing",
+    label: "Receptionist (Front Desk)",
+    description: "Patient Registration & Pathway Routing",
+    email: "tunde.olawale@lekkifamily.clinic",
     route: "/staff/reception",
   },
   {
     id: "facility_admin",
     label: "Facility Administrator",
-    desc: "Bed Capacity & Regional Telemetry",
+    description: "Bed Capacity & Regional Telemetry",
+    email: "admin@lekkifamily.clinic",
     route: "/facilities",
   },
   {
     id: "sysadmin",
     label: "System Administrator",
-    desc: "Cryptographic Audit Ledger & Sync Health",
+    description: "Audit Ledger & Cryptographic Verification",
+    email: "sysadmin@clinova.internal",
     route: "/system",
   },
   {
     id: "patient",
-    label: "Registered Patient",
-    desc: "Patient Portal & Digital Care Tracker",
+    label: "Patient (Portal User)",
+    description: "Digital Intake & Care Plan Instructions",
+    email: "ada.okafor@example.com",
     route: "/patient",
   },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState("clinician");
-  const [username, setUsername] = useState("clinician");
+  const { signIn } = useClinova();
+
+  const [mode, setMode] = useState<"signin" | "forgot">("signin");
+  const [email, setEmail] = useState("joshua.ajose@lekkifamily.clinic");
   const [password, setPassword] = useState("ClinovaDemo2026!");
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("clinician");
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [forgotModal, setForgotModal] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [resetSent, setResetSent] = useState(false);
 
-  const handleRoleSelectChange = (roleId: string) => {
+  const handleRoleChange = (roleId: string) => {
     setSelectedRole(roleId);
-    setUsername(roleId);
-    setPassword("ClinovaDemo2026!");
+    const found = DEMO_ROLES.find((r) => r.id === roleId);
+    if (found) {
+      setEmail(found.email);
+    }
     setError(null);
   };
 
-  const executeLogin = async (userToAuth: string, passToAuth: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await login(userToAuth, passToAuth);
-      const role = result.user?.role?.toUpperCase();
+  const validate = () => {
+    const errs: Record<string, string> = {};
+    if (!email.trim()) {
+      errs.email = "Enter your work email.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errs.email = "Enter a valid email address, like name@clinic.org.";
+    }
 
-      if (role === "PATIENT") {
-        router.push("/patient");
-      } else if (role === "RECEPTIONIST") {
-        router.push("/staff/reception");
-      } else if (role === "NURSE") {
-        router.push("/staff/triage");
-      } else if (role === "CLINICIAN" || role === "DOCTOR") {
-        router.push("/staff/review");
-      } else if (role === "FACILITY_ADMIN") {
-        router.push("/facilities");
-      } else if (role === "SYSTEM_ADMIN" || role === "AUDITOR") {
-        router.push("/system");
-      } else if (role === "REFERRAL_COORDINATOR") {
-        router.push("/referrals");
-      } else {
-        router.push("/staff");
+    if (mode === "signin") {
+      if (!password) {
+        errs.password = "Enter your password.";
+      } else if (password.length < 8) {
+        errs.password = "Passwords are at least 8 characters.";
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Authentication failed";
-      setError(msg);
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!validate()) return;
+
+    if (password === "incorrect-pass") {
+      setError(
+        "The email or password you entered is incorrect. After 5 failed attempts your account will be locked for 15 minutes."
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const ok = await signIn(selectedRole, password);
+      if (ok) {
+        const found = DEMO_ROLES.find((r) => r.id === selectedRole);
+        router.push(found?.route || "/staff");
+      } else {
+        setError("Invalid credentials or server unavailable.");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Authentication failed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSso = async () => {
+    setSsoLoading(true);
+    setError(null);
+    try {
+      const ok = await signIn(selectedRole, "ClinovaDemo2026!");
+      if (ok) {
+        const found = DEMO_ROLES.find((r) => r.id === selectedRole);
+        router.push(found?.route || "/staff");
+      }
+    } finally {
       setSsoLoading(false);
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleResetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) {
-      setError("Please enter your username or work email.");
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldErrors({ email: "Enter a valid work email." });
       return;
     }
-    if (!password) {
-      setError("Please enter your password.");
-      return;
-    }
-    await executeLogin(username, password);
-  };
-
-  const handleSsoClick = async () => {
-    setSsoLoading(true);
-    setError(null);
-    // Instant organization SSO authentication using active demo credentials
-    await executeLogin(selectedRole, "ClinovaDemo2026!");
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setResetSent(true);
+    }, 700);
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: "20px auto", padding: "0 var(--s-3)" }}>
-      <div className="auth">
-        {/* LEFT PANE: Sign-in Form */}
-        <div className="auth-panel">
-          {/* Top Bar: Brand & Demo badge */}
-          <div className="row between" style={{ marginBottom: 24 }}>
-            <Link href="/" className="row gap-2" style={{ textDecoration: "none" }}>
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  minWidth: 34,
-                  minHeight: 34,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  position: "relative",
-                }}
-              >
-                <Image
-                  src="/branding/clinova-ai-mark.png"
-                  alt="CLINOVA AI Logo"
-                  width={34}
-                  height={34}
-                  priority
-                  style={{
-                    width: 34,
-                    height: 34,
-                    objectFit: "contain",
-                  }}
-                />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span
-                  style={{
-                    fontSize: "1.0625rem",
-                    fontWeight: 800,
-                    color: "var(--navy-900)",
-                    letterSpacing: "-0.02em",
-                    lineHeight: 1.15,
-                  }}
-                >
-                  CLINOVA <span style={{ color: "var(--teal-600)" }}>AI</span>
-                </span>
-                <span
-                  style={{
-                    fontSize: "0.625rem",
-                    color: "var(--teal-700)",
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Continuous Care Intelligence
-                </span>
-              </div>
-            </Link>
-
-            <span className="demo-ribbon demo-ribbon-teal">
-              <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal-600)" }} />
-              Demo Environment
-            </span>
-          </div>
-
-          {/* Form Wrap */}
-          <div className="auth-form-wrap">
-            <div className="stack gap-1" style={{ marginBottom: 20 }}>
-              <h1 style={{ fontSize: "var(--fs-2xl)", color: "var(--navy-900)", fontWeight: 700 }}>
-                Welcome to Clinova AI
-              </h1>
-              <p className="small muted">
-                Your clinical workspace, organized around better care.
-              </p>
-            </div>
-
-            {error && (
-              <div className="alert alert-error" style={{ marginBottom: 16 }}>
-                <AlertTriangle style={{ width: 16, height: 16 }} aria-hidden="true" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Organization SSO Button */}
-            <button
-              type="button"
-              onClick={handleSsoClick}
-              disabled={loading || ssoLoading}
-              className="btn btn-secondary btn-lg btn-block"
-              style={{ marginBottom: 16, justifyContent: "center", gap: 10 }}
+    <div className="auth">
+      {/* Left Column: Authentic Login Panel */}
+      <div className="auth-panel">
+        <div className="row between">
+          <Link href="/" className="row gap-2" style={{ textDecoration: "none", color: "inherit" }}>
+            <span
+              className="brand-mark"
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 8,
+                background: "var(--navy-800)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              aria-hidden="true"
             >
-              <Building style={{ width: 18, height: 18, color: "var(--teal-700)" }} aria-hidden="true" />
-              <span>{ssoLoading ? "Connecting to Hospital SSO..." : "Sign in with Organization SSO"}</span>
-            </button>
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8 2v12M2 8h12" stroke="#5fd3c7" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="strong" style={{ fontSize: 16 }}>
+              Clinova <span style={{ color: "var(--teal-600)" }}>AI</span>
+            </span>
+          </Link>
+          <span className="demo-ribbon">Demo environment</span>
+        </div>
 
-            {/* Divider */}
-            <div className="row gap-3 xs muted" style={{ marginBottom: 16 }}>
-              <hr className="grow" style={{ borderColor: "var(--border)", borderStyle: "solid", borderWidth: "1px 0 0 0" }} />
-              <span>or sign in with credentials</span>
-              <hr className="grow" style={{ borderColor: "var(--border)", borderStyle: "solid", borderWidth: "1px 0 0 0" }} />
-            </div>
-
-            <form onSubmit={handleFormSubmit} className="stack gap-4">
-              {/* Role Quick Selector */}
-              <div className="field">
-                <label className="label" htmlFor="role-select">
-                  <span>Demo: Sign in as persona</span>
-                  <span className="req">*</span>
-                </label>
-                <select
-                  id="role-select"
-                  className="select"
-                  value={selectedRole}
-                  onChange={(e) => handleRoleSelectChange(e.target.value)}
-                >
-                  {DEMO_ROLES.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.label} — {role.desc}
-                    </option>
-                  ))}
-                </select>
-                <span className="hint">
-                  Role controls workspace access (e.g. only clinicians can sign consultation notes).
-                </span>
+        <div className="auth-form-wrap">
+          {mode === "signin" ? (
+            <form onSubmit={handleSignIn} noValidate className="stack gap-5">
+              <div className="stack gap-2">
+                <h1>Welcome to Clinova AI</h1>
+                <p className="muted">Your clinical workspace, organized around better care.</p>
               </div>
 
-              {/* Username / Email */}
+              {error && (
+                <div className="alert alert-error" role="alert">
+                  <AlertTriangle style={{ width: 18, height: 18 }} aria-hidden="true" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* SSO Button */}
+              <button
+                type="button"
+                className="btn btn-secondary btn-lg btn-block"
+                onClick={handleSso}
+                disabled={loading || ssoLoading}
+              >
+                {ssoLoading ? (
+                  <span className="spinner" aria-hidden="true" />
+                ) : (
+                  <Building style={{ width: 16, height: 16 }} aria-hidden="true" />
+                )}
+                <span>{ssoLoading ? "Redirecting to your organization…" : "Sign in with organization SSO"}</span>
+              </button>
+
+              <div className="row gap-3 xs muted">
+                <hr className="divider grow" />
+                <span>or sign in with email</span>
+                <hr className="divider grow" />
+              </div>
+
+              {/* Email */}
               <div className="field">
-                <label className="label" htmlFor="username-input">
-                  <span>Work Email or Username</span>
-                  <span className="req">*</span>
+                <label className="label" htmlFor="email">
+                  <span>Work email</span>
                 </label>
                 <div className="input-group">
-                  <Mail style={{ width: 16, height: 16, color: "var(--text-4)" }} aria-hidden="true" />
+                  <Mail style={{ width: 16, height: 16 }} aria-hidden="true" />
                   <input
-                    id="username-input"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
+                    id="email"
                     className="input"
-                    placeholder="name@clinic.org"
+                    type="email"
+                    autoComplete="username"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={!!fieldErrors.email}
                   />
                 </div>
+                {fieldErrors.email && <span className="error-text">{fieldErrors.email}</span>}
               </div>
 
               {/* Password */}
               <div className="field">
-                <div className="row between">
-                  <label className="label" htmlFor="password-input">
-                    <span>Password</span>
-                    <span className="req">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setForgotModal(true)}
-                    className="btn btn-ghost btn-sm"
-                    style={{ padding: "0 4px", fontSize: "11px", color: "var(--teal-700)" }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+                <label className="label" htmlFor="password">
+                  <span>Password</span>
+                </label>
                 <div className="input-group">
-                  <KeyRound style={{ width: 16, height: 16, color: "var(--text-4)" }} aria-hidden="true" />
+                  <Lock style={{ width: 16, height: 16 }} aria-hidden="true" />
                   <input
-                    id="password-input"
+                    id="password"
+                    className="input"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="input"
-                    placeholder="Enter password"
-                    style={{ paddingRight: 40 }}
+                    style={{ paddingRight: 44 }}
+                    aria-invalid={!!fieldErrors.password}
                   />
                   <button
                     type="button"
+                    className="btn btn-ghost btn-icon btn-sm input-action"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="input-action btn btn-ghost btn-icon btn-sm"
                   >
                     {showPassword ? (
-                      <EyeOff style={{ width: 15, height: 15 }} aria-hidden="true" />
+                      <EyeOff style={{ width: 15, height: 15 }} />
                     ) : (
-                      <Eye style={{ width: 15, height: 15 }} aria-hidden="true" />
+                      <Eye style={{ width: 15, height: 15 }} />
                     )}
                   </button>
                 </div>
+                {fieldErrors.password && <span className="error-text">{fieldErrors.password}</span>}
               </div>
 
-              {/* Submit Button */}
+              {/* Role Select */}
+              <div className="field">
+                <label className="label" htmlFor="role">
+                  <span>Demo: sign in as</span>
+                </label>
+                <div className="hint" style={{ marginBottom: 4 }}>
+                  Role controls which actions are available — e.g. only clinicians can sign notes.
+                </div>
+                <select
+                  id="role"
+                  className="select"
+                  value={selectedRole}
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                >
+                  {DEMO_ROLES.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label} — {r.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="row between">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ paddingLeft: 0, color: "var(--teal-700)" }}
+                  onClick={() => {
+                    setMode("forgot");
+                    setError(null);
+                    setResetSent(false);
+                  }}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
               <button
                 type="submit"
-                disabled={loading || ssoLoading}
                 className="btn btn-primary btn-lg btn-block"
-                style={{ marginTop: 4, justifyContent: "center" }}
+                disabled={loading || ssoLoading}
               >
-                <LogIn style={{ width: 18, height: 18 }} aria-hidden="true" />
-                <span>{loading ? "Signing in..." : "Sign in"}</span>
+                {loading && <span className="spinner" aria-hidden="true" />}
+                <span>{loading ? "Signing in…" : "Sign in"}</span>
               </button>
 
-              <p className="xs muted" style={{ textAlign: "center", margin: "4px 0 0" }}>
-                Demo password: <code className="mono">ClinovaDemo2026!</code> for all pre-seeded accounts.
+              <p className="xs muted" style={{ textAlign: "center", lineHeight: 1.5 }}>
+                Demo: any password with 8+ characters signs in. Use{" "}
+                <span className="mono">incorrect-pass</span> to preview the invalid-credentials state.
               </p>
             </form>
-          </div>
+          ) : (
+            /* Forgot Password Mode */
+            <form onSubmit={handleResetSubmit} noValidate className="stack gap-5">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ alignSelf: "flex-start", paddingLeft: 0 }}
+                onClick={() => setMode("signin")}
+              >
+                <ArrowLeft style={{ width: 14, height: 14 }} aria-hidden="true" />
+                <span>Back to sign in</span>
+              </button>
 
-          {/* Footer note */}
-          <div className="row between xs muted" style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-            <span>Protected by Role-Based Access Control</span>
-            <span>Sessions time out after 15 minutes of inactivity</span>
-          </div>
-        </div>
+              <div className="stack gap-2">
+                <h1>Reset your password</h1>
+                <p className="muted">Enter your work email and we’ll send a reset link if an account exists.</p>
+              </div>
 
-        {/* RIGHT PANE: Workflow Continuum Showcase */}
-        <div className="auth-aside">
-          <div className="stack gap-4">
-            <span className="demo-ribbon" style={{ alignSelf: "flex-start", background: "rgba(255,255,255,0.08)", color: "#9fb3c8", borderColor: "rgba(255,255,255,0.15)" }}>
-              AI Clinical Workflow Assistant
-            </span>
-
-            <div>
-              <h2>Less paperwork. More time for patient care.</h2>
-              <p style={{ color: "#9fb3c8", maxWidth: 460, marginTop: 10, lineHeight: 1.6, fontSize: "var(--fs-base)" }}>
-                Clinova AI organises patient information, prepares documentation and coordinates follow-ups — while healthcare professionals stay in control of every clinical decision.
-              </p>
-            </div>
-
-            {/* 6 Continuous Flow Steps */}
-            <div className="stack gap-2" style={{ maxWidth: 460, marginTop: 8 }}>
-              {FLOW_STEPS.map((item) => (
-                <div key={item.step} className="flow-step">
-                  <span className="n">{item.step}</span>
-                  <span style={{ color: "#e2e8f0", fontWeight: 500 }}>{item.title}</span>
-                  <span
-                    className="who"
-                    style={{
-                      color: item.actor.includes("Clinician") ? "#5fd3c7" : "#94a3b8",
-                      background: item.actor.includes("Clinician") ? "rgba(95, 211, 199, 0.12)" : "rgba(255, 255, 255, 0.06)",
-                    }}
-                  >
-                    {item.actor}
+              {resetSent ? (
+                <div className="alert alert-success" role="status">
+                  <CheckCircle2 style={{ width: 18, height: 18 }} aria-hidden="true" />
+                  <span>
+                    If an account exists for <strong>{email}</strong>, a reset link has been sent. The link
+                    expires in 30 minutes. <em>(Simulated — no email is sent in demo mode.)</em>
                   </span>
                 </div>
-              ))}
-            </div>
-          </div>
+              ) : (
+                <>
+                  <div className="field">
+                    <label className="label" htmlFor="reset-email">
+                      <span>Work email</span>
+                    </label>
+                    <input
+                      id="reset-email"
+                      className="input"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      aria-invalid={!!fieldErrors.email}
+                    />
+                    {fieldErrors.email && <span className="error-text">{fieldErrors.email}</span>}
+                  </div>
 
-          {/* Bottom Security Highlights */}
-          <div className="row gap-4 xs" style={{ color: "#8aa0b8", marginTop: 24, flexWrap: "wrap" }}>
-            <span className="row gap-2">
-              <ShieldCheck style={{ width: 15, height: 15, color: "#5fd3c7" }} aria-hidden="true" />
-              Role-Based Access
-            </span>
-            <span className="row gap-2">
-              <Clock style={{ width: 15, height: 15, color: "#38bdf8" }} aria-hidden="true" />
-              Full Audit Trail
-            </span>
-            <span>Non-Diagnostic Clinical Safety Invariant</span>
-          </div>
+                  <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={loading}>
+                    {loading && <span className="spinner" aria-hidden="true" />}
+                    <span>Send reset link</span>
+                  </button>
+                </>
+              )}
+            </form>
+          )}
         </div>
+
+        <footer className="row gap-4 wrap xs muted" style={{ marginTop: "auto", paddingTop: 24 }}>
+          <Link href="/privacy">Privacy notice</Link>
+          <Link href="/disclaimer">Security practices</Link>
+          <Link href="/about">Terms of use</Link>
+          <span style={{ marginLeft: "auto" }}>Sessions time out after 15 minutes of inactivity.</span>
+        </footer>
       </div>
 
-      {/* Forgot Password Modal */}
-      {forgotModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(13, 33, 53, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: 16,
-          }}
-          onClick={() => setForgotModal(false)}
-        >
-          <div
-            className="card"
-            style={{ maxWidth: 420, width: "100%", padding: "var(--s-6)" }}
-            onClick={(e) => e.stopPropagation()}
+      {/* Right Column: Authentic Reference Marketing / Workflow Aside */}
+      <div className="auth-aside">
+        <div className="stack gap-4">
+          <span
+            className="demo-ribbon"
+            style={{
+              alignSelf: "flex-start",
+              background: "rgba(255,255,255,0.06)",
+              color: "#9fb3c8",
+              borderColor: "rgba(255,255,255,0.1)",
+            }}
           >
-            <div className="row gap-2" style={{ marginBottom: 12 }}>
-              <KeyRound style={{ width: 20, height: 20, color: "var(--teal-600)" }} aria-hidden="true" />
-              <h3 style={{ fontSize: "var(--fs-lg)", margin: 0 }}>Demo Account Credentials</h3>
-            </div>
-            <p className="small subtle" style={{ lineHeight: 1.5, marginBottom: 16 }}>
-              All demo persona accounts are pre-configured with the default demo password:
-            </p>
-            <div
-              style={{
-                padding: "10px 14px",
-                background: "var(--surface-sunken)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--r-md)",
-                marginBottom: 16,
-                fontSize: "var(--fs-sm)",
-              }}
-            >
-              Password: <code className="mono strong">ClinovaDemo2026!</code>
-            </div>
-            <p className="xs muted" style={{ lineHeight: 1.5, marginBottom: 16 }}>
-              Select any role from the dropdown menu to sign in as Doctor, Nurse, Receptionist, Facility Admin, or Patient.
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary btn-block"
-              onClick={() => setForgotModal(false)}
-            >
-              Close and Continue
-            </button>
-          </div>
+            AI clinical workflow assistant
+          </span>
+          <h2>Less paperwork. More time for patient care.</h2>
+          <p style={{ color: "#9fb3c8", maxWidth: 460, lineHeight: 1.6 }}>
+            Clinova AI organises patient information, prepares documentation and coordinates follow-ups —
+            while healthcare professionals stay in control of every clinical decision.
+          </p>
         </div>
-      )}
+
+        <ol className="list-reset stack gap-2" style={{ maxWidth: 480 }}>
+          {FLOW_STEPS.map((s, idx) => (
+            <li key={s.step} className="flow-step">
+              <span className="n">{idx + 1}</span>
+              <span className="grow">{s.title}</span>
+              <span className="who" style={s.actor.startsWith("Clinician") ? { color: "#5fd3c7" } : undefined}>
+                {s.actor}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        <div className="row gap-4 xs" style={{ color: "#8aa0b8" }}>
+          <span className="row gap-2">
+            <ShieldCheck style={{ width: 14, height: 14 }} aria-hidden="true" />
+            <span>Role-based access</span>
+          </span>
+          <span>Full audit trail</span>
+          <span>No compliance certification is claimed for this demo</span>
+        </div>
+      </div>
     </div>
   );
 }

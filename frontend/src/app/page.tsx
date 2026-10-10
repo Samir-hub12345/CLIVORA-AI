@@ -20,7 +20,16 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { useClinova } from "@/lib/referenceContext";
+import { ReferenceDashboard } from "@/components/dashboard/ReferenceDashboard";
+
 export default function HomePage() {
+  const { user } = useClinova();
+
+  if (user) {
+    return <ReferenceDashboard />;
+  }
+
   const platformStats = [
     {
       label: "Zero-PII & Statutory Compliance",
